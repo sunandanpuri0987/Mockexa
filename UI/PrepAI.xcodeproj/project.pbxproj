@@ -1,0 +1,249 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 71;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B10000000000000000000001 /* PrepAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* PrepAIApp.swift */; };
+		B10000000000000000000002 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* DesignSystem.swift */; };
+		B10000000000000000000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* Models.swift */; };
+		B10000000000000000000004 /* RootAndOnboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* RootAndOnboarding.swift */; };
+		B10000000000000000000005 /* MainScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* MainScreens.swift */; };
+		B10000000000000000000006 /* PracticeFlows.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* PracticeFlows.swift */; };
+		B10000000000000000000011 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* Config.swift */; };
+		B10000000000000000000012 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* AuthManager.swift */; };
+		B10000000000000000000013 /* APISchemas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* APISchemas.swift */; };
+		B10000000000000000000014 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* APIClient.swift */; };
+		B10000000000000000000015 /* InterviewViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* InterviewViewModels.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000000000000000000001 /* PrepAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrepAIApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000002 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A10000000000000000000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A10000000000000000000004 /* RootAndOnboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootAndOnboarding.swift; sourceTree = "<group>"; };
+		A10000000000000000000005 /* MainScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreens.swift; sourceTree = "<group>"; };
+		A10000000000000000000006 /* PracticeFlows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeFlows.swift; sourceTree = "<group>"; };
+		A10000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A10000000000000000000008 /* PrepAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrepAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000011 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		A10000000000000000000012 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		A10000000000000000000013 /* APISchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISchemas.swift; sourceTree = "<group>"; };
+		A10000000000000000000014 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		A10000000000000000000015 /* InterviewViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterviewViewModels.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D10000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C10000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				C10000000000000000000002 /* PrepAI */,
+				C10000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C10000000000000000000002 /* PrepAI */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000001 /* PrepAIApp.swift */,
+				A10000000000000000000002 /* DesignSystem.swift */,
+				A10000000000000000000003 /* Models.swift */,
+				A10000000000000000000004 /* RootAndOnboarding.swift */,
+				A10000000000000000000005 /* MainScreens.swift */,
+				A10000000000000000000006 /* PracticeFlows.swift */,
+				A10000000000000000000007 /* Info.plist */,
+				A10000000000000000000011 /* Config.swift */,
+				A10000000000000000000012 /* AuthManager.swift */,
+				A10000000000000000000013 /* APISchemas.swift */,
+				A10000000000000000000014 /* APIClient.swift */,
+				A10000000000000000000015 /* InterviewViewModels.swift */,
+			);
+			path = PrepAI;
+			sourceTree = "<group>";
+		};
+		C10000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000008 /* PrepAI.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E10000000000000000000001 /* PrepAI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000000000000000000002 /* Build configuration list for PBXNativeTarget "PrepAI" */;
+			buildPhases = (
+				D10000000000000000000001 /* Sources */,
+				D10000000000000000000002 /* Frameworks */,
+				D10000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PrepAI;
+			productName = PrepAI;
+			productReference = A10000000000000000000008 /* PrepAI.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E10000000000000000000002 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					E10000000000000000000001 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = F10000000000000000000001 /* Build configuration list for PBXProject "PrepAI" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C10000000000000000000001;
+			productRefGroup = C10000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E10000000000000000000001 /* PrepAI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D10000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D10000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B10000000000000000000001 /* PrepAIApp.swift in Sources */,
+				B10000000000000000000002 /* DesignSystem.swift in Sources */,
+				B10000000000000000000003 /* Models.swift in Sources */,
+				B10000000000000000000004 /* RootAndOnboarding.swift in Sources */,
+				B10000000000000000000005 /* MainScreens.swift in Sources */,
+				B10000000000000000000006 /* PracticeFlows.swift in Sources */,
+				B10000000000000000000011 /* Config.swift in Sources */,
+				B10000000000000000000012 /* AuthManager.swift in Sources */,
+				B10000000000000000000013 /* APISchemas.swift in Sources */,
+				B10000000000000000000014 /* APIClient.swift in Sources */,
+				B10000000000000000000015 /* InterviewViewModels.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F20000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F20000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F20000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897UQM93C;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PrepAI/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.prepai.prototype;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F20000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897UQM93C;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PrepAI/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.prepai.prototype;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F10000000000000000000001 /* Build configuration list for PBXProject "PrepAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000000000000000000001 /* Debug */,
+				F20000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F10000000000000000000002 /* Build configuration list for PBXNativeTarget "PrepAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000000000000000000003 /* Debug */,
+				F20000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E10000000000000000000002 /* Project object */;
+}

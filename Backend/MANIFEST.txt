@@ -1,0 +1,195 @@
+# Mockexa Backend — Mac Setup Guide & Transfer Manifest
+# Generated: 2026-08-30
+# ============================================================
+
+## CONTENTS OF THIS ARCHIVE
+- app/                        FastAPI application source
+- group_d/model/              LoRA adapter weights (Qwen2.5-1.5B-Instruct base)
+- tests/                      Pytest test suite (62 tests)
+- docs/                       Project documentation
+- requirements.txt            Python dependency manifest
+- .env.example                Environment variable template
+- seed_questions_merged.sql   Supabase seed SQL (optional, for DB setup)
+- README.md                   Project readme
+- MANIFEST.txt                This file
+- verify_all_http.py          HTTP smoke-test helper (optional)
+- verify_gd_http.py           GD-specific HTTP test (optional)
+- verify_gd_model.py          Local model load test (optional)
+- verify_hr_http.py           HR-specific HTTP test (optional)
+
+## EXCLUDED FROM ARCHIVE
+- .venv/            (recreate locally — see below)
+- .git/             (version control history not included)
+- __pycache__/      (auto-generated — not portable)
+- .pytest_cache/    (auto-generated)
+- .env              (NEVER committed — contains real secrets)
+- live_*_runner.py  (E2E test runners — dev-only)
+- GD_Moderator/     (scratch notebooks — not required for runtime)
+- group_d/evaluation/ (training artifacts — not required for runtime)
+
+## MAC SETUP COMMANDS
+============================================================
+
+### 1. Prerequisites (install once on Mac)
+
+Homebrew (if not installed):
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+Python 3.11 or 3.12 (recommended):
+  brew install python@3.11
+  # or download from https://www.python.org/downloads/
+
+PyTorch (CPU or MPS — choose ONE):
+
+  # CPU only (lighter, ~700MB):
+  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+  # Apple Silicon MPS (recommended for M1/M2/M3):
+  pip install torch torchvision torchaudio
+
+  NOTE: torch must be installed BEFORE running `pip install -r requirements.txt`
+  if you want to use a specific PyTorch build. Otherwise requirements.txt will
+  install the default CPU torch automatically.
+
+### 2. Extract & Enter Directory
+
+  cd /path/to/Mockexa/Backend   # wherever you extracted the ZIP
+
+### 3. Create Virtual Environment
+
+  python3 -m venv .venv
+  source .venv/bin/activate
+
+### 4. Install Dependencies
+
+  pip install --upgrade pip
+  pip install -r requirements.txt
+
+  Expected installed packages include:
+    fastapi, uvicorn[standard], pydantic, groq, PyJWT[crypto],
+    pytest, httpx, python-dotenv, numpy, torch, transformers,
+    peft, accelerate, scikit-learn
+
+### 5. Configure Environment
+
+  cp .env.example .env
+
+  Open .env and fill in the following REQUIRED values:
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ REQUIRED VALUES TO FILL IN MANUALLY                             │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ SUPABASE_URL          Your Supabase project URL                 │
+  │                       e.g. https://abcdef.supabase.co          │
+  │                                                                 │
+  │ SUPABASE_ANON_KEY     Your Supabase anon/public key            │
+  │                       (starts with eyJ...)                      │
+  │                                                                 │
+  │ SUPABASE_JWT_SECRET   Your Supabase JWT secret                  │
+  │                       (found in Supabase → Settings → API)      │
+  │                                                                 │
+  │ GROQ_API_KEY          Your Groq API key (optional)              │
+  │                       Required only if USE_GROQ=True            │
+  │                       Get one at https://console.groq.com       │
+  └─────────────────────────────────────────────────────────────────┘
+
+  RECOMMENDED transfer configuration (start with this):
+    USE_GROQ=False
+    USE_SUPABASE_PERSISTENCE=False
+
+  When ready for live Supabase persistence:
+    USE_SUPABASE_PERSISTENCE=True
+    USE_GROQ=True   # (optional — enables Groq verification for GD)
+
+### 6. Start the Backend
+
+  uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  For development with auto-reload:
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+### 7. Verify Health
+
+  curl http://127.0.0.1:8000/health
+
+  Expected response:
+    {"status":"ok","environment":"development","groq_configured":false}
+
+### 8. Run Tests
+
+  python3 -m pytest tests -q
+
+  Expected: 62 passed
+
+## MODEL INFORMATION
+============================================================
+  Architecture: Qwen2.5-1.5B-Instruct (base) + LoRA adapter
+  Adapter path: group_d/model/  (relative to project root)
+  Adapter type: PEFT LoRA (r=32, alpha=64)
+  Task:         Causal LM — Group Discussion turn generation
+  Base model:   Downloaded automatically from HuggingFace on first run
+                → Qwen/Qwen2.5-1.5B-Instruct (~3GB, cached in ~/.cache/huggingface)
+  Adapter file: group_d/model/adapter_model.safetensors (~141MB, included in archive)
+
+  IMPORTANT: On first GD session start, the backend will download
+  the base model from HuggingFace if not already cached.
+  Ensure internet access and ~3GB free disk space in ~/.cache/huggingface/
+
+## PORTABILITY NOTES
+============================================================
+  - All model paths use pathlib (relative to CWD) — no hard-coded Windows paths
+  - No Windows-only commands or subprocess calls in application code
+  - No CRLF-sensitive scripts — Python source is cross-platform
+  - .env loading uses python-dotenv with path resolution relative to app/config.py
+  - group_d/model path resolved as Path("group_d/model") — must run uvicorn
+    from the project root directory (where requirements.txt lives)
+
+## API CONTRACT SUMMARY
+============================================================
+  GET  /health                       Health check (unauthenticated)
+  POST /technical/start              Start technical interview session
+  POST /technical/answer             Submit answer for evaluation
+  POST /technical/finish/{id}        Finish session and get report
+  POST /hr/start                     Start HR interview session
+  POST /hr/answer                    Submit HR answer for evaluation
+  POST /hr/finish/{id}               Finish HR session and get report
+  POST /gd/start                     Start group discussion session
+  POST /gd/respond                   Submit GD turn (AI generates response)
+  POST /gd/finish/{id}               Finish GD session and get feedback
+
+  All routes except /health require:
+    Authorization: Bearer <supabase_jwt_token>
+
+## KNOWN LIVE E2E VERIFICATION STATUS
+============================================================
+  Technical: Live Supabase persistence E2E passed
+             Restart durability passed
+             Ownership isolation passed
+
+  HR:        Live Supabase persistence partially exercised
+             NOTE: Earlier runs encountered Groq rate limiting
+             Full complete live HR E2E was not re-run after GD implementation
+
+  GD:        Live Supabase + Groq E2E passed (2026-08-30)
+             Restart durability passed (clean server restart between turns 1→2)
+             Cross-user isolation passed (User B got 404 on User A's session)
+             8 turns persisted with sequential turn_index [0..7]
+             feedback.scores correctly populated
+
+## TROUBLESHOOTING
+============================================================
+  ImportError: No module named 'torch'
+    → Run: pip install torch  (or see step 1 for platform-specific install)
+
+  ImportError: No module named 'peft'
+    → Run: pip install peft accelerate transformers
+
+  401 Unauthorized on all routes
+    → Check SUPABASE_JWT_SECRET in .env matches your Supabase project
+
+  GD session hangs on first /gd/start
+    → Base model is downloading from HuggingFace — wait for download to complete
+
+  Cannot connect to Supabase
+    → Verify SUPABASE_URL and SUPABASE_ANON_KEY are correct
+    → USE_SUPABASE_PERSISTENCE=False disables Supabase writes (safe for local dev)

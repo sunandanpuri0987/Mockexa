@@ -1,0 +1,61 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Environment & Secret files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# Python & Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Xcode & iOS Build Artifacts
+DerivedData/
+build/
+**/xcuserdata/
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.ipa
+*.dSYM/
+
+# IDE & Editor caches
+.idea/
+.vscode/
+*.swp
+*~
+
+# Large Local ML Models & Adapter Weights
+Backend/group_d/model/*.safetensors
+Backend/group_d/model/*.bin
+Backend/group_d/model/*.pt
+*.safetensors
+
+# Logs & Temporary files
+*.log
+*.tmp
+scratch/

@@ -1,0 +1,38 @@
+-- Idempotent seed; wording is original, provenance is documented beside each source URL.
+insert into public.questions(id,kind,domain,difficulty,prompt,ideal_answer,source_url,license_note) values
+('tech-dsa-001','technical','dsa',.45,'Explain how a hash table handles collisions. Compare chaining and open addressing.','Collisions use chaining or probing; discuss load factor and resizing.','https://opendatastructures.org/','CC BY 4.0 reference; original question wording.'),
+('tech-oop-001','technical','oop',.40,'Contrast composition with inheritance. When would you favor composition?','Composition has-a, inheritance is-a; explain coupling and flexibility.','https://docs.oracle.com/javase/tutorial/java/concepts/','Oracle documentation license; original question wording.'),
+('tech-dbms-001','technical','dbms',.55,'What is normalization and what anomaly does third normal form help prevent?','Explain redundancy, transitive dependencies, and update anomalies.','https://opentextbc.ca/dbdesign01/','CC BY 4.0 reference; original question wording.'),
+('tech-os-001','technical','os',.55,'Describe the Coffman conditions for deadlock and one prevention strategy.','Name all four conditions and break one.','https://pages.cs.wisc.edu/~remzi/OSTEP/','CC BY-NC-SA 4.0 reference; original question wording.'),
+('tech-code-001','technical','Coding',.45,'PROBLEM:\nGiven an array of integers nums, find the first duplicate element.\n\nCONSTRAINTS:\n1 <= N <= 10^5\n\nEXPECTED:\nExplain your approach, state time/space complexity, and provide working code.','Use a hash set to track seen elements in O(N) time and O(N) space.','internal','curated'),
+('hr-001','hr','behavioral',.40,'Tell me about a time you received difficult feedback. What did you do?','Specific STAR story with reflection and outcome.','https://www.careeronestop.org/','US DOL public resource; original question wording.'),
+('hr-002','hr','leadership',.50,'Describe a conflict in a team and how you helped resolve it.','Specific situation, action, respectful communication, outcome.','https://www.careeronestop.org/','US DOL public resource; original question wording.'),
+('ds-array-list','technical','Data Structures',0.50,'Compare an array and a linked list, including access and insertion trade-offs.','Arrays provide indexed access; linked lists trade this for easier node insertion.','internal','curated'),
+('ds-hash','technical','Data Structures',0.50,'How do hash tables handle collisions, and what are average and worst-case lookup costs?','Collision strategies include chaining; average lookup is O(1), but worst case can degrade.','internal','curated'),
+('alg-binary','technical','Algorithms',0.25,'Why does binary search require sorted input, and what is its time complexity?','Ordering lets each comparison discard half of the remaining search space, giving O(log n).','internal','curated'),
+('alg-dp','technical','Algorithms',0.75,'When is dynamic programming preferable to plain recursion?','Use it when overlapping subproblems and optimal substructure make memoization or tabulation valuable.','internal','curated'),
+('alg-sort','technical','Algorithms',0.50,'When would a stable sorting algorithm matter, and what does stability preserve?','Stability preserves the relative order of items with equal sort keys, which matters for multi-pass sorts.','internal','curated'),
+('os-thread','technical','Operating Systems',0.50,'Contrast processes and threads, including address-space and isolation implications.','Processes have separate address spaces; threads share process memory and are lighter but less isolated.','internal','curated'),
+('code-two-sum','technical','Coding',0.50,'PROBLEM:\nGiven an integer array nums and an integer target, return the indices of two numbers whose sum equals target.\n\nEXPECTED:\nExplain your approach, state time/space complexity, and provide working code.','Use a hash map mapping value -> index to find target - x in O(N) time and O(N) space.','internal','curated'),
+('db-acid','technical','DBMS',0.75,'Explain ACID and why isolation matters when two transactions update the same row.','Isolation prevents harmful interference such as lost updates while preserving transaction semantics.','internal','curated'),
+('db-index','technical','DBMS',0.50,'How does a database index improve reads, and what write trade-off does it introduce?','An index accelerates lookup but consumes storage and must be maintained on writes.','internal','curated'),
+('ds-tree','technical','Data Structures',0.50,'What invariant makes a binary search tree efficient for ordered lookup?','For each node, left keys are smaller and right keys larger, enabling directed search.','internal','curated'),
+('oop-poly','technical','OOP',0.25,'What is runtime polymorphism in Java and how does method overriding enable it?','A base-typed reference can dispatch an overridden instance method according to the object''s runtime type.','internal','curated'),
+('se-git','technical','Software Engineering',0.50,'How would you safely recover from an incorrect commit already pushed to a shared branch?','Use a new revert commit on shared history, review it, and avoid rewriting others'' commits.','internal','curated'),
+('prog-java','technical','Programming',0.25,'What is the difference between == and equals in Java?','== compares primitive values or object references; equals expresses logical equality when implemented.','internal','curated'),
+('ds-array-list-followup','technical','Data Structures',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('ds-hash-followup','technical','Data Structures',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('alg-binary-followup','technical','Algorithms',0.25,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('alg-dp-followup','technical','Algorithms',0.75,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('alg-sort-followup','technical','Algorithms',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('os-thread-followup','technical','Operating Systems',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('code-two-sum-followup','technical','Coding',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+
+('db-acid-followup','technical','DBMS',0.75,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('db-index-followup','technical','DBMS',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('ds-tree-followup','technical','Data Structures',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('oop-poly-followup','technical','OOP',0.25,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('se-git-followup','technical','Software Engineering',0.50,'Follow-up placeholder','Follow-up placeholder','internal','curated'),
+('prog-java-followup','technical','Programming',0.25,'Follow-up placeholder','Follow-up placeholder','internal','curated')
+on conflict (id) do update set prompt=excluded.prompt, ideal_answer=excluded.ideal_answer, source_url=excluded.source_url, license_note=excluded.license_note;
+
