@@ -2,8 +2,8 @@
 
 > **Document Type**: Comprehensive System Inspection, Architecture Blueprint & Feature Matrix  
 > **Target Project**: Mockexa (Internal/Legacy Identifiers: `PrepAI`, `UI/PrepAI`, `PrepAI.xcodeproj`)  
-> **Status**: Verified Against Full Codebase, Pytest (125/125 Passed), and Native Xcode Build (`BUILD SUCCEEDED`)  
-> **Last Inspected**: September 24, 2026  
+> **Status**: Verified Against Full Codebase, Pytest (150/150 Passed), and Native Xcode Build (`BUILD SUCCEEDED`)
+> **Last Inspected**: October 1, 2026
 
 ---
 
@@ -89,8 +89,8 @@ graph TB
 
 ### 4.1. Technical Interview System
 - **Source Files**: 
-  - Backend: [`Backend/app/routers/technical.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/routers/technical.py), [`Backend/app/controllers/technical_controller.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/technical_controller.py), [`Backend/app/controllers/technical_gemini_backend.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/technical_gemini_backend.py)
-  - iOS: [`UI/PrepAI/PracticeFlows.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/PracticeFlows.swift), [`UI/PrepAI/InterviewViewModels.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/InterviewViewModels.swift)
+  - Backend: [`Backend/app/routers/technical.py`](Backend/app/routers/technical.py), [`Backend/app/controllers/technical_controller.py`](Backend/app/controllers/technical_controller.py), [`Backend/app/controllers/technical_gemini_backend.py`](Backend/app/controllers/technical_gemini_backend.py)
+  - iOS: [`UI/PrepAI/PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift), [`UI/PrepAI/InterviewViewModels.swift`](UI/PrepAI/InterviewViewModels.swift)
 - **7 Selectable Core Domains**:
   1. Data Structures
   2. Algorithms
@@ -109,8 +109,8 @@ graph TB
 
 ### 4.2. Behavioral HR Interview System
 - **Source Files**:
-  - Backend: [`Backend/app/routers/hr.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/routers/hr.py), [`Backend/app/controllers/hr_controller.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/hr_controller.py), [`Backend/app/controllers/hr_gemini_backend.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/hr_gemini_backend.py)
-  - iOS: [`UI/PrepAI/PracticeFlows.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/PracticeFlows.swift), [`UI/PrepAI/InterviewViewModels.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/InterviewViewModels.swift)
+  - Backend: [`Backend/app/routers/hr.py`](Backend/app/routers/hr.py), [`Backend/app/controllers/hr_controller.py`](Backend/app/controllers/hr_controller.py), [`Backend/app/controllers/hr_gemini_backend.py`](Backend/app/controllers/hr_gemini_backend.py)
+  - iOS: [`UI/PrepAI/PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift), [`UI/PrepAI/InterviewViewModels.swift`](UI/PrepAI/InterviewViewModels.swift)
 - **Framework**: Guided STAR (Situation, Task, Action, Result) methodology.
 - **7 Evaluation Dimensions**:
   1. **Clarity**: Structural coherence and conciseness.
@@ -123,8 +123,8 @@ graph TB
 
 ### 4.3. Multi-Agent Group Discussion (GD) Engine
 - **Source Files**:
-  - Backend: [`Backend/app/routers/gd.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/routers/gd.py), [`Backend/app/controllers/gd_controller.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/gd_controller.py)
-  - iOS: [`UI/PrepAI/PracticeFlows.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/PracticeFlows.swift) (`PanelView`), [`UI/PrepAI/InterviewViewModels.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/InterviewViewModels.swift)
+  - Backend: [`Backend/app/routers/gd.py`](Backend/app/routers/gd.py), [`Backend/app/controllers/gd_controller.py`](Backend/app/controllers/gd_controller.py)
+  - iOS: [`UI/PrepAI/PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift) (`PanelView`), [`UI/PrepAI/InterviewViewModels.swift`](UI/PrepAI/InterviewViewModels.swift)
 - **AI Participant Personas**:
   - **Dr. Maya Shah**: Clinical Statistician (analytical, cautious, data/evidence-driven).
   - **Jordan Lee**: Public-Interest Ethicist (empathetic, human-centric, societal impact focus).
@@ -138,8 +138,8 @@ graph TB
 
 ### 4.4. Friends Group Discussion & Social Multiplayer
 - **Source Files**:
-  - Backend: [`Backend/app/controllers/gd_friends.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/gd_friends.py)
-  - iOS: [`UI/PrepAI/FriendsGD.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/FriendsGD.swift)
+  - Backend: [`Backend/app/controllers/gd_friends.py`](Backend/app/controllers/gd_friends.py)
+  - iOS: [`UI/PrepAI/FriendsGD.swift`](UI/PrepAI/FriendsGD.swift)
 - **Multiplayer Features**:
   - Room Management: Create private rooms with custom topics, or join via 6-character room codes.
   - Matchmaking Queue: Automated matchmaking pool pairing candidates by topic and duration.
@@ -152,8 +152,8 @@ graph TB
 
 ### 4.5. Company-Specific Question Bank
 - **Source Files**:
-  - Backend: [`Backend/app/routers/company.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/routers/company.py), [`Backend/app/controllers/company_controller.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/controllers/company_controller.py), [`Backend/app/data/company_questions.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/data/company_questions.py)
-  - iOS: [`UI/PrepAI/CompanyQuestionBank.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/CompanyQuestionBank.swift)
+  - Backend: [`Backend/app/routers/company.py`](Backend/app/routers/company.py), [`Backend/app/controllers/company_controller.py`](Backend/app/controllers/company_controller.py), [`Backend/app/data/company_questions.py`](Backend/app/data/company_questions.py)
+  - iOS: [`UI/PrepAI/CompanyQuestionBank.swift`](UI/PrepAI/CompanyQuestionBank.swift)
 - **Features**:
   - Comprehensive question catalogs categorized by employer (Google, Amazon, Microsoft, Meta, etc.).
   - Filters by category (`DSA`, `Technical`, `System Design`, `Behavioral`) and job role.
@@ -162,8 +162,8 @@ graph TB
 
 ### 4.6. AI Resume Builder & ATS Score Analyzer
 - **Source Files**:
-  - iOS: [`UI/PrepAI/ResumeModels.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/ResumeModels.swift), [`UI/PrepAI/ResumeService.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/ResumeService.swift), [`UI/PrepAI/ResumeViewModel.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/ResumeViewModel.swift), [`UI/PrepAI/ResumeViews.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/ResumeViews.swift)
-  - Exporters: [`UI/PrepAI/PDFExportService.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/PDFExportService.swift), [`UI/PrepAI/DOCXExportService.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/DOCXExportService.swift)
+  - iOS: [`UI/PrepAI/ResumeModels.swift`](UI/PrepAI/ResumeModels.swift), [`UI/PrepAI/ResumeService.swift`](UI/PrepAI/ResumeService.swift), [`UI/PrepAI/ResumeViewModel.swift`](UI/PrepAI/ResumeViewModel.swift), [`UI/PrepAI/ResumeViews.swift`](UI/PrepAI/ResumeViews.swift)
+  - Exporters: [`UI/PrepAI/PDFExportService.swift`](UI/PrepAI/PDFExportService.swift), [`UI/PrepAI/DOCXExportService.swift`](UI/PrepAI/DOCXExportService.swift)
 - **Capabilities**:
   - **ATS Compatibility Scoring**: Real-time evaluation calculating section completeness, bullet action verb strength, quantification percentage, and structural readability.
   - **AI Bullet Enhancer**: Refactors weak resume bullets into high-impact statements using active verbs and metric placeholders, explaining *why* the revision is stronger.
@@ -173,8 +173,8 @@ graph TB
 
 ### 4.7. Full-Duplex Voice Engine & Neural TTS
 - **Source Files**:
-  - Backend: [`Backend/app/routers/tts.py`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/app/routers/tts.py)
-  - iOS: [`UI/PrepAI/VoiceFoundation.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/VoiceFoundation.swift)
+  - Backend: [`Backend/app/routers/tts.py`](Backend/app/routers/tts.py)
+  - iOS: [`UI/PrepAI/VoiceFoundation.swift`](UI/PrepAI/VoiceFoundation.swift)
 - **Features**:
   - **Speech-to-Text (STT)**: Apple `SFSpeechRecognizer` with real-time audio power metering, voice activity detection, and automatic silence commit.
   - **Dual TTS System**:
@@ -185,7 +185,7 @@ graph TB
     - LRU audio cache in backend memory avoiding redundant synthesis charges and network delays.
 
 ### 4.8. Content Moderation & Language Validation
-- **Source File**: [`UI/PrepAI/LanguageValidator.swift`](file:///Users/dhruvsoni/Desktop/PrepAI/UI/PrepAI/LanguageValidator.swift)
+- **Source File**: [`UI/PrepAI/LanguageValidator.swift`](UI/PrepAI/LanguageValidator.swift)
 - **Validation Pipeline**:
   - Devanagari script detection to reject non-Latin Hindi text in professional GD practice.
   - Transliterated Hinglish keyword scoring with ratio thresholds.
