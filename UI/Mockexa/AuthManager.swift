@@ -77,7 +77,7 @@ struct AuthSession: Codable {
 
 // MARK: - Keychain Helper
 private struct KeychainHelper {
-    static let service = "com.prepai.auth"
+    static let service = "com.mockexa.auth"
     
     static func save(key: String, data: Data) {
         let query = [
@@ -192,9 +192,9 @@ final class AuthManager: ObservableObject {
         return "ME"
     }
     
-    private let keychainKey = "PREPAI_ACTIVE_SESSION"
-    private let installFlagKey = "PREPAI_APP_INSTALLED_FLAG"
-    private let preferencesOwnerKey = "PREPAI_PREFERENCES_OWNER"
+    private let keychainKey = "MOCKEXA_ACTIVE_SESSION"
+    private let installFlagKey = "MOCKEXA_APP_INSTALLED_FLAG"
+    private let preferencesOwnerKey = "MOCKEXA_PREFERENCES_OWNER"
     
     init() {
         restoreSession()
@@ -236,22 +236,22 @@ final class AuthManager: ObservableObject {
             self.currentUserId = session.userId
             self.currentUserEmail = session.email
             if self.currentUserEmail.isEmpty,
-               let cachedEmail = UserDefaults.standard.string(forKey: "PREPAI_USER_EMAIL_\(session.userId)"), !cachedEmail.isEmpty {
+               let cachedEmail = UserDefaults.standard.string(forKey: "MOCKEXA_USER_EMAIL_\(session.userId)"), !cachedEmail.isEmpty {
                 self.currentUserEmail = cachedEmail
             }
-            self.currentUserPhone = UserDefaults.standard.string(forKey: "PREPAI_USER_PHONE_\(session.userId)") ?? ""
-            if UserDefaults.standard.bool(forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(session.userId)") {
+            self.currentUserPhone = UserDefaults.standard.string(forKey: "MOCKEXA_USER_PHONE_\(session.userId)") ?? ""
+            if UserDefaults.standard.bool(forKey: "MOCKEXA_PROTOTYPE_PHONE_USER_\(session.userId)") {
                 self.currentUserEmail = ""
             }
             self.isAuthenticated = true
             activatePreferences(for: session.userId)
             
-            if let cachedName = UserDefaults.standard.string(forKey: "PREPAI_USER_FULL_NAME_\(session.userId)"), !cachedName.isEmpty {
+            if let cachedName = UserDefaults.standard.string(forKey: "MOCKEXA_USER_FULL_NAME_\(session.userId)"), !cachedName.isEmpty {
                 self.currentUserFullName = cachedName
             }
-            self.currentUserPhotoData = UserDefaults.standard.data(forKey: "PREPAI_USER_PHOTO_\(session.userId)")
+            self.currentUserPhotoData = UserDefaults.standard.data(forKey: "MOCKEXA_USER_PHOTO_\(session.userId)")
             
-            let ageKey = "PREPAI_USER_AGE_\(session.userId)"
+            let ageKey = "MOCKEXA_USER_AGE_\(session.userId)"
             if UserDefaults.standard.object(forKey: ageKey) != nil {
                 let cachedAge = UserDefaults.standard.integer(forKey: ageKey)
                 if cachedAge > 0 {
@@ -274,11 +274,11 @@ final class AuthManager: ObservableObject {
         guard !uid.isEmpty else { return false }
         
         // Clean up legacy global key if present so it never contaminates any account
-        if UserDefaults.standard.object(forKey: "PREPAI_ONBOARDING_COMPLETED") != nil {
-            UserDefaults.standard.removeObject(forKey: "PREPAI_ONBOARDING_COMPLETED")
+        if UserDefaults.standard.object(forKey: "MOCKEXA_ONBOARDING_COMPLETED") != nil {
+            UserDefaults.standard.removeObject(forKey: "MOCKEXA_ONBOARDING_COMPLETED")
         }
         
-        return UserDefaults.standard.bool(forKey: "PREPAI_ONBOARDING_COMPLETED_\(uid)")
+        return UserDefaults.standard.bool(forKey: "MOCKEXA_ONBOARDING_COMPLETED_\(uid)")
     }
     
     /// Marks onboarding as completed for the specified or active user account and syncs to Supabase user_metadata
@@ -287,9 +287,9 @@ final class AuthManager: ObservableObject {
         guard !uid.isEmpty else { return }
         
         // Update user-scoped local cache immediately
-        UserDefaults.standard.set(completed, forKey: "PREPAI_ONBOARDING_COMPLETED_\(uid)")
+        UserDefaults.standard.set(completed, forKey: "MOCKEXA_ONBOARDING_COMPLETED_\(uid)")
         // Ensure legacy global key is removed
-        UserDefaults.standard.removeObject(forKey: "PREPAI_ONBOARDING_COMPLETED")
+        UserDefaults.standard.removeObject(forKey: "MOCKEXA_ONBOARDING_COMPLETED")
         
         // Sync to Supabase Auth user_metadata asynchronously
         Task {
@@ -302,18 +302,18 @@ final class AuthManager: ObservableObject {
         guard !currentUserId.isEmpty, !cleanName.isEmpty else { return }
         currentUserFullName = cleanName
         currentUserAge = age
-        UserDefaults.standard.set(cleanName, forKey: "PREPAI_USER_FULL_NAME_\(currentUserId)")
+        UserDefaults.standard.set(cleanName, forKey: "MOCKEXA_USER_FULL_NAME_\(currentUserId)")
         if let age {
-            UserDefaults.standard.set(age, forKey: "PREPAI_USER_AGE_\(currentUserId)")
+            UserDefaults.standard.set(age, forKey: "MOCKEXA_USER_AGE_\(currentUserId)")
         } else {
-            UserDefaults.standard.removeObject(forKey: "PREPAI_USER_AGE_\(currentUserId)")
+            UserDefaults.standard.removeObject(forKey: "MOCKEXA_USER_AGE_\(currentUserId)")
         }
         if let email {
             let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
             if !cleanEmail.isEmpty {
                 currentUserEmail = cleanEmail
-                UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
-                UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_LAST_EMAIL")
+                UserDefaults.standard.set(cleanEmail, forKey: "MOCKEXA_USER_EMAIL_\(currentUserId)")
+                UserDefaults.standard.set(cleanEmail, forKey: "MOCKEXA_LAST_EMAIL")
                 persistUpdatedEmailInSession(cleanEmail)
             }
         }
@@ -330,9 +330,9 @@ final class AuthManager: ObservableObject {
         guard !cleanEmail.isEmpty else { return }
         currentUserEmail = cleanEmail
         if !currentUserId.isEmpty {
-            UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
+            UserDefaults.standard.set(cleanEmail, forKey: "MOCKEXA_USER_EMAIL_\(currentUserId)")
         }
-        UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_LAST_EMAIL")
+        UserDefaults.standard.set(cleanEmail, forKey: "MOCKEXA_LAST_EMAIL")
         persistUpdatedEmailInSession(cleanEmail)
         Task {
             await syncEmailToSupabase(cleanEmail)
@@ -359,11 +359,11 @@ final class AuthManager: ObservableObject {
 
     private func syncEmailToSupabase(_ email: String) async {
         guard let token = accessToken, !token.isEmpty,
-              let url = URL(string: "\(PrepConfig.supabaseURL)/auth/v1/user") else { return }
+              let url = URL(string: "\(MockexaConfig.supabaseURL)/auth/v1/user") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(PrepConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue(MockexaConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["email": email, "data": ["email": email]])
         _ = try? await URLSession.shared.data(for: request)
@@ -372,7 +372,7 @@ final class AuthManager: ObservableObject {
     func setProfilePhotoData(_ data: Data?) {
         guard !currentUserId.isEmpty else { return }
         currentUserPhotoData = data
-        let key = "PREPAI_USER_PHOTO_\(currentUserId)"
+        let key = "MOCKEXA_USER_PHOTO_\(currentUserId)"
         if let data {
             UserDefaults.standard.set(data, forKey: key)
         } else {
@@ -384,10 +384,10 @@ final class AuthManager: ObservableObject {
         guard !currentUserId.isEmpty else { return }
         let defaults = UserDefaults.standard
         let values: [(String, Any)] = [
-            ("PREPAI_STUDY_FIELD", study),
-            ("PREPAI_TARGET_ROLE", role),
-            ("PREPAI_TARGET_COMPANIES", companies),
-            ("PREPAI_CONFIDENCE_LEVEL", confidence),
+            ("MOCKEXA_STUDY_FIELD", study),
+            ("MOCKEXA_TARGET_ROLE", role),
+            ("MOCKEXA_TARGET_COMPANIES", companies),
+            ("MOCKEXA_CONFIDENCE_LEVEL", confidence),
         ]
         for (key, value) in values {
             defaults.set(value, forKey: key)
@@ -398,7 +398,7 @@ final class AuthManager: ObservableObject {
 
     func saveTargetPreference(key: String, value: String) {
         guard !currentUserId.isEmpty,
-              key == "PREPAI_TARGET_ROLE" || key == "PREPAI_TARGET_COMPANIES" else { return }
+              key == "MOCKEXA_TARGET_ROLE" || key == "MOCKEXA_TARGET_COMPANIES" else { return }
         UserDefaults.standard.set(value, forKey: key)
         UserDefaults.standard.set(value, forKey: "\(key)_\(currentUserId)")
         UserDefaults.standard.set(currentUserId, forKey: preferencesOwnerKey)
@@ -407,7 +407,7 @@ final class AuthManager: ObservableObject {
     private func activatePreferences(for userId: String) {
         guard !userId.isEmpty else { return }
         let defaults = UserDefaults.standard
-        let keys = ["PREPAI_STUDY_FIELD", "PREPAI_TARGET_ROLE", "PREPAI_TARGET_COMPANIES", "PREPAI_CONFIDENCE_LEVEL"]
+        let keys = ["MOCKEXA_STUDY_FIELD", "MOCKEXA_TARGET_ROLE", "MOCKEXA_TARGET_COMPANIES", "MOCKEXA_CONFIDENCE_LEVEL"]
         let owner = defaults.string(forKey: preferencesOwnerKey)
 
         // One-time migration for an existing installation created before
@@ -431,13 +431,13 @@ final class AuthManager: ObservableObject {
 
     private func syncProfileMetadataToSupabase(fullName: String, age: Int?) async {
         guard let token = accessToken, !token.isEmpty,
-              let url = URL(string: "\(PrepConfig.supabaseURL)/auth/v1/user") else { return }
+              let url = URL(string: "\(MockexaConfig.supabaseURL)/auth/v1/user") else { return }
         var metadata: [String: Any] = ["full_name": fullName]
         if let age { metadata["age"] = age }
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(PrepConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue(MockexaConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["data": metadata])
         do {
@@ -458,8 +458,8 @@ final class AuthManager: ObservableObject {
             return
         }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/user") else { return }
         
@@ -493,8 +493,8 @@ final class AuthManager: ObservableObject {
     func fetchUserMetadataFromSupabase() async {
         guard let token = accessToken, !token.isEmpty, !currentUserId.isEmpty else { return }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/user") else { return }
         
@@ -508,30 +508,30 @@ final class AuthManager: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return }
             
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                let isPrototypePhoneUser = UserDefaults.standard.bool(forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(currentUserId)")
+                let isPrototypePhoneUser = UserDefaults.standard.bool(forKey: "MOCKEXA_PROTOTYPE_PHONE_USER_\(currentUserId)")
                 if !isPrototypePhoneUser, let email = json["email"] as? String, !email.isEmpty {
                     self.currentUserEmail = email
-                    UserDefaults.standard.set(email, forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
-                    UserDefaults.standard.set(email, forKey: "PREPAI_LAST_EMAIL")
+                    UserDefaults.standard.set(email, forKey: "MOCKEXA_USER_EMAIL_\(currentUserId)")
+                    UserDefaults.standard.set(email, forKey: "MOCKEXA_LAST_EMAIL")
                 }
                 if let phone = json["phone"] as? String, !phone.isEmpty {
                     self.currentUserPhone = phone
-                    UserDefaults.standard.set(phone, forKey: "PREPAI_USER_PHONE_\(currentUserId)")
+                    UserDefaults.standard.set(phone, forKey: "MOCKEXA_USER_PHONE_\(currentUserId)")
                 }
                 let metadata = json["user_metadata"] as? [String: Any]
                 if let completed = metadata?["onboarding_completed"] as? Bool, completed {
-                    UserDefaults.standard.set(true, forKey: "PREPAI_ONBOARDING_COMPLETED_\(currentUserId)")
+                    UserDefaults.standard.set(true, forKey: "MOCKEXA_ONBOARDING_COMPLETED_\(currentUserId)")
                 }
                 if let name = (metadata?["full_name"] as? String ?? metadata?["name"] as? String), !name.isEmpty {
                     self.currentUserFullName = name
-                    UserDefaults.standard.set(name, forKey: "PREPAI_USER_FULL_NAME_\(currentUserId)")
+                    UserDefaults.standard.set(name, forKey: "MOCKEXA_USER_FULL_NAME_\(currentUserId)")
                 }
                 if let ageVal = metadata?["age"] as? Int {
                     self.currentUserAge = ageVal
-                    UserDefaults.standard.set(ageVal, forKey: "PREPAI_USER_AGE_\(currentUserId)")
+                    UserDefaults.standard.set(ageVal, forKey: "MOCKEXA_USER_AGE_\(currentUserId)")
                 } else if let ageStr = metadata?["age"] as? String, let ageVal = Int(ageStr) {
                     self.currentUserAge = ageVal
-                    UserDefaults.standard.set(ageVal, forKey: "PREPAI_USER_AGE_\(currentUserId)")
+                    UserDefaults.standard.set(ageVal, forKey: "MOCKEXA_USER_AGE_\(currentUserId)")
                 }
             }
         } catch {
@@ -541,8 +541,8 @@ final class AuthManager: ObservableObject {
     
     /// Refreshes the real Supabase Auth session using the stored refresh token
     func refreshSession(with refreshToken: String) async -> Bool {
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/token?grant_type=refresh_token") else {
             return false
@@ -593,8 +593,8 @@ final class AuthManager: ObservableObject {
         
         defer { isLoading = false }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/token?grant_type=password") else {
             authError = "Invalid Supabase URL"
@@ -621,7 +621,7 @@ final class AuthManager: ObservableObject {
             }
             
             if httpResponse.statusCode == 200 {
-                UserDefaults.standard.set(trimmedEmail, forKey: "PREPAI_LAST_EMAIL")
+                UserDefaults.standard.set(trimmedEmail, forKey: "MOCKEXA_LAST_EMAIL")
                 var session = try JSONDecoder().decode(AuthSession.self, from: data)
                 if session.email.isEmpty && !trimmedEmail.isEmpty {
                     session = AuthSession(
@@ -676,8 +676,8 @@ final class AuthManager: ObservableObject {
         
         defer { isLoading = false }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/signup") else {
             authError = "Invalid Supabase URL"
@@ -715,7 +715,7 @@ final class AuthManager: ObservableObject {
             }
             
             if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
-                UserDefaults.standard.set(trimmedEmail, forKey: "PREPAI_LAST_EMAIL")
+                UserDefaults.standard.set(trimmedEmail, forKey: "MOCKEXA_LAST_EMAIL")
                 if var session = try? JSONDecoder().decode(AuthSession.self, from: data) {
                     if session.email.isEmpty && !trimmedEmail.isEmpty {
                         session = AuthSession(
@@ -763,8 +763,8 @@ final class AuthManager: ObservableObject {
         authError = nil
         defer { isLoading = false }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/recover") else {
             authError = "Invalid Supabase URL"
@@ -833,22 +833,22 @@ final class AuthManager: ObservableObject {
             }
         }
         if effectiveEmail.isEmpty,
-           let cachedEmail = UserDefaults.standard.string(forKey: "PREPAI_USER_EMAIL_\(session.userId)"), !cachedEmail.isEmpty {
+           let cachedEmail = UserDefaults.standard.string(forKey: "MOCKEXA_USER_EMAIL_\(session.userId)"), !cachedEmail.isEmpty {
             effectiveEmail = cachedEmail
         }
         self.currentUserEmail = effectiveEmail
         if !effectiveEmail.isEmpty {
-            UserDefaults.standard.set(effectiveEmail, forKey: "PREPAI_USER_EMAIL_\(session.userId)")
-            UserDefaults.standard.set(effectiveEmail, forKey: "PREPAI_LAST_EMAIL")
+            UserDefaults.standard.set(effectiveEmail, forKey: "MOCKEXA_USER_EMAIL_\(session.userId)")
+            UserDefaults.standard.set(effectiveEmail, forKey: "MOCKEXA_LAST_EMAIL")
         }
         if let rawData,
            let json = try? JSONSerialization.jsonObject(with: rawData) as? [String: Any],
            let phone = ((json["user"] as? [String: Any])?["phone"] as? String ?? json["phone"] as? String),
            !phone.isEmpty {
             self.currentUserPhone = phone
-            UserDefaults.standard.set(phone, forKey: "PREPAI_USER_PHONE_\(session.userId)")
+            UserDefaults.standard.set(phone, forKey: "MOCKEXA_USER_PHONE_\(session.userId)")
         } else {
-            self.currentUserPhone = UserDefaults.standard.string(forKey: "PREPAI_USER_PHONE_\(session.userId)") ?? ""
+            self.currentUserPhone = UserDefaults.standard.string(forKey: "MOCKEXA_USER_PHONE_\(session.userId)") ?? ""
         }
 
         let sessionToStore = (session.email.isEmpty && !effectiveEmail.isEmpty)
@@ -868,8 +868,8 @@ final class AuthManager: ObservableObject {
         }
         self.isAuthenticated = true
         activatePreferences(for: session.userId)
-        self.currentUserPhotoData = UserDefaults.standard.data(forKey: "PREPAI_USER_PHOTO_\(session.userId)")
-        if UserDefaults.standard.bool(forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(session.userId)") {
+        self.currentUserPhotoData = UserDefaults.standard.data(forKey: "MOCKEXA_USER_PHOTO_\(session.userId)")
+        if UserDefaults.standard.bool(forKey: "MOCKEXA_PROTOTYPE_PHONE_USER_\(session.userId)") {
             self.currentUserEmail = ""
         }
         
@@ -879,18 +879,18 @@ final class AuthManager: ObservableObject {
             let userObj = json["user"] as? [String: Any]
             let metadata = (userObj?["user_metadata"] as? [String: Any]) ?? (json["user_metadata"] as? [String: Any])
             if let completed = metadata?["onboarding_completed"] as? Bool, completed {
-                UserDefaults.standard.set(true, forKey: "PREPAI_ONBOARDING_COMPLETED_\(session.userId)")
+                UserDefaults.standard.set(true, forKey: "MOCKEXA_ONBOARDING_COMPLETED_\(session.userId)")
             }
             if let name = (metadata?["full_name"] as? String ?? metadata?["name"] as? String), !name.isEmpty {
                 self.currentUserFullName = name
-                UserDefaults.standard.set(name, forKey: "PREPAI_USER_FULL_NAME_\(session.userId)")
+                UserDefaults.standard.set(name, forKey: "MOCKEXA_USER_FULL_NAME_\(session.userId)")
             }
             if let ageVal = metadata?["age"] as? Int {
                 self.currentUserAge = ageVal
-                UserDefaults.standard.set(ageVal, forKey: "PREPAI_USER_AGE_\(session.userId)")
+                UserDefaults.standard.set(ageVal, forKey: "MOCKEXA_USER_AGE_\(session.userId)")
             } else if let ageStr = metadata?["age"] as? String, let ageVal = Int(ageStr) {
                 self.currentUserAge = ageVal
-                UserDefaults.standard.set(ageVal, forKey: "PREPAI_USER_AGE_\(session.userId)")
+                UserDefaults.standard.set(ageVal, forKey: "MOCKEXA_USER_AGE_\(session.userId)")
             }
         }
     }
@@ -933,8 +933,8 @@ final class AuthManager: ObservableObject {
     }
     
     func signInWithApple(idToken: String, rawNonce: String, fullName: String? = nil, email: String? = nil) async -> Bool {
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/token?grant_type=id_token") else {
             authError = "Invalid Supabase URL"
@@ -1007,9 +1007,9 @@ final class AuthManager: ObservableObject {
         authError = nil
         defer { isLoading = false }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let scheme = "prepaai"
-        let redirectURL = "prepaai://auth/callback"
+        let supabaseURL = MockexaConfig.supabaseURL
+        let scheme = "mockexa"
+        let redirectURL = "mockexa://auth/callback"
         
         let allowedQuery = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
         guard let encodedRedirect = redirectURL.addingPercentEncoding(withAllowedCharacters: allowedQuery),
@@ -1152,13 +1152,13 @@ final class AuthManager: ObservableObject {
         let password: String
     }
 
-    private var prototypeCredentialsKey: String { "PREPAI_PROTOTYPE_PHONE_CREDENTIALS" }
+    private var prototypeCredentialsKey: String { "MOCKEXA_PROTOTYPE_PHONE_CREDENTIALS" }
 
     private func finishPrototypePhoneLogin(phone: String) {
         guard !currentUserId.isEmpty else { return }
-        UserDefaults.standard.set(phone, forKey: "PREPAI_USER_PHONE_\(currentUserId)")
-        UserDefaults.standard.set(true, forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(currentUserId)")
-        UserDefaults.standard.removeObject(forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
+        UserDefaults.standard.set(phone, forKey: "MOCKEXA_USER_PHONE_\(currentUserId)")
+        UserDefaults.standard.set(true, forKey: "MOCKEXA_PROTOTYPE_PHONE_USER_\(currentUserId)")
+        UserDefaults.standard.removeObject(forKey: "MOCKEXA_USER_EMAIL_\(currentUserId)")
         currentUserPhone = phone
         currentUserEmail = ""
     }
@@ -1241,8 +1241,8 @@ final class AuthManager: ObservableObject {
         authError = nil
         defer { isLoading = false }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
 
         if await isPhoneAuthEnabled(supabaseURL: supabaseURL, anonKey: anonKey) == false {
             authError = "Phone sign-in is temporarily unavailable. Please use email or Google while SMS setup is completed."
@@ -1304,8 +1304,8 @@ final class AuthManager: ObservableObject {
         authError = nil
         defer { isLoading = false }
         
-        let supabaseURL = PrepConfig.supabaseURL
-        let anonKey = PrepConfig.supabaseAnonKey
+        let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/verify") else {
             authError = "Invalid Supabase URL"

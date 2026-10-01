@@ -29,26 +29,26 @@ struct ThemeSelectorControl: View {
                     VStack(spacing: 8) {
                         Image(systemName: option.icon)
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(isSelected ? .white : PrepTheme.darkNavy)
+                            .foregroundStyle(isSelected ? .white : MockexaTheme.darkNavy)
 
                         Text(option.title)
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(isSelected ? .white : PrepTheme.textSecondary)
+                            .foregroundStyle(isSelected ? .white : MockexaTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background {
                         if isSelected {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(PrepTheme.gradient)
+                                .fill(MockexaTheme.gradient)
                                 .matchedGeometryEffect(id: "ActiveThemeTab", in: themeAnimation)
-                                .shadow(color: PrepTheme.primary.opacity(0.35), radius: 8, y: 3)
+                                .shadow(color: MockexaTheme.primary.opacity(0.35), radius: 8, y: 3)
                         } else {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(PrepTheme.surface)
+                                .fill(MockexaTheme.surface)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .stroke(PrepTheme.border, lineWidth: 1)
+                                        .stroke(MockexaTheme.border, lineWidth: 1)
                                 )
                         }
                     }
@@ -61,7 +61,7 @@ struct ThemeSelectorControl: View {
 }
 
 struct QuickThemeToggle: View {
-    @AppStorage("PREPAI_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
+    @AppStorage("MOCKEXA_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
 
     private var current: AppAppearance {
         AppAppearance(rawValue: appearanceRaw) ?? .light
@@ -89,18 +89,18 @@ struct QuickThemeToggle: View {
                 Text(current.title)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
             }
-            .foregroundStyle(PrepTheme.primary)
+            .foregroundStyle(MockexaTheme.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(PrepTheme.surface, in: Capsule())
-            .overlay(Capsule().stroke(PrepTheme.border, lineWidth: 1))
+            .background(MockexaTheme.surface, in: Capsule())
+            .overlay(Capsule().stroke(MockexaTheme.border, lineWidth: 1))
             .shadow(color: Color.black.opacity(0.04), radius: 6, y: 2)
         }
         .accessibilityLabel("Change Theme: currently \(current.title)")
     }
 }
 
-enum PrepTheme {
+enum MockexaTheme {
     // Semantic system colors respond correctly even when the app-level color
     // scheme is changed at runtime through preferredColorScheme.
     static let primary = Color(red: 13/255, green: 148/255, blue: 136/255)
@@ -125,13 +125,13 @@ enum PrepTheme {
 struct AppBackground: View {
     var body: some View {
         ZStack {
-            PrepTheme.background.ignoresSafeArea()
+            MockexaTheme.background.ignoresSafeArea()
             
             // Soft Mint Atmospheric Studio Glow
             RadialGradient(
                 colors: [
-                    PrepTheme.secondary.opacity(0.06),
-                    PrepTheme.primary.opacity(0.02),
+                    MockexaTheme.secondary.opacity(0.06),
+                    MockexaTheme.primary.opacity(0.02),
                     .clear
                 ],
                 center: UnitPoint(x: 0.5, y: 0.35),
@@ -150,8 +150,8 @@ struct GlassCard<Content: View>: View {
     var body: some View {
         content
             .padding(20)
-            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(PrepTheme.border, lineWidth: 1))
+            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(MockexaTheme.border, lineWidth: 1))
             .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.20 : 0.055), radius: 12, y: 5)
     }
 }
@@ -174,8 +174,8 @@ struct PrimaryButtonLabel: View {
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity)
         .frame(height: 56)
-        .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
-        .shadow(color: PrepTheme.primary.opacity(isPressed ? 0.35 : 0.22), radius: isPressed ? 6 : 12, y: isPressed ? 2 : 5)
+        .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
+        .shadow(color: MockexaTheme.primary.opacity(isPressed ? 0.35 : 0.22), radius: isPressed ? 6 : 12, y: isPressed ? 2 : 5)
     }
 }
 
@@ -240,11 +240,11 @@ struct SecondaryButtonLabel: View {
                     .offset(x: isPressed ? 4 : 0)
             }
         }
-        .foregroundStyle(PrepTheme.darkNavy)
+        .foregroundStyle(MockexaTheme.darkNavy)
         .frame(maxWidth: .infinity)
         .frame(height: 54)
-        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 27))
-        .overlay(RoundedRectangle(cornerRadius: 27).stroke(PrepTheme.border, lineWidth: 1))
+        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 27))
+        .overlay(RoundedRectangle(cornerRadius: 27).stroke(MockexaTheme.border, lineWidth: 1))
         .shadow(color: Color.black.opacity(isPressed ? 0.06 : 0.03), radius: isPressed ? 3 : 6, y: isPressed ? 1 : 2)
     }
 }
@@ -328,13 +328,13 @@ struct HeroAmbientGlowView: View {
             
             ZStack {
                 Circle()
-                    .fill(PrepTheme.secondary.opacity(0.14))
+                    .fill(MockexaTheme.secondary.opacity(0.14))
                     .frame(width: 140, height: 140)
                     .blur(radius: 28)
                     .offset(x: offsetX - 30, y: offsetY - 10)
                 
                 Circle()
-                    .fill(PrepTheme.primary.opacity(0.12))
+                    .fill(MockexaTheme.primary.opacity(0.12))
                     .frame(width: 160, height: 160)
                     .blur(radius: 32)
                     .offset(x: -offsetX + 30, y: -offsetY + 10)
@@ -373,7 +373,7 @@ struct SubtleEmeraldGlowModifier: ViewModifier {
     var active: Bool = true
     func body(content: Content) -> some View {
         content
-            .shadow(color: active ? PrepTheme.primary.opacity(0.14) : Color.clear, radius: 14, x: 0, y: 6)
+            .shadow(color: active ? MockexaTheme.primary.opacity(0.14) : Color.clear, radius: 14, x: 0, y: 6)
     }
 }
 
@@ -385,7 +385,7 @@ struct SectionHeader: View {
         HStack {
             Text(title)
                 .font(.system(size: 19, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             Spacer()
             if let action {
                 Button(action) {
@@ -393,7 +393,7 @@ struct SectionHeader: View {
                     onAction?()
                 }
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundStyle(PrepTheme.primary)
+                .foregroundStyle(MockexaTheme.primary)
             }
         }
     }
@@ -402,7 +402,7 @@ struct SectionHeader: View {
 
 struct AIAvatar: View {
     let initials: String
-    var color: Color = PrepTheme.primary
+    var color: Color = MockexaTheme.primary
     var active = false
     var body: some View {
         ZStack {
@@ -434,19 +434,19 @@ struct ScoreRing: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(PrepTheme.border, lineWidth: 12)
+                .stroke(MockexaTheme.border, lineWidth: 12)
             Circle()
                 .trim(from: 0, to: progress)
-                .stroke(PrepTheme.gradient, style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                .stroke(MockexaTheme.gradient, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             VStack(spacing: 2) {
                 Text("\(displayScore)")
                     .font(.system(size: size * 0.32, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .contentTransition(.numericText())
                 Text("out of 100")
                     .font(.system(size: size * 0.09, weight: .medium))
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
         }
         .frame(width: size, height: size)
@@ -470,7 +470,7 @@ struct ScoreRing: View {
 
 struct WaveformView: View {
     var active: Bool
-    var color: Color = PrepTheme.secondary
+    var color: Color = MockexaTheme.secondary
     var body: some View {
         TimelineView(.animation(minimumInterval: 0.12, paused: !active)) { timeline in
             let phase = timeline.date.timeIntervalSinceReferenceDate
@@ -501,11 +501,11 @@ extension View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 30, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             if let subtitle {
                 Text(subtitle)
                     .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
             self
         }

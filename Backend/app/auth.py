@@ -23,7 +23,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import Settings, get_settings
 
-logger = logging.getLogger("prepai.auth")
+logger = logging.getLogger("mockexa.auth")
 
 _bearer_scheme = HTTPBearer()
 

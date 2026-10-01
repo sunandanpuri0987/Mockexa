@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Protocol
 
-logger = logging.getLogger("prepai.hr_controller")
+logger = logging.getLogger("mockexa.hr_controller")
 
 
 @dataclass(frozen=True)

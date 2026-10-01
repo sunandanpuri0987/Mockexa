@@ -12,10 +12,10 @@ The application combines a high-performance native SwiftUI interface—featuring
 
 ### 🔐 Authentication & Session Security
 - **Email & Password**: Native signup and login via Supabase Auth REST API.
-- **Google OAuth**: Integrated PKCE web authentication session (`ASWebAuthenticationSession`) with deep linking callback (`prepaai://auth/callback`).
+- **Google OAuth**: Integrated PKCE web authentication session (`ASWebAuthenticationSession`) with deep linking callback (`mockexa://auth/callback`).
 - **Apple Sign In**: Native iOS `ASAuthorizationAppleIDProvider` credential request exchanged securely with Supabase Auth.
 - **Phone OTP**: SMS verification code requests and session token verification.
-- **Keychain Persistence**: Secure encrypted local token storage (`PREPAI_ACTIVE_SESSION`) for persistent sign-in.
+- **Keychain Persistence**: Secure encrypted local token storage (`MOCKEXA_ACTIVE_SESSION`) for persistent sign-in.
 - **Cross-Device Onboarding Sync**: Account-scoped onboarding completion state synced with Supabase `user_metadata` and isolated locally per user UUID.
 
 ### 🎯 Interview Practice Modes
@@ -137,27 +137,27 @@ Code/Text Response     STAR Method Answer       Panel Contribution
 ## 📱 iOS Application Details
 
 ### Main Components & Files
-- **[`PrepAIApp.swift`](UI/PrepAI/PrepAIApp.swift)**: Main application entry point initializing shared application and authentication state.
-- **[`RootAndOnboarding.swift`](UI/PrepAI/RootAndOnboarding.swift)**: Core route controller, splash/welcome flow, authentication, and onboarding.
-- **[`AuthManager.swift`](UI/PrepAI/AuthManager.swift)**: Supabase Auth, Keychain access, OAuth flows, token refresh, and account metadata.
-- **[`MainScreens.swift`](UI/PrepAI/MainScreens.swift)**: Main tabs, home, practice hub, dashboard, history, session detail, and profile screens.
-- **[`PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift)**: Technical, HR, and AI-panel GD setup, live sessions, reports, and transcripts.
-- **[`CompanyQuestionBank.swift`](UI/PrepAI/CompanyQuestionBank.swift)**: Company catalog, sourced question browser, practice flow, and branded assets.
-- **[`FriendsGD.swift`](UI/PrepAI/FriendsGD.swift)**: Friends-room and online-matchmaking GD experience.
-- **[`ResumeViews.swift`](UI/PrepAI/ResumeViews.swift)**: Resume builder, analyzer, tailoring, preview, and export UI, supported by the resume model/service files.
-- **[`VoiceFoundation.swift`](UI/PrepAI/VoiceFoundation.swift)**: Speech recognition, audio playback, silence detection, and voice orchestration.
-- **[`DesignSystem.swift`](UI/PrepAI/DesignSystem.swift)**: Theme tokens and reusable interaction/animation components.
-- **[`APIClient.swift`](UI/PrepAI/APIClient.swift) and [`APISchemas.swift`](UI/PrepAI/APISchemas.swift)**: Network request pipeline and strongly typed DTOs.
-- **[`Config.swift`](UI/PrepAI/Config.swift)**: Backend and Supabase configuration. It defaults to loopback in the Simulator and the configured mDNS host on a physical device.
+- **[`MockexaApp.swift`](UI/Mockexa/MockexaApp.swift)**: Main application entry point initializing shared application and authentication state.
+- **[`RootAndOnboarding.swift`](UI/Mockexa/RootAndOnboarding.swift)**: Core route controller, splash/welcome flow, authentication, and onboarding.
+- **[`AuthManager.swift`](UI/Mockexa/AuthManager.swift)**: Supabase Auth, Keychain access, OAuth flows, token refresh, and account metadata.
+- **[`MainScreens.swift`](UI/Mockexa/MainScreens.swift)**: Main tabs, home, practice hub, dashboard, history, session detail, and profile screens.
+- **[`PracticeFlows.swift`](UI/Mockexa/PracticeFlows.swift)**: Technical, HR, and AI-panel GD setup, live sessions, reports, and transcripts.
+- **[`CompanyQuestionBank.swift`](UI/Mockexa/CompanyQuestionBank.swift)**: Company catalog, sourced question browser, practice flow, and branded assets.
+- **[`FriendsGD.swift`](UI/Mockexa/FriendsGD.swift)**: Friends-room and online-matchmaking GD experience.
+- **[`ResumeViews.swift`](UI/Mockexa/ResumeViews.swift)**: Resume builder, analyzer, tailoring, preview, and export UI, supported by the resume model/service files.
+- **[`VoiceFoundation.swift`](UI/Mockexa/VoiceFoundation.swift)**: Speech recognition, audio playback, silence detection, and voice orchestration.
+- **[`DesignSystem.swift`](UI/Mockexa/DesignSystem.swift)**: Theme tokens and reusable interaction/animation components.
+- **[`APIClient.swift`](UI/Mockexa/APIClient.swift) and [`APISchemas.swift`](UI/Mockexa/APISchemas.swift)**: Network request pipeline and strongly typed DTOs.
+- **[`Config.swift`](UI/Mockexa/Config.swift)**: Backend and Supabase configuration. It defaults to loopback in the Simulator and the configured mDNS host on a physical device.
 
 ---
 
 ## 🔐 Authentication Implementation
 
 - **Supabase Auth Integration**: Interacts directly with Supabase Auth REST endpoints (`/auth/v1/signup`, `/auth/v1/token?grant_type=password`, `/auth/v1/recover`, `/auth/v1/user`).
-- **Keychain Storage**: Key-Value generic password item (`PREPAI_ACTIVE_SESSION`) for access tokens and refresh tokens.
-- **Account Isolation**: Onboarding completion and display names are cached using account-isolated keys (`PREPAI_ONBOARDING_COMPLETED_<USER_ID>`, `PREPAI_USER_FULL_NAME_<USER_ID>`).
-- **OAuth Deep Linking**: Handles custom URL scheme `prepaai://auth/callback` for Google Sign In PKCE exchange.
+- **Keychain Storage**: Key-Value generic password item (`MOCKEXA_ACTIVE_SESSION`) for access tokens and refresh tokens.
+- **Account Isolation**: Onboarding completion and display names are cached using account-isolated keys (`MOCKEXA_ONBOARDING_COMPLETED_<USER_ID>`, `MOCKEXA_USER_FULL_NAME_<USER_ID>`).
+- **OAuth Deep Linking**: Handles custom URL scheme `mockexa://auth/callback` for Google Sign In PKCE exchange.
 
 ---
 
@@ -252,7 +252,7 @@ Mockexa/
 │   ├── requirements.txt
 │   └── seed_questions_merged.sql
 ├── UI/
-│   ├── PrepAI/
+│   ├── Mockexa/
 │   │   ├── Assets.xcassets/
 │   │   ├── APIClient.swift, APISchemas.swift
 │   │   ├── AuthManager.swift, Config.swift
@@ -261,8 +261,8 @@ Mockexa/
 │   │   ├── ResumeModels.swift, ResumeService.swift, ResumeViewModel.swift
 │   │   ├── ResumeViews.swift, PDFExportService.swift, DOCXExportService.swift
 │   │   ├── VoiceFoundation.swift, LanguageValidator.swift
-│   │   └── PrepAIApp.swift, RootAndOnboarding.swift, DesignSystem.swift
-│   └── PrepAI.xcodeproj/
+│   │   └── MockexaApp.swift, RootAndOnboarding.swift, DesignSystem.swift
+│   └── Mockexa.xcodeproj/
 ├── MOCKEXA_CURRENT_PROJECT.md
 ├── PROJECT_OVERVIEW.md
 └── README.md
@@ -301,14 +301,14 @@ Verify backend health at `http://127.0.0.1:8000/health` or open interactive docs
 
 ### 2. Running the iOS Application
 
-1. Open `UI/PrepAI.xcodeproj` in Xcode.
-2. Select the `PrepAI` scheme and an iOS Simulator (e.g., iPhone 17 Pro Max).
+1. Open `UI/Mockexa.xcodeproj` in Xcode.
+2. Select the `Mockexa` scheme and an iOS Simulator (e.g., iPhone 17 Pro Max).
 3. Press `Cmd + R` to build and run.
 
 To build via terminal:
 ```bash
-xcodebuild -project UI/PrepAI.xcodeproj \
-  -scheme PrepAI \
+xcodebuild -project UI/Mockexa.xcodeproj \
+  -scheme Mockexa \
   -sdk iphonesimulator \
   -destination 'generic/platform=iOS Simulator' \
   CODE_SIGNING_ALLOWED=NO build
@@ -333,7 +333,7 @@ OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 
 Gemini, ElevenLabs, and OpenAI are optional for local development: the backend uses deterministic interview evaluation and the TTS route can fall through to EdgeTTS when paid-provider credentials are unavailable. `USE_SUPABASE_PERSISTENCE=False` keeps session data in memory; set it to `True` only after configuring Supabase.
 
-The iOS backend URL resolves in this order: a saved in-app override, the `PREPAI_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the target-specific default. The Simulator defaults to `http://127.0.0.1:8000`; physical devices use the configured `.local` mDNS hostname.
+The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the target-specific default. The Simulator defaults to `http://127.0.0.1:8000`; physical devices use the configured `.local` mDNS hostname.
 
 > **Security Note**: Never commit actual API keys or credentials to repository source control.
 
@@ -362,7 +362,7 @@ The current verified result is **150 passed**. The iOS target can be checked ind
 
 ## 📌 Known Limitations
 
-1. **Physical Device Network Routing**: The iPhone and backend Mac must be reachable on the same network. If the default `.local` hostname does not resolve, set a backend URL override in the app or via `PREPAI_BACKEND_BASE_URL` using the Mac's LAN address.
+1. **Physical Device Network Routing**: The iPhone and backend Mac must be reachable on the same network. If the default `.local` hostname does not resolve, set a backend URL override in the app or via `MOCKEXA_BACKEND_BASE_URL` using the Mac's LAN address.
 2. **Gemini API Key**: Real-time LLM inference requires a valid `GEMINI_API_KEY` configured in `Backend/.env`. If unconfigured, the backend uses deterministic evaluation engines.
 3. **Cloud Features**: Cross-device history, authenticated persistence, and friends matchmaking across processes depend on Supabase configuration. Paid neural voices require the corresponding ElevenLabs or OpenAI credentials; EdgeTTS remains the backend fallback.
 

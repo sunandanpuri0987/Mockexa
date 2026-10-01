@@ -12,7 +12,7 @@ from fastapi.responses import Response
 
 from app.config import get_settings
 
-logger = logging.getLogger("prepai.tts")
+logger = logging.getLogger("mockexa.tts")
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 

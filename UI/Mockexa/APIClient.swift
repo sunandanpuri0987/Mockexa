@@ -26,7 +26,7 @@ enum APIError: LocalizedError {
         case .networkTimeout:
             return "Connection timed out. Please check your network or backend server."
         case .unreachable(let msg):
-            return "Backend unreachable (\(msg)). Make sure FastAPI is running on \(PrepConfig.baseURL)."
+            return "Backend unreachable (\(msg)). Make sure FastAPI is running on \(MockexaConfig.baseURL)."
         case .invalidResponse:
             return "Received invalid response from server."
         case .decodingError(let msg):
@@ -49,7 +49,7 @@ final class APIClient {
     
     /// Performs a GET request to the specified endpoint
     func get<T: Decodable>(endpoint: String, token: String? = nil) async throws -> T {
-        let urlString = "\(PrepConfig.baseURL)\(endpoint)"
+        let urlString = "\(MockexaConfig.baseURL)\(endpoint)"
         guard let url = URL(string: urlString) else {
             throw APIError.unreachable("Invalid URL format: \(urlString)")
         }
@@ -67,7 +67,7 @@ final class APIClient {
     
     /// Performs a POST request with an Encodable body
     func post<Req: Encodable, Res: Decodable>(endpoint: String, body: Req, token: String? = nil) async throws -> Res {
-        let urlString = "\(PrepConfig.baseURL)\(endpoint)"
+        let urlString = "\(MockexaConfig.baseURL)\(endpoint)"
         guard let url = URL(string: urlString) else {
             throw APIError.unreachable("Invalid URL format: \(urlString)")
         }
@@ -92,7 +92,7 @@ final class APIClient {
     
     /// Performs a POST request without a body (e.g. /technical/finish/{session_id})
     func postEmpty<Res: Decodable>(endpoint: String, token: String? = nil) async throws -> Res {
-        let urlString = "\(PrepConfig.baseURL)\(endpoint)"
+        let urlString = "\(MockexaConfig.baseURL)\(endpoint)"
         guard let url = URL(string: urlString) else {
             throw APIError.unreachable("Invalid URL format: \(urlString)")
         }
@@ -109,7 +109,7 @@ final class APIClient {
     }
 
     func delete<Res: Decodable>(endpoint: String, token: String? = nil) async throws -> Res {
-        let urlString = "\(PrepConfig.baseURL)\(endpoint)"
+        let urlString = "\(MockexaConfig.baseURL)\(endpoint)"
         guard let url = URL(string: urlString) else { throw APIError.unreachable("Invalid URL format: \(urlString)") }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"

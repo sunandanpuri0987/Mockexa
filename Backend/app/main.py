@@ -10,7 +10,7 @@ from app.error_handlers import register_error_handlers
 from app.routers import company, gd, health, hr, sessions, technical, tts
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("prepai.app")
+logger = logging.getLogger("mockexa.app")
 
 _settings = get_settings()
 

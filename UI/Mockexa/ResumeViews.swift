@@ -24,7 +24,7 @@ struct ResumeBuilderView: View {
                         HStack {
                             Text("Step \(vm.currentStep.rawValue + 1) of \(ResumeBuilderStep.allCases.count)")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.primary)
+                                .foregroundStyle(MockexaTheme.primary)
 
                             Spacer()
 
@@ -33,26 +33,26 @@ struct ResumeBuilderView: View {
                                     .font(.caption2.bold())
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(PrepTheme.secondary.opacity(0.12), in: Capsule())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .background(MockexaTheme.secondary.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(MockexaTheme.primary)
                             }
 
                         }
 
                         ProgressView(value: Double(vm.currentStep.rawValue + 1), total: Double(ResumeBuilderStep.allCases.count))
-                            .tint(PrepTheme.primary)
+                            .tint(MockexaTheme.primary)
 
                         Text(vm.currentStep.title)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.textPrimary)
+                            .foregroundStyle(MockexaTheme.textPrimary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
                     .padding(.bottom, 16)
-                    .background(PrepTheme.surface)
+                    .background(MockexaTheme.surface)
 
-                    Divider().background(PrepTheme.border)
+                    Divider().background(MockexaTheme.border)
 
                     // Step Form Content
                     ScrollView {
@@ -65,8 +65,8 @@ struct ResumeBuilderView: View {
                                     Spacer()
                                 }
                                 .padding(14)
-                                .background(PrepTheme.destructive.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-                                .foregroundStyle(PrepTheme.destructive)
+                                .background(MockexaTheme.destructive.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(MockexaTheme.destructive)
                             }
 
                             switch vm.currentStep {
@@ -103,7 +103,7 @@ struct ResumeBuilderView: View {
 
                     // Navigation Footer
                     VStack(spacing: 12) {
-                        Divider().background(PrepTheme.border)
+                        Divider().background(MockexaTheme.border)
                         HStack(spacing: 12) {
                             if vm.canGoBack {
                                 SecondaryButton(title: "Back") {
@@ -124,7 +124,7 @@ struct ResumeBuilderView: View {
                         .padding(.horizontal, 20)
                         .padding(.bottom, 16)
                     }
-                    .background(PrepTheme.surface)
+                    .background(MockexaTheme.surface)
                 }
             }
             .navigationTitle("Resume Builder")
@@ -132,7 +132,7 @@ struct ResumeBuilderView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
@@ -144,7 +144,7 @@ struct ResumeBuilderView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                     }
                 }
             }
@@ -184,7 +184,7 @@ struct PersonalInfoForm: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("PERSONAL DETAILS")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
 
                 FormField(label: "Full Name *", text: $info.fullName, placeholder: "e.g. Alex Rivera")
                 FormField(label: "Professional Headline", text: $info.headline, placeholder: "e.g. Computer Science Student | Mobile App Dev")
@@ -209,39 +209,39 @@ struct SummaryForm: View {
                 HStack {
                     Text("PROFESSIONAL SUMMARY")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     Spacer()
                     Text("Optional")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
 
                 TextEditor(text: $summary)
                     .frame(minHeight: 140)
                     .padding(8)
                     .scrollContentBackground(.hidden)
-                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
+                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
                     .font(.body)
-                    .foregroundStyle(PrepTheme.textPrimary)
+                    .foregroundStyle(MockexaTheme.textPrimary)
 
                 HStack {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     Text("Polish wording while preserving your facts")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                     Spacer()
                     Button("Polish Wording") {
                         showImprover = true
                     }
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                     .disabled(summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .opacity(summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
                 }
                 .padding(10)
-                .background(PrepTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+                .background(MockexaTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
             }
         }
         .sheet(isPresented: $showImprover) {
@@ -262,19 +262,19 @@ struct EducationForm: View {
             HStack {
                 Text("EDUCATION ENTRIES")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Education", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
             if education.isEmpty {
                 Text("No education entries added yet. Tap 'Add Education' above.")
                     .font(.subheadline)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                     .padding()
             }
 
@@ -284,7 +284,7 @@ struct EducationForm: View {
                         HStack {
                             Text(edu.institution.isEmpty ? "New Education" : edu.institution)
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .foregroundStyle(MockexaTheme.textPrimary)
                             Spacer()
                             Button(action: {
                                 if let idx = education.firstIndex(where: { $0.id == edu.id }) {
@@ -292,7 +292,7 @@ struct EducationForm: View {
                                 }
                             }) {
                                 Image(systemName: "trash")
-                                    .foregroundStyle(PrepTheme.destructive)
+                                    .foregroundStyle(MockexaTheme.destructive)
                             }
                         }
 
@@ -356,15 +356,15 @@ struct SkillCategoryCard: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                            .foregroundStyle(PrepTheme.textPrimary)
+                            .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                            .foregroundStyle(MockexaTheme.textPrimary)
                         }
                     }
 
                     HStack {
                         TextField("Add skill", text: $newSkillInput)
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textPrimary)
+                            .foregroundStyle(MockexaTheme.textPrimary)
                             .onSubmit {
                                 onAdd(newSkillInput)
                                 newSkillInput = ""
@@ -374,30 +374,30 @@ struct SkillCategoryCard: View {
                             newSkillInput = ""
                         }
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     }
                     .padding(10)
-                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
+                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
                 }
                 .padding(.top, 10)
             } label: {
                 HStack {
                     Text(title)
                         .font(.subheadline.bold())
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Spacer()
                     if !items.isEmpty {
                         Text("\(items.count)")
                             .font(.caption2.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                             .padding(.horizontal, 7)
                             .padding(.vertical, 3)
-                            .background(PrepTheme.primary.opacity(0.12), in: Capsule())
+                            .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
                     }
                 }
             }
-            .tint(PrepTheme.primary)
+            .tint(MockexaTheme.primary)
         }
     }
 }
@@ -414,19 +414,19 @@ struct ProjectsForm: View {
             HStack {
                 Text("PROJECTS")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Project", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
             if projects.isEmpty {
                 Text("No projects added yet.")
                     .font(.subheadline)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
 
             ForEach($projects) { $proj in
@@ -435,7 +435,7 @@ struct ProjectsForm: View {
                         HStack {
                             Text(proj.name.isEmpty ? "New Project" : proj.name)
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .foregroundStyle(MockexaTheme.textPrimary)
                             Spacer()
                             Button(action: {
                                 if let idx = projects.firstIndex(where: { $0.id == proj.id }) {
@@ -443,7 +443,7 @@ struct ProjectsForm: View {
                                 }
                             }) {
                                 Image(systemName: "trash")
-                                    .foregroundStyle(PrepTheme.destructive)
+                                    .foregroundStyle(MockexaTheme.destructive)
                             }
                         }
 
@@ -480,23 +480,23 @@ struct ExperienceForm: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("EXPERIENCE / INTERNSHIPS")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     Text("Not mandatory for freshers")
                         .font(.caption2)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Experience", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
             if experience.isEmpty {
                 Text("No experience added yet. Experience is optional for student resumes.")
                     .font(.subheadline)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
 
             ForEach($experience) { $exp in
@@ -505,7 +505,7 @@ struct ExperienceForm: View {
                         HStack {
                             Text(exp.company.isEmpty ? "New Experience" : exp.company)
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .foregroundStyle(MockexaTheme.textPrimary)
                             Spacer()
                             Button(action: {
                                 if let idx = experience.firstIndex(where: { $0.id == exp.id }) {
@@ -513,7 +513,7 @@ struct ExperienceForm: View {
                                 }
                             }) {
                                 Image(systemName: "trash")
-                                    .foregroundStyle(PrepTheme.destructive)
+                                    .foregroundStyle(MockexaTheme.destructive)
                             }
                         }
 
@@ -526,7 +526,7 @@ struct ExperienceForm: View {
                         }
                         Toggle("Currently working here", isOn: $exp.currentlyWorking)
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.textPrimary)
+                            .foregroundStyle(MockexaTheme.textPrimary)
                         FormField(label: "Responsibilities", text: $exp.responsibilities, placeholder: "Key duties...", onImprove: {
                             activeImprover = ImproverItemTarget(type: .experienceBullet, originalText: exp.responsibilities) { exp.responsibilities = $0 }
                         })
@@ -554,12 +554,12 @@ struct CertificationsForm: View {
             HStack {
                 Text("CERTIFICATIONS")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Certification", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
@@ -575,7 +575,7 @@ struct CertificationsForm: View {
                                     onDelete(IndexSet(integer: idx))
                                 }
                             }) {
-                                Image(systemName: "trash").foregroundStyle(PrepTheme.destructive)
+                                Image(systemName: "trash").foregroundStyle(MockexaTheme.destructive)
                             }
                         }
                         FormField(label: "Certificate Name", text: $cert.name, placeholder: "AWS Practitioner")
@@ -601,12 +601,12 @@ struct AchievementsForm: View {
             HStack {
                 Text("ACHIEVEMENTS")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Achievement", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
@@ -622,7 +622,7 @@ struct AchievementsForm: View {
                                     onDelete(IndexSet(integer: idx))
                                 }
                             }) {
-                                Image(systemName: "trash").foregroundStyle(PrepTheme.destructive)
+                                Image(systemName: "trash").foregroundStyle(MockexaTheme.destructive)
                             }
                         }
                         FormField(label: "Achievement Title", text: $ach.title, placeholder: "Hackathon Winner")
@@ -652,12 +652,12 @@ struct PositionsForm: View {
             HStack {
                 Text("POSITIONS OF RESPONSIBILITY")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Position", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
@@ -673,7 +673,7 @@ struct PositionsForm: View {
                                     onDelete(IndexSet(integer: idx))
                                 }
                             }) {
-                                Image(systemName: "trash").foregroundStyle(PrepTheme.destructive)
+                                Image(systemName: "trash").foregroundStyle(MockexaTheme.destructive)
                             }
                         }
                         FormField(label: "Organization", text: $pos.organization, placeholder: "ACM Student Chapter")
@@ -702,12 +702,12 @@ struct LanguagesForm: View {
             HStack {
                 Text("LANGUAGES SPOKEN")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Language", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
@@ -722,7 +722,7 @@ struct LanguagesForm: View {
                                     onDelete(IndexSet(integer: idx))
                                 }
                             }) {
-                                Image(systemName: "trash").foregroundStyle(PrepTheme.destructive)
+                                Image(systemName: "trash").foregroundStyle(MockexaTheme.destructive)
                             }
                         }
                     }
@@ -742,12 +742,12 @@ struct ExtracurricularsForm: View {
             HStack {
                 Text("EXTRACURRICULAR ACTIVITIES")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Activity", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
@@ -763,7 +763,7 @@ struct ExtracurricularsForm: View {
                                     onDelete(IndexSet(integer: idx))
                                 }
                             }) {
-                                Image(systemName: "trash").foregroundStyle(PrepTheme.destructive)
+                                Image(systemName: "trash").foregroundStyle(MockexaTheme.destructive)
                             }
                         }
                         FormField(label: "Activity", text: $item.activity, placeholder: "Open Source Contributor")
@@ -784,7 +784,7 @@ struct CourseworkForm: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("RELEVANT COURSEWORK")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
 
                 FlowLayout(spacing: 6) {
                     ForEach(items, id: \.self) { course in
@@ -798,15 +798,15 @@ struct CourseworkForm: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                        .foregroundStyle(PrepTheme.textPrimary)
+                        .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                        .foregroundStyle(MockexaTheme.textPrimary)
                     }
                 }
 
                 HStack {
                     TextField("Add course...", text: $newCourse)
                         .font(.subheadline)
-                        .foregroundStyle(PrepTheme.textPrimary)
+                        .foregroundStyle(MockexaTheme.textPrimary)
                         .onSubmit {
                             let trimmed = newCourse.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !trimmed.isEmpty && !items.contains(trimmed) {
@@ -822,11 +822,11 @@ struct CourseworkForm: View {
                         }
                     }
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 }
                 .padding(10)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
             }
         }
     }
@@ -842,12 +842,12 @@ struct VolunteeringForm: View {
             HStack {
                 Text("VOLUNTEERING")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Spacer()
                 Button(action: onAdd) {
                     Label("Add Volunteering", systemImage: "plus.circle.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
 
@@ -863,7 +863,7 @@ struct VolunteeringForm: View {
                                     onDelete(IndexSet(integer: idx))
                                 }
                             }) {
-                                Image(systemName: "trash").foregroundStyle(PrepTheme.destructive)
+                                Image(systemName: "trash").foregroundStyle(MockexaTheme.destructive)
                             }
                         }
                         FormField(label: "Organization", text: $item.organization, placeholder: "Youth Coding Workshop")
@@ -897,7 +897,7 @@ struct FormField: View {
             HStack {
                 Text(label)
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.textPrimary)
+                    .foregroundStyle(MockexaTheme.textPrimary)
                 Spacer()
                 if let onImprove = onImprove {
                     Button(action: onImprove) {
@@ -906,15 +906,15 @@ struct FormField: View {
                             Text("Polish")
                         }
                         .font(.caption2.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     }
                 }
             }
             TextField(placeholder, text: $text)
                 .padding(12)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
-                .foregroundStyle(PrepTheme.textPrimary)
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
+                .foregroundStyle(MockexaTheme.textPrimary)
         }
     }
 }
@@ -990,8 +990,8 @@ struct ResumePreviewView: View {
                         }
                         .padding(.horizontal, 9)
                         .padding(.vertical, 5)
-                        .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                        .foregroundStyle(PrepTheme.primary)
+                        .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                        .foregroundStyle(MockexaTheme.primary)
 
                         // Page Budget Indicator Badge
                         HStack(spacing: 4) {
@@ -1002,8 +1002,8 @@ struct ResumePreviewView: View {
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(exportResult.isOptimalOnePage ? PrepTheme.success.opacity(0.12) : PrepTheme.warning.opacity(0.15), in: Capsule())
-                        .foregroundStyle(exportResult.isOptimalOnePage ? PrepTheme.success : PrepTheme.warning)
+                        .background(exportResult.isOptimalOnePage ? MockexaTheme.success.opacity(0.12) : MockexaTheme.warning.opacity(0.15), in: Capsule())
+                        .foregroundStyle(exportResult.isOptimalOnePage ? MockexaTheme.success : MockexaTheme.warning)
 
                         Spacer()
 
@@ -1021,35 +1021,35 @@ struct ResumePreviewView: View {
                                 .font(.caption.bold())
                                 .padding(.horizontal, 9)
                                 .padding(.vertical, 6)
-                                .background(PrepTheme.primary.opacity(0.15), in: Capsule())
-                                .foregroundStyle(PrepTheme.primary)
+                                .background(MockexaTheme.primary.opacity(0.15), in: Capsule())
+                                .foregroundStyle(MockexaTheme.primary)
                         }
                     }
                     .padding(.horizontal, 16)
                 }
                 .padding(.vertical, 10)
-                .background(PrepTheme.surface)
+                .background(MockexaTheme.surface)
 
-                Divider().background(PrepTheme.border)
+                Divider().background(MockexaTheme.border)
 
                 // Over One-Page Budget Warning Banner
                 if let warning = exportResult.warningMessage {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 14))
-                            .foregroundStyle(PrepTheme.warning)
+                            .foregroundStyle(MockexaTheme.warning)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("One-Page Layout Warning")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.warning)
+                                .foregroundStyle(MockexaTheme.warning)
                             Text(warning)
                                 .font(.caption2)
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .foregroundStyle(MockexaTheme.textPrimary)
                         }
                         Spacer()
                     }
                     .padding(10)
-                    .background(PrepTheme.warning.opacity(0.1))
+                    .background(MockexaTheme.warning.opacity(0.1))
                 }
 
                 // Document Preview Canvas Area
@@ -1066,24 +1066,24 @@ struct ResumePreviewView: View {
                                 VStack(spacing: 6) {
                                     Text(activeData.personalInfo.fullName.isEmpty ? "Your Name" : activeData.personalInfo.fullName)
                                         .font(selectedTemplate == .atsSafe ? .custom("Helvetica-Bold", size: 22) : .title2.bold())
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
 
                                     if !activeData.personalInfo.headline.isEmpty {
                                         Text(activeData.personalInfo.headline)
                                             .font(.subheadline.bold())
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .foregroundStyle(MockexaTheme.primary)
                                     }
 
                                     if !contactParts.isEmpty {
                                         Text(contactParts.joined(separator: "  •  "))
                                             .font(.caption)
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                     }
 
                                     if !linkParts.isEmpty {
                                         Text(linkParts.joined(separator: "  •  "))
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .foregroundStyle(MockexaTheme.primary)
                                     }
                                 }
                                 .frame(maxWidth: .infinity)
@@ -1094,21 +1094,21 @@ struct ResumePreviewView: View {
                                         Text("Edit")
                                     }
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(PrepTheme.primary.opacity(0.12), in: Capsule())
+                                    .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
                                 }
                             }
                             .padding(16)
-                            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
 
                             // Professional Summary
                             if !activeData.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 PreviewSection(title: "PROFESSIONAL SUMMARY", onEdit: { editSection(.summary) }) {
                                     Text(activeData.summary)
                                         .font(.subheadline)
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
                                 }
                             }
 
@@ -1118,18 +1118,18 @@ struct ResumePreviewView: View {
                                     ForEach(activeData.education) { edu in
                                         VStack(alignment: .leading, spacing: 4) {
                                             HStack {
-                                                Text(edu.institution).font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
+                                                Text(edu.institution).font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
                                                 Spacer()
                                                 Text("\(edu.startYear)\(edu.startYear.isEmpty ? "" : " - ")\(edu.graduationYear)")
                                                     .font(.caption)
-                                                    .foregroundStyle(PrepTheme.textSecondary)
+                                                    .foregroundStyle(MockexaTheme.textSecondary)
                                             }
                                             Text("\(edu.degree)\(edu.degree.isEmpty || edu.fieldOfStudy.isEmpty ? "" : " in ")\(edu.fieldOfStudy)")
                                                 .font(.caption.bold())
-                                                .foregroundStyle(PrepTheme.primary)
-                                            if !edu.gpa.isEmpty { Text("GPA / Score: \(edu.gpa)").font(.caption).foregroundStyle(PrepTheme.textPrimary) }
-                                            if !edu.relevantCoursework.isEmpty { Text("Coursework: \(edu.relevantCoursework)").font(.caption).foregroundStyle(PrepTheme.textSecondary) }
-                                            if !edu.academicAchievement.isEmpty { Text("Honors: \(edu.academicAchievement)").font(.caption).foregroundStyle(PrepTheme.textSecondary) }
+                                                .foregroundStyle(MockexaTheme.primary)
+                                            if !edu.gpa.isEmpty { Text("GPA / Score: \(edu.gpa)").font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
+                                            if !edu.relevantCoursework.isEmpty { Text("Coursework: \(edu.relevantCoursework)").font(.caption).foregroundStyle(MockexaTheme.textSecondary) }
+                                            if !edu.academicAchievement.isEmpty { Text("Honors: \(edu.academicAchievement)").font(.caption).foregroundStyle(MockexaTheme.textSecondary) }
                                         }
                                         .padding(.bottom, 6)
                                     }
@@ -1161,10 +1161,10 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "PROJECTS", onEdit: { editSection(.projects) }) {
                                     ForEach(activeData.projects) { proj in
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text(proj.name).font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
-                                            if !proj.description.isEmpty { Text(proj.description).font(.caption).foregroundStyle(PrepTheme.textPrimary) }
-                                            if !proj.keyContributions.isEmpty { Text("Contributions: \(proj.keyContributions)").font(.caption).foregroundStyle(PrepTheme.textPrimary) }
-                                            if !proj.technologies.isEmpty { Text("Tech: \(proj.technologies)").font(.caption.bold()).foregroundStyle(PrepTheme.primary) }
+                                            Text(proj.name).font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
+                                            if !proj.description.isEmpty { Text(proj.description).font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
+                                            if !proj.keyContributions.isEmpty { Text("Contributions: \(proj.keyContributions)").font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
+                                            if !proj.technologies.isEmpty { Text("Tech: \(proj.technologies)").font(.caption.bold()).foregroundStyle(MockexaTheme.primary) }
                                         }
                                         .padding(.bottom, 6)
                                     }
@@ -1177,14 +1177,14 @@ struct ResumePreviewView: View {
                                     ForEach(activeData.experience) { exp in
                                         VStack(alignment: .leading, spacing: 4) {
                                             HStack {
-                                                Text("\(exp.role) @ \(exp.company)").font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
+                                                Text("\(exp.role) @ \(exp.company)").font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
                                                 Spacer()
                                                 Text("\(exp.startDate)\(exp.startDate.isEmpty ? "" : " - ")\(exp.currentlyWorking ? "Present" : exp.endDate)")
                                                     .font(.caption)
-                                                    .foregroundStyle(PrepTheme.textSecondary)
+                                                    .foregroundStyle(MockexaTheme.textSecondary)
                                             }
-                                            if !exp.responsibilities.isEmpty { Text("• \(exp.responsibilities)").font(.caption).foregroundStyle(PrepTheme.textPrimary) }
-                                            if !exp.achievements.isEmpty { Text("• Impact: \(exp.achievements)").font(.caption).foregroundStyle(PrepTheme.textPrimary) }
+                                            if !exp.responsibilities.isEmpty { Text("• \(exp.responsibilities)").font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
+                                            if !exp.achievements.isEmpty { Text("• Impact: \(exp.achievements)").font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
                                         }
                                         .padding(.bottom, 6)
                                     }
@@ -1196,8 +1196,8 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "CERTIFICATIONS", onEdit: { editSection(.certifications) }) {
                                     ForEach(activeData.certifications) { cert in
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(cert.name).font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
-                                            if !cert.issuer.isEmpty { Text("Issuer: \(cert.issuer)").font(.caption).foregroundStyle(PrepTheme.textSecondary) }
+                                            Text(cert.name).font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
+                                            if !cert.issuer.isEmpty { Text("Issuer: \(cert.issuer)").font(.caption).foregroundStyle(MockexaTheme.textSecondary) }
                                         }
                                     }
                                 }
@@ -1208,8 +1208,8 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "ACHIEVEMENTS", onEdit: { editSection(.achievements) }) {
                                     ForEach(activeData.achievements) { ach in
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(ach.title).font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
-                                            if !ach.description.isEmpty { Text(ach.description).font(.caption).foregroundStyle(PrepTheme.textPrimary) }
+                                            Text(ach.title).font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
+                                            if !ach.description.isEmpty { Text(ach.description).font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
                                         }
                                     }
                                 }
@@ -1220,8 +1220,8 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "POSITIONS OF RESPONSIBILITY", onEdit: { editSection(.positions) }) {
                                     ForEach(activeData.positionsOfResponsibility) { pos in
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text("\(pos.position) - \(pos.organization)").font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
-                                            if !pos.responsibilities.isEmpty { Text(pos.responsibilities).font(.caption).foregroundStyle(PrepTheme.textPrimary) }
+                                            Text("\(pos.position) - \(pos.organization)").font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
+                                            if !pos.responsibilities.isEmpty { Text(pos.responsibilities).font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
                                         }
                                     }
                                 }
@@ -1232,7 +1232,7 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "LANGUAGES", onEdit: { editSection(.languages) }) {
                                     Text(activeData.languages.map { "\($0.language)\($0.proficiency.isEmpty ? "" : " (\($0.proficiency))")" }.joined(separator: ", "))
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
                                 }
                             }
 
@@ -1241,8 +1241,8 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "EXTRACURRICULAR ACTIVITIES", onEdit: { editSection(.extracurriculars) }) {
                                     ForEach(activeData.extracurriculars) { extra in
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(extra.activity).font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
-                                            if !extra.description.isEmpty { Text(extra.description).font(.caption).foregroundStyle(PrepTheme.textPrimary) }
+                                            Text(extra.activity).font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
+                                            if !extra.description.isEmpty { Text(extra.description).font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
                                         }
                                     }
                                 }
@@ -1253,7 +1253,7 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "RELEVANT COURSEWORK", onEdit: { editSection(.coursework) }) {
                                     Text(activeData.relevantCoursework.joined(separator: ", "))
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
                                 }
                             }
 
@@ -1262,8 +1262,8 @@ struct ResumePreviewView: View {
                                 PreviewSection(title: "VOLUNTEERING", onEdit: { editSection(.volunteering) }) {
                                     ForEach(activeData.volunteering) { vol in
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text("\(vol.role) - \(vol.organization)").font(.subheadline.bold()).foregroundStyle(PrepTheme.textPrimary)
-                                            if !vol.description.isEmpty { Text(vol.description).font(.caption).foregroundStyle(PrepTheme.textPrimary) }
+                                            Text("\(vol.role) - \(vol.organization)").font(.subheadline.bold()).foregroundStyle(MockexaTheme.textPrimary)
+                                            if !vol.description.isEmpty { Text(vol.description).font(.caption).foregroundStyle(MockexaTheme.textPrimary) }
                                         }
                                     }
                                 }
@@ -1275,12 +1275,12 @@ struct ResumePreviewView: View {
 
                 // Bottom Export Bar
                 VStack(alignment: .leading, spacing: 10) {
-                    Divider().background(PrepTheme.border)
+                    Divider().background(MockexaTheme.border)
 
                     HStack {
                         Text("Export Resume")
                             .font(.subheadline.bold())
-                            .foregroundStyle(PrepTheme.textPrimary)
+                            .foregroundStyle(MockexaTheme.textPrimary)
                         Spacer()
                     }
                     .padding(.horizontal, 20)
@@ -1310,7 +1310,7 @@ struct ResumePreviewView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(PrepTheme.primary, in: RoundedRectangle(cornerRadius: 12))
+                            .background(MockexaTheme.primary, in: RoundedRectangle(cornerRadius: 12))
                         }
 
                         // Word (.docx) Export Button
@@ -1333,20 +1333,20 @@ struct ResumePreviewView: View {
                                 Text("Word (.docx)")
                                     .font(.headline.bold())
                             }
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(PrepTheme.primary.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                            .background(MockexaTheme.primary.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(PrepTheme.primary.opacity(0.4), lineWidth: 1)
+                                    .stroke(MockexaTheme.primary.opacity(0.4), lineWidth: 1)
                             )
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 16)
                 }
-                .background(PrepTheme.surface)
+                .background(MockexaTheme.surface)
             }
         }
         .navigationTitle("Resume Preview & Export")
@@ -1428,7 +1428,7 @@ struct SectionEditorSheet: View {
                         dismiss()
                     }
                     .font(.body.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 }
             }
         }
@@ -1446,7 +1446,7 @@ struct PreviewSection<Content: View>: View {
                 HStack {
                     Text(title)
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     Spacer()
                     if let onEdit = onEdit {
                         Button(action: onEdit) {
@@ -1455,10 +1455,10 @@ struct PreviewSection<Content: View>: View {
                                 Text("Edit")
                             }
                             .font(.caption2.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(PrepTheme.primary.opacity(0.12), in: Capsule())
+                            .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
                         }
                     }
                 }
@@ -1504,29 +1504,29 @@ struct AIImproverSheet: View {
                         HStack(spacing: 12) {
                             Image(systemName: "lightbulb.fill")
                                 .font(.system(size: 20))
-                                .foregroundStyle(PrepTheme.warning)
+                                .foregroundStyle(MockexaTheme.warning)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("PLACEMENT STUDENT GUIDANCE")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("Only include achievements and metrics you can comfortably explain in an interview.")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                         }
                         .padding(14)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.border, lineWidth: 1))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.border, lineWidth: 1))
 
                         // CURRENT Content Box
                         GlassCard {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("CURRENT CONTENT")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 Text(originalText.isEmpty ? "(No content entered yet)" : originalText)
                                     .font(.body)
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                             }
                         }
 
@@ -1538,10 +1538,10 @@ struct AIImproverSheet: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                 Text("Polishing wording...")
                                             .font(.subheadline.bold())
-                                            .foregroundStyle(PrepTheme.textPrimary)
+                                            .foregroundStyle(MockexaTheme.textPrimary)
                                         Text("Applying strong action verbs & professional polish...")
                                             .font(.caption)
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                     }
                                 }
                                 .padding(.vertical, 8)
@@ -1552,19 +1552,19 @@ struct AIImproverSheet: View {
                                 VStack(alignment: .leading, spacing: 12) {
                                     HStack {
                                         Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundStyle(PrepTheme.destructive)
+                                            .foregroundStyle(MockexaTheme.destructive)
                                         Text("Enhancement Failed")
                                             .font(.subheadline.bold())
-                                            .foregroundStyle(PrepTheme.destructive)
+                                            .foregroundStyle(MockexaTheme.destructive)
                                     }
                                     Text(error)
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     Button("Retry") {
                                         Task { await processImprovement() }
                                     }
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 }
                             }
                         } else if let res = result {
@@ -1574,20 +1574,20 @@ struct AIImproverSheet: View {
                                     HStack {
                                         Text("SUGGESTED WORDING (EDITABLE)")
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .foregroundStyle(MockexaTheme.primary)
                                         Spacer()
                                         Image(systemName: "sparkles")
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .foregroundStyle(MockexaTheme.primary)
                                     }
 
                                     TextEditor(text: $editableSuggestion)
                                         .frame(minHeight: 110)
                                         .padding(8)
                                         .scrollContentBackground(.hidden)
-                                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
+                                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
                                         .font(.body)
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
                                 }
                             }
 
@@ -1596,16 +1596,16 @@ struct AIImproverSheet: View {
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("WHY THIS IS BETTER")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.success)
+                                        .foregroundStyle(MockexaTheme.success)
 
                                     ForEach(res.whyBetter, id: \.self) { reason in
                                         HStack(alignment: .top, spacing: 8) {
                                             Image(systemName: "checkmark.circle.fill")
                                                 .font(.system(size: 14))
-                                                .foregroundStyle(PrepTheme.success)
+                                                .foregroundStyle(MockexaTheme.success)
                                             Text(reason)
                                                 .font(.caption)
-                                                .foregroundStyle(PrepTheme.textPrimary)
+                                                .foregroundStyle(MockexaTheme.textPrimary)
                                         }
                                     }
 
@@ -1614,10 +1614,10 @@ struct AIImproverSheet: View {
                                         HStack(alignment: .top, spacing: 8) {
                                             Image(systemName: "info.circle.fill")
                                                 .font(.system(size: 14))
-                                                .foregroundStyle(PrepTheme.primary)
+                                                .foregroundStyle(MockexaTheme.primary)
                                             Text(tip)
                                                 .font(.caption.bold())
-                                                .foregroundStyle(PrepTheme.primary)
+                                                .foregroundStyle(MockexaTheme.primary)
                                         }
                                     }
                                 }
@@ -1628,7 +1628,7 @@ struct AIImproverSheet: View {
                 }
                 .safeAreaInset(edge: .bottom) {
                     VStack(spacing: 10) {
-                        Divider().background(PrepTheme.border)
+                        Divider().background(MockexaTheme.border)
                         HStack(spacing: 12) {
                             SecondaryButton(title: "Cancel") {
                                 dismiss()
@@ -1641,9 +1641,9 @@ struct AIImproverSheet: View {
                                 .font(.system(size: 15, weight: .semibold))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
-                                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 24))
-                                .overlay(RoundedRectangle(cornerRadius: 24).stroke(PrepTheme.border, lineWidth: 1))
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 24))
+                                .overlay(RoundedRectangle(cornerRadius: 24).stroke(MockexaTheme.border, lineWidth: 1))
+                                .foregroundStyle(MockexaTheme.textPrimary)
 
                                 PrimaryButton(title: "Accept & Apply", icon: "checkmark") {
                                     onAccept(editableSuggestion)
@@ -1655,7 +1655,7 @@ struct AIImproverSheet: View {
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                     }
-                    .background(PrepTheme.surface)
+                    .background(MockexaTheme.surface)
                 }
             }
             .navigationTitle("Resume Wording Assistant")
@@ -1741,7 +1741,7 @@ struct ATSCheckerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
             .sheet(isPresented: $showOptimizationSheet) {
@@ -1783,19 +1783,19 @@ struct ATSInputFormView: View {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 24))
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("PLACEMENT ATS ANALYSIS")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     Text("Paste the job description below to check keyword match, skill alignment, and structural formatting.")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
             }
             .padding(14)
-            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.border, lineWidth: 1))
+            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.border, lineWidth: 1))
 
             GlassCard {
                 VStack(alignment: .leading, spacing: 14) {
@@ -1804,16 +1804,16 @@ struct ATSInputFormView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Job Description *")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
 
                         TextEditor(text: $jobDescription)
                             .frame(minHeight: 180)
                             .padding(8)
                             .scrollContentBackground(.hidden)
-                            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
+                            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
                             .font(.body)
-                            .foregroundStyle(PrepTheme.textPrimary)
+                            .foregroundStyle(MockexaTheme.textPrimary)
                     }
 
                     if isAnalyzing {
@@ -1821,7 +1821,7 @@ struct ATSInputFormView: View {
                             ProgressView()
                             Text("Analyzing ATS match deterministically...")
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
@@ -1845,9 +1845,9 @@ struct ATSResultContentView: View {
     let onOptimize: () -> Void
 
     var scoreColor: Color {
-        if result.score >= 75 { return PrepTheme.success }
-        if result.score >= 50 { return PrepTheme.warning }
-        return PrepTheme.destructive
+        if result.score >= 75 { return MockexaTheme.success }
+        if result.score >= 50 { return MockexaTheme.warning }
+        return MockexaTheme.destructive
     }
 
     var body: some View {
@@ -1859,10 +1859,10 @@ struct ATSResultContentView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("ATS MATCH SCORE")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                             Text(result.jobTitle)
                                 .font(.title3.bold())
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                         }
                         Spacer()
                         ZStack {
@@ -1886,7 +1886,7 @@ struct ATSResultContentView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("TRANSPARENT SCORE BREAKDOWN")
                             .font(.caption2.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
 
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                             ScoreBreakdownItem(title: "Keyword Match", score: result.breakdown.keywordScore, maxScore: 25)
@@ -1903,13 +1903,13 @@ struct ATSResultContentView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("KEYWORD OVERLAP")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
 
                     if !result.matchedKeywords.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Matched Keywords (\(result.matchedKeywords.count))")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.success)
+                                .foregroundStyle(MockexaTheme.success)
                             FlowLayout(spacing: 6) {
                                 ForEach(result.matchedKeywords, id: \.self) { kw in
                                     HStack(spacing: 4) {
@@ -1919,8 +1919,8 @@ struct ATSResultContentView: View {
                                     }
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(PrepTheme.success.opacity(0.12), in: Capsule())
-                                    .foregroundStyle(PrepTheme.success)
+                                    .background(MockexaTheme.success.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(MockexaTheme.success)
                                 }
                             }
                         }
@@ -1930,7 +1930,7 @@ struct ATSResultContentView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Missing Keywords (\(result.missingKeywords.count))")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.warning)
+                                .foregroundStyle(MockexaTheme.warning)
                             FlowLayout(spacing: 6) {
                                 ForEach(result.missingKeywords, id: \.self) { kw in
                                     HStack(spacing: 4) {
@@ -1940,8 +1940,8 @@ struct ATSResultContentView: View {
                                     }
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
-                                    .background(PrepTheme.warning.opacity(0.12), in: Capsule())
-                                    .foregroundStyle(PrepTheme.warning)
+                                    .background(MockexaTheme.warning.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(MockexaTheme.warning)
                                 }
                             }
                         }
@@ -1954,21 +1954,21 @@ struct ATSResultContentView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("SKILLS ALIGNMENT")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
 
                     if !result.matchedSkills.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Found in Resume")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.success)
+                                .foregroundStyle(MockexaTheme.success)
                             FlowLayout(spacing: 6) {
                                 ForEach(result.matchedSkills, id: \.self) { sk in
                                     Text(sk)
                                         .font(.caption.bold())
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                                        .foregroundStyle(MockexaTheme.primary)
                                 }
                             }
                         }
@@ -1978,15 +1978,15 @@ struct ATSResultContentView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Requested in JD but Missing")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.destructive)
+                                .foregroundStyle(MockexaTheme.destructive)
                             FlowLayout(spacing: 6) {
                                 ForEach(result.missingSkills, id: \.self) { sk in
                                     Text(sk)
                                         .font(.caption.bold())
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 4)
-                                        .background(PrepTheme.destructive.opacity(0.12), in: Capsule())
-                                        .foregroundStyle(PrepTheme.destructive)
+                                        .background(MockexaTheme.destructive.opacity(0.12), in: Capsule())
+                                        .foregroundStyle(MockexaTheme.destructive)
                                 }
                             }
                         }
@@ -1999,19 +1999,19 @@ struct ATSResultContentView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("RESUME SECTION CHECK")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
 
                     ForEach(result.sectionChecks) { chk in
                         HStack(spacing: 10) {
                             Image(systemName: chk.isPresent ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                .foregroundStyle(chk.isPresent ? PrepTheme.success : PrepTheme.warning)
+                                .foregroundStyle(chk.isPresent ? MockexaTheme.success : MockexaTheme.warning)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(chk.sectionName)
                                     .font(.subheadline.bold())
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text(chk.detail)
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                             Spacer()
                         }
@@ -2024,24 +2024,24 @@ struct ATSResultContentView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("FORMATTING CHECK")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
 
                     if result.formattingIssues.isEmpty {
                         HStack(spacing: 8) {
                             Image(systemName: "checkmark.seal.fill")
-                                .foregroundStyle(PrepTheme.success)
+                                .foregroundStyle(MockexaTheme.success)
                             Text("Clean ATS layout detected! Standard headings and clear structure.")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                         }
                     } else {
                         ForEach(result.formattingIssues, id: \.self) { issue in
                             HStack(spacing: 8) {
                                 Image(systemName: "exclamationmark.circle.fill")
-                                    .foregroundStyle(PrepTheme.warning)
+                                    .foregroundStyle(MockexaTheme.warning)
                                 Text(issue)
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                             }
                         }
                     }
@@ -2053,14 +2053,14 @@ struct ATSResultContentView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("ACTIONABLE RECOMMENDATIONS")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
 
                     ForEach(result.recommendations, id: \.self) { rec in
                         HStack(alignment: .top, spacing: 8) {
-                            Text("•").font(.body.bold()).foregroundStyle(PrepTheme.primary)
+                            Text("•").font(.body.bold()).foregroundStyle(MockexaTheme.primary)
                             Text(rec)
                                 .font(.caption)
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                         }
                     }
                 }
@@ -2093,18 +2093,18 @@ struct ScoreBreakdownItem: View {
             HStack {
                 Text(title)
                     .font(.caption2.bold())
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                 Spacer()
                 Text("\(score)/\(maxScore)")
                     .font(.caption2.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
             }
             ProgressView(value: Double(score), total: Double(maxScore))
-                .tint(PrepTheme.primary)
+                .tint(MockexaTheme.primary)
         }
         .padding(10)
-        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(PrepTheme.border, lineWidth: 1))
+        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(MockexaTheme.border, lineWidth: 1))
     }
 }
 
@@ -2124,23 +2124,23 @@ struct ATSOptimizationSheet: View {
                         HStack(spacing: 12) {
                             Image(systemName: "shield.trianglebadge.exclamationmark")
                                 .font(.system(size: 22))
-                                .foregroundStyle(PrepTheme.warning)
+                                .foregroundStyle(MockexaTheme.warning)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("ANTI-HALLUCINATION & INTEGRITY")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("Only include skills, technologies, and achievements you can comfortably explain in an interview. Never invent unearned experience.")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                         }
                         .padding(14)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.border, lineWidth: 1))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.border, lineWidth: 1))
 
                         Text("Target Job: \(result.jobTitle)")
                             .font(.subheadline.bold())
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
 
                         ForEach(result.optimizationSuggestions) { sug in
                             GlassCard {
@@ -2148,27 +2148,27 @@ struct ATSOptimizationSheet: View {
                                     HStack {
                                         Text(sug.category.uppercased())
                                             .font(.caption2.bold())
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .foregroundStyle(MockexaTheme.primary)
                                         Spacer()
                                     }
 
                                     Text(sug.title)
                                         .font(.subheadline.bold())
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
 
                                     Text(sug.suggestion)
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
 
                                     Divider()
 
                                     HStack(alignment: .top, spacing: 8) {
                                         Image(systemName: "checkmark.bubble.fill")
                                             .font(.system(size: 14))
-                                            .foregroundStyle(PrepTheme.success)
+                                            .foregroundStyle(MockexaTheme.success)
                                         Text(sug.actionableAdvice)
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.darkNavy)
+                                            .foregroundStyle(MockexaTheme.darkNavy)
                                     }
                                 }
                             }
@@ -2182,7 +2182,7 @@ struct ATSOptimizationSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
         }
@@ -2225,10 +2225,10 @@ struct ResumeStudioView: View {
                             HStack {
                                 Image(systemName: "folder.fill.badge.gearshape")
                                     .font(.title2)
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("Resume Studio")
                                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                                 Spacer()
                                 Menu {
                                     Button("Upload PDF or Text Resume", systemImage: "arrow.up.doc.fill") {
@@ -2242,19 +2242,19 @@ struct ResumeStudioView: View {
                                         .font(.subheadline.bold())
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 7)
-                                        .background(PrepTheme.primary, in: Capsule())
+                                        .background(MockexaTheme.primary, in: Capsule())
                                         .foregroundStyle(.white)
                                 }
                             }
                             Text("Manage your master resume profiles and create job-tailored versions without re-entering data.")
                                 .font(.footnote)
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         }
                         .padding(16)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 16))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(PrepTheme.border, lineWidth: 1)
+                                .stroke(MockexaTheme.border, lineWidth: 1)
                         )
 
                         // Prominent Upload Real Resume Card
@@ -2262,14 +2262,14 @@ struct ResumeStudioView: View {
                             HStack(alignment: .top) {
                                 Image(systemName: "doc.badge.plus")
                                     .font(.title2)
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("Upload Your Resume (PDF / TXT)")
                                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
                                     Text("Import your actual resume to check your ATS score, customize against any Job Description, and practice Technical, HR, & GD rounds grounded in your real projects.")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                 }
                             }
 
@@ -2282,49 +2282,49 @@ struct ResumeStudioView: View {
                                 .font(.caption.bold())
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .background(PrepTheme.primary, in: RoundedRectangle(cornerRadius: 8))
+                                .background(MockexaTheme.primary, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
                         }
                         .padding(14)
-                        .background(PrepTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+                        .background(MockexaTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(PrepTheme.primary.opacity(0.25), lineWidth: 1)
+                                .stroke(MockexaTheme.primary.opacity(0.25), lineWidth: 1)
                         )
 
                         if let successMsg = importSuccessMessage {
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(PrepTheme.success)
+                                    .foregroundStyle(MockexaTheme.success)
                                 Text(successMsg)
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                                 Spacer()
                                 Button(action: { importSuccessMessage = nil }) {
                                     Image(systemName: "xmark")
                                         .font(.caption2)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                 }
                             }
                             .padding(10)
-                            .background(PrepTheme.success.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                            .background(MockexaTheme.success.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
                         }
 
                         // Saved Profiles List Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("SAVED RESUME PROFILES")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .tracking(1)
 
                             if vm.profiles.isEmpty {
                                 Text("No resume profiles saved. Tap 'Upload Your Resume' to get started.")
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                     .padding(24)
                                     .frame(maxWidth: .infinity)
-                                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
                             } else {
                                 ForEach(vm.profiles) { profile in
                                     ResumeProfileCardView(
@@ -2361,18 +2361,18 @@ struct ResumeStudioView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "sparkles")
                                 .font(.title3)
-                                .foregroundStyle(PrepTheme.secondary)
+                                .foregroundStyle(MockexaTheme.secondary)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Keep one master resume")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                                 Text("The Active resume can personalize HR, Technical and AI GD practice. Tailored copies keep your original facts unchanged.")
                                     .font(.caption2)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                         }
                         .padding(12)
-                        .background(PrepTheme.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                        .background(MockexaTheme.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                     }
                     .padding(20)
                 }
@@ -2382,7 +2382,7 @@ struct ResumeStudioView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
             .alert("Create New Profile", isPresented: $showCreateProfileAlert) {
@@ -2507,7 +2507,7 @@ struct ResumeProfileCardView: View {
                 Button(action: onSelect) {
                     Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(isActive ? PrepTheme.primary : PrepTheme.textSecondary.opacity(0.5))
+                        .foregroundStyle(isActive ? MockexaTheme.primary : MockexaTheme.textSecondary.opacity(0.5))
                 }
                 .buttonStyle(.plain)
 
@@ -2516,15 +2516,15 @@ struct ResumeProfileCardView: View {
                         HStack(spacing: 6) {
                             Text(profile.name)
                                 .font(.system(size: 17, weight: .bold, design: .rounded))
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .foregroundStyle(MockexaTheme.textPrimary)
 
                             if isActive {
                                 Text("Active")
                                     .font(.caption2.bold())
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(PrepTheme.primary.opacity(0.15), in: Capsule())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .background(MockexaTheme.primary.opacity(0.15), in: Capsule())
+                                    .foregroundStyle(MockexaTheme.primary)
                             }
 
                             if profile.isSample {
@@ -2532,8 +2532,8 @@ struct ResumeProfileCardView: View {
                                     .font(.caption2.bold())
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(PrepTheme.secondary.opacity(0.15), in: Capsule())
-                                    .foregroundStyle(PrepTheme.secondary)
+                                    .background(MockexaTheme.secondary.opacity(0.15), in: Capsule())
+                                    .foregroundStyle(MockexaTheme.secondary)
                             }
                         }
                     }
@@ -2542,11 +2542,11 @@ struct ResumeProfileCardView: View {
                     if let target = profile.targetJobTitle, !target.isEmpty {
                         Text("Target: \(target)")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                     } else if !profile.resumeData.personalInfo.headline.isEmpty {
                         Text(profile.resumeData.personalInfo.headline)
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .lineLimit(1)
                     }
 
@@ -2557,7 +2557,7 @@ struct ResumeProfileCardView: View {
                             Text("Tailored Version")
                                 .font(.caption2.bold())
                         }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     }
                 }
 
@@ -2576,12 +2576,12 @@ struct ResumeProfileCardView: View {
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.title3)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                         .padding(4)
                 }
             }
 
-            Divider().background(PrepTheme.border)
+            Divider().background(MockexaTheme.border)
 
             // Middle Stats Row: ATS Score & Last Edited
             HStack {
@@ -2589,7 +2589,7 @@ struct ResumeProfileCardView: View {
                     HStack(spacing: 6) {
                         Text("ATS Score:")
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                         
                         HStack(spacing: 3) {
                             Text("\(atsScore)")
@@ -2600,13 +2600,13 @@ struct ResumeProfileCardView: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(
-                            atsScore >= 75 ? PrepTheme.success.opacity(0.15) :
-                            (atsScore >= 50 ? PrepTheme.warning.opacity(0.15) : PrepTheme.destructive.opacity(0.15)),
+                            atsScore >= 75 ? MockexaTheme.success.opacity(0.15) :
+                            (atsScore >= 50 ? MockexaTheme.warning.opacity(0.15) : MockexaTheme.destructive.opacity(0.15)),
                             in: Capsule()
                         )
                         .foregroundStyle(
-                            atsScore >= 75 ? PrepTheme.success :
-                            (atsScore >= 50 ? PrepTheme.warning : PrepTheme.destructive)
+                            atsScore >= 75 ? MockexaTheme.success :
+                            (atsScore >= 50 ? MockexaTheme.warning : MockexaTheme.destructive)
                         )
                     }
                 }
@@ -2616,7 +2616,7 @@ struct ResumeProfileCardView: View {
 
                 Text("Last edited: \(profile.formattedDate)")
                     .font(.caption2)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
 
             // Bottom Action Buttons Row: [Edit] [Preview] [Tailor] [ATS Check]
@@ -2629,8 +2629,8 @@ struct ResumeProfileCardView: View {
                     .font(.caption.bold())
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(PrepTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-                    .foregroundStyle(PrepTheme.textPrimary)
+                    .background(MockexaTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(MockexaTheme.textPrimary)
                 }
 
                 Button(action: onPreview) {
@@ -2641,8 +2641,8 @@ struct ResumeProfileCardView: View {
                     .font(.caption.bold())
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(PrepTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-                    .foregroundStyle(PrepTheme.textPrimary)
+                    .background(MockexaTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(MockexaTheme.textPrimary)
                 }
 
                 Button(action: onTailor) {
@@ -2653,8 +2653,8 @@ struct ResumeProfileCardView: View {
                     .font(.caption.bold())
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(PrepTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-                    .foregroundStyle(PrepTheme.textPrimary)
+                    .background(MockexaTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(MockexaTheme.textPrimary)
                 }
 
                 if let onATS = onATSCheck {
@@ -2666,20 +2666,20 @@ struct ResumeProfileCardView: View {
                         .font(.caption.bold())
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
-                        .background(PrepTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-                        .foregroundStyle(PrepTheme.textPrimary)
+                        .background(MockexaTheme.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                        .foregroundStyle(MockexaTheme.textPrimary)
                     }
                 }
             }
         }
         .padding(14)
         .background(
-            isActive ? PrepTheme.primary.opacity(0.04) : PrepTheme.surface,
+            isActive ? MockexaTheme.primary.opacity(0.04) : MockexaTheme.surface,
             in: RoundedRectangle(cornerRadius: 14)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(isActive ? PrepTheme.primary : PrepTheme.border, lineWidth: isActive ? 1.5 : 1)
+                .stroke(isActive ? MockexaTheme.primary : MockexaTheme.border, lineWidth: isActive ? 1.5 : 1)
         )
     }
 }
@@ -2711,15 +2711,15 @@ struct TailorResumeSheet: View {
                     VStack(spacing: 24) {
                         Image(systemName: "checkmark.seal.fill")
                             .font(.system(size: 54))
-                            .foregroundStyle(PrepTheme.success)
+                            .foregroundStyle(MockexaTheme.success)
 
                         VStack(spacing: 6) {
                             Text("Tailored Resume Created!")
                                 .font(.title2.bold())
-                                .foregroundStyle(PrepTheme.textPrimary)
+                                .foregroundStyle(MockexaTheme.textPrimary)
                             Text("Saved as '\(outcome.tailoredProfile.name)' separate from your master resume.")
                                 .font(.subheadline)
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 20)
                         }
@@ -2730,39 +2730,39 @@ struct TailorResumeSheet: View {
                                 VStack(spacing: 4) {
                                     Text("BEFORE")
                                         .font(.caption2.bold())
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     Text("\(analysis.beforeATSScore)")
                                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     Text("ATS Match")
                                         .font(.caption2)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(14)
-                                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
 
                                 Image(systemName: "arrow.right")
                                     .font(.title2.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 VStack(spacing: 4) {
                                     Text("AFTER")
                                         .font(.caption2.bold())
-                                        .foregroundStyle(PrepTheme.success)
+                                        .foregroundStyle(MockexaTheme.success)
                                     Text("\(outcome.afterATSScore)")
                                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.success)
+                                        .foregroundStyle(MockexaTheme.success)
                                     Text("ATS Match")
                                         .font(.caption2)
-                                        .foregroundStyle(PrepTheme.success)
+                                        .foregroundStyle(MockexaTheme.success)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(14)
-                                .background(PrepTheme.success.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                                .background(MockexaTheme.success.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(PrepTheme.success, lineWidth: 1)
+                                        .stroke(MockexaTheme.success, lineWidth: 1)
                                 )
                             }
                             .padding(.horizontal, 20)
@@ -2779,7 +2779,7 @@ struct TailorResumeSheet: View {
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(PrepTheme.primary, in: RoundedRectangle(cornerRadius: 12))
+                                .background(MockexaTheme.primary, in: RoundedRectangle(cornerRadius: 12))
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 20)
@@ -2794,31 +2794,31 @@ struct TailorResumeSheet: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("JOB MATCH & TAILORING REVIEW")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 Text("Safe Wording Suggestions")
                                     .font(.title3.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
 
                                 Text("The original master '\(masterProfile.name)' will remain untouched.")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                             .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
 
                             // Matched vs Missing Skills section
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("SKILLS COMPARISON")
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
 
                                 if !analysis.matchedExistingSkills.isEmpty {
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text("Existing Relevant Skills:")
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.success)
+                                            .foregroundStyle(MockexaTheme.success)
 
                                         FlowLayout(spacing: 6) {
                                             ForEach(analysis.matchedExistingSkills, id: \.self) { skill in
@@ -2830,8 +2830,8 @@ struct TailorResumeSheet: View {
                                                 }
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 4)
-                                                .background(PrepTheme.success.opacity(0.12), in: Capsule())
-                                                .foregroundStyle(PrepTheme.success)
+                                                .background(MockexaTheme.success.opacity(0.12), in: Capsule())
+                                                .foregroundStyle(MockexaTheme.success)
                                             }
                                         }
                                     }
@@ -2842,11 +2842,11 @@ struct TailorResumeSheet: View {
                                         HStack {
                                             Text("Missing from current resume:")
                                                 .font(.caption.bold())
-                                                .foregroundStyle(PrepTheme.warning)
+                                                .foregroundStyle(MockexaTheme.warning)
                                             Spacer()
                                             Text("(Not added to resume)")
                                                 .font(.caption2)
-                                                .foregroundStyle(PrepTheme.textSecondary)
+                                                .foregroundStyle(MockexaTheme.textSecondary)
                                         }
 
                                         FlowLayout(spacing: 6) {
@@ -2859,15 +2859,15 @@ struct TailorResumeSheet: View {
                                                 }
                                                 .padding(.horizontal, 8)
                                                 .padding(.vertical, 4)
-                                                .background(PrepTheme.warning.opacity(0.1), in: Capsule())
-                                                .foregroundStyle(PrepTheme.warning)
+                                                .background(MockexaTheme.warning.opacity(0.1), in: Capsule())
+                                                .foregroundStyle(MockexaTheme.warning)
                                             }
                                         }
                                     }
                                 }
                             }
                             .padding(14)
-                            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
 
                             // Action: Accept All Safe Changes
                             HStack {
@@ -2878,24 +2878,24 @@ struct TailorResumeSheet: View {
                                 .font(.caption.bold())
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                                .foregroundStyle(PrepTheme.primary)
+                                .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                                .foregroundStyle(MockexaTheme.primary)
 
                                 Spacer()
 
                                 Text("\(acceptedSuggestionIds.count) of \(analysis.suggestions.count) selected")
                                     .font(.caption2)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
 
                             // Suggestions List
                             if analysis.suggestions.isEmpty {
                                 Text("No wording changes necessary. Your master resume already cleanly matches the job description.")
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                     .padding(20)
                                     .frame(maxWidth: .infinity)
-                                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
                             } else {
                                 ForEach(analysis.suggestions) { suggestion in
                                     let isAccepted = acceptedSuggestionIds.contains(suggestion.id)
@@ -2917,13 +2917,13 @@ struct TailorResumeSheet: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("TAILORED PROFILE NAME")
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
 
                                 TextField("e.g. \(masterProfile.name) — \(jobTitle.isEmpty ? "Google SDE" : jobTitle)", text: $customProfileName)
                                     .font(.subheadline)
                                     .padding(12)
-                                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 8))
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 8))
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                             }
 
                             // Create Tailored Profile Button
@@ -2945,7 +2945,7 @@ struct TailorResumeSheet: View {
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(PrepTheme.primary, in: RoundedRectangle(cornerRadius: 12))
+                                .background(MockexaTheme.primary, in: RoundedRectangle(cornerRadius: 12))
                             }
                         }
                         .padding(20)
@@ -2958,46 +2958,46 @@ struct TailorResumeSheet: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("TAILOR RESUME FOR JOB")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 Text("Master: \(masterProfile.name)")
                                     .font(.title3.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
 
                                 Text("Compare your saved resume with a target job description. We will suggest wording changes based ONLY on facts already in your resume.")
                                     .font(.footnote)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                             .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Target Job Title *")
                                     .font(.subheadline.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
 
                                 TextField("e.g. SDE Internship / Software Engineer", text: $jobTitle)
                                     .font(.subheadline)
                                     .padding(12)
-                                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Job Description (JD) *")
                                     .font(.subheadline.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
 
                                 TextEditor(text: $jobDescription)
                                     .font(.subheadline)
                                     .frame(height: 180)
                                     .padding(8)
                                     .scrollContentBackground(.hidden)
-                                    .background(PrepTheme.surface)
-                                    .foregroundStyle(PrepTheme.textPrimary)
-                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
+                                    .background(MockexaTheme.surface)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
                             }
 
                             if isAnalyzing {
@@ -3005,11 +3005,11 @@ struct TailorResumeSheet: View {
                                     ProgressView()
                                     Text("Analyzing Job & Generating Safe Suggestions...")
                                         .font(.subheadline.bold())
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .foregroundStyle(MockexaTheme.primary)
                                 }
                                 .padding(16)
                                 .frame(maxWidth: .infinity)
-                                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
                             } else {
                                 Button(action: {
                                     isAnalyzing = true
@@ -3034,7 +3034,7 @@ struct TailorResumeSheet: View {
                                     .padding(.vertical, 14)
                                     .background(
                                         jobTitle.trimmingCharacters(in: .whitespaces).isEmpty || jobDescription.trimmingCharacters(in: .whitespaces).isEmpty
-                                        ? PrepTheme.textSecondary.opacity(0.3) : PrepTheme.primary,
+                                        ? MockexaTheme.textSecondary.opacity(0.3) : MockexaTheme.primary,
                                         in: RoundedRectangle(cornerRadius: 12)
                                     )
                                 }
@@ -3050,7 +3050,7 @@ struct TailorResumeSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
         }
@@ -3069,12 +3069,12 @@ struct SuggestionCardView: View {
             HStack {
                 Text(suggestion.sectionTitle)
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
 
                 if let item = suggestion.itemTitle {
                     Text("• \(item)")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
 
                 Spacer()
@@ -3084,42 +3084,42 @@ struct SuggestionCardView: View {
                         .font(.caption2.bold())
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(isAccepted ? PrepTheme.success.opacity(0.15) : PrepTheme.secondary.opacity(0.12), in: Capsule())
-                        .foregroundStyle(isAccepted ? PrepTheme.success : PrepTheme.textSecondary)
+                        .background(isAccepted ? MockexaTheme.success.opacity(0.15) : MockexaTheme.secondary.opacity(0.12), in: Capsule())
+                        .foregroundStyle(isAccepted ? MockexaTheme.success : MockexaTheme.textSecondary)
                 }
             }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("Current:")
                     .font(.caption2.bold())
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                 Text(suggestion.originalText)
                     .font(.caption)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PrepTheme.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                    .background(MockexaTheme.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
 
                 Text("Suggested (Safe Wording):")
                     .font(.caption2.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Text(suggestion.suggestedText)
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.textPrimary)
+                    .foregroundStyle(MockexaTheme.textPrimary)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PrepTheme.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                    .background(MockexaTheme.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
             }
 
             Text(suggestion.rationale)
                 .font(.caption2)
-                .foregroundStyle(PrepTheme.textSecondary)
+                .foregroundStyle(MockexaTheme.textSecondary)
         }
         .padding(12)
-        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isAccepted ? PrepTheme.primary.opacity(0.5) : PrepTheme.border, lineWidth: 1)
+                .stroke(isAccepted ? MockexaTheme.primary.opacity(0.5) : MockexaTheme.border, lineWidth: 1)
         )
     }
 }
@@ -3208,32 +3208,32 @@ struct ResumePracticeRoundSheet: View {
                             HStack {
                                 Image(systemName: "doc.text.fill")
                                     .font(.title2)
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("Grounded Practice: \(profile.name)")
                                     .font(.headline.bold())
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                                 Spacer()
                                 Text("ACTIVE RESUME")
                                     .font(.caption2.bold())
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 3)
-                                    .background(PrepTheme.primary.opacity(0.15), in: Capsule())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .background(MockexaTheme.primary.opacity(0.15), in: Capsule())
+                                    .foregroundStyle(MockexaTheme.primary)
                             }
                             Text("The AI interviewer will ask questions tailored directly to your candidate background, skills, and projects from this resume.")
                                 .font(.caption)
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         }
                         .padding(14)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.border, lineWidth: 1))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.border, lineWidth: 1))
 
                         // Target Role & Job Description Customization
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text("TARGET ROLE & JOB DESCRIPTION")
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                     .tracking(1)
                                 Spacer()
                                 Button(action: saveJobDetails) {
@@ -3242,48 +3242,48 @@ struct ResumePracticeRoundSheet: View {
                                         Text(showSavedNotice ? "Saved" : "Save to Resume")
                                     }
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 }
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Target Job Title")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 TextField("e.g. Full Stack Developer, Data Engineer", text: $targetRole)
                                     .font(.subheadline)
                                     .padding(10)
-                                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 8))
-                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(PrepTheme.border, lineWidth: 1))
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(MockexaTheme.border, lineWidth: 1))
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Target Job Description (JD)")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 Text("Paste the requirements or JD here. Questions will bridge your resume projects with what the JD asks for.")
                                     .font(.caption2)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
 
                                 TextEditor(text: $targetJobDescription)
                                     .frame(minHeight: 90)
                                     .font(.subheadline)
                                     .padding(8)
                                     .scrollContentBackground(.hidden)
-                                    .background(PrepTheme.surface)
+                                    .background(MockexaTheme.surface)
                                     .cornerRadius(8)
-                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(PrepTheme.border, lineWidth: 1))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(MockexaTheme.border, lineWidth: 1))
                             }
                         }
                         .padding(14)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
 
                         // Round Selector Segmented Control
                         VStack(alignment: .leading, spacing: 12) {
                             Text("CHOOSE INTERVIEW ROUND")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .tracking(1)
 
                             Picker("Round", selection: $selectedRound) {
@@ -3299,7 +3299,7 @@ struct ResumePracticeRoundSheet: View {
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("Technical Focus Domain:")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 8) {
                                             ForEach(techDomains, id: \.self) { d in
@@ -3308,9 +3308,9 @@ struct ResumePracticeRoundSheet: View {
                                                         .font(.caption.bold())
                                                         .padding(.horizontal, 12)
                                                         .padding(.vertical, 6)
-                                                        .background(selectedDomain == d ? PrepTheme.primary : PrepTheme.surface, in: Capsule())
-                                                        .foregroundStyle(selectedDomain == d ? .white : PrepTheme.textPrimary)
-                                                        .overlay(Capsule().stroke(selectedDomain == d ? Color.clear : PrepTheme.border, lineWidth: 1))
+                                                        .background(selectedDomain == d ? MockexaTheme.primary : MockexaTheme.surface, in: Capsule())
+                                                        .foregroundStyle(selectedDomain == d ? .white : MockexaTheme.textPrimary)
+                                                        .overlay(Capsule().stroke(selectedDomain == d ? Color.clear : MockexaTheme.border, lineWidth: 1))
                                                 }
                                             }
                                         }
@@ -3319,7 +3319,7 @@ struct ResumePracticeRoundSheet: View {
                                     HStack {
                                         Text("Difficulty:")
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                         Spacer()
                                         Picker("Difficulty", selection: $selectedDifficulty) {
                                             ForEach(difficulties, id: \.self) { diff in
@@ -3336,7 +3336,7 @@ struct ResumePracticeRoundSheet: View {
                                 VStack(alignment: .leading, spacing: 10) {
                                     Text("HR Interview Style:")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 8) {
                                             ForEach(hrStyles, id: \.self) { s in
@@ -3345,9 +3345,9 @@ struct ResumePracticeRoundSheet: View {
                                                         .font(.caption.bold())
                                                         .padding(.horizontal, 12)
                                                         .padding(.vertical, 6)
-                                                        .background(hrInterviewStyle == s ? PrepTheme.primary : PrepTheme.surface, in: Capsule())
-                                                        .foregroundStyle(hrInterviewStyle == s ? .white : PrepTheme.textPrimary)
-                                                        .overlay(Capsule().stroke(hrInterviewStyle == s ? Color.clear : PrepTheme.border, lineWidth: 1))
+                                                        .background(hrInterviewStyle == s ? MockexaTheme.primary : MockexaTheme.surface, in: Capsule())
+                                                        .foregroundStyle(hrInterviewStyle == s ? .white : MockexaTheme.textPrimary)
+                                                        .overlay(Capsule().stroke(hrInterviewStyle == s ? Color.clear : MockexaTheme.border, lineWidth: 1))
                                                 }
                                             }
                                         }
@@ -3359,18 +3359,18 @@ struct ResumePracticeRoundSheet: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("Discussion Topic:")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     TextField("Enter GD Topic", text: $gdTopic)
                                         .font(.subheadline)
                                         .padding(10)
-                                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 8))
-                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(PrepTheme.border, lineWidth: 1))
+                                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 8))
+                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(MockexaTheme.border, lineWidth: 1))
                                 }
                                 .padding(.top, 4)
                             }
                         }
                         .padding(14)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
 
                         // Launch Interview Button
                         Button(action: startPersonalizedRound) {
@@ -3384,14 +3384,14 @@ struct ResumePracticeRoundSheet: View {
                             .padding(.vertical, 14)
                             .background(
                                 LinearGradient(
-                                    colors: [PrepTheme.primary, PrepTheme.primary.opacity(0.85)],
+                                    colors: [MockexaTheme.primary, MockexaTheme.primary.opacity(0.85)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 ),
                                 in: RoundedRectangle(cornerRadius: 12)
                             )
                             .foregroundStyle(.white)
-                            .shadow(color: PrepTheme.primary.opacity(0.3), radius: 8, y: 3)
+                            .shadow(color: MockexaTheme.primary.opacity(0.3), radius: 8, y: 3)
                         }
                     }
                     .padding(20)
@@ -3402,7 +3402,7 @@ struct ResumePracticeRoundSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
             .fullScreenCover(item: $activeLiveInterview) { dest in

@@ -150,7 +150,7 @@ struct SplashView: View {
 }
 
 struct LogoMark: View {
-    var body: some View { ZStack { RoundedRectangle(cornerRadius: 24).fill(PrepTheme.gradient).frame(width: 82, height: 82); Image(systemName: "bubble.left.and.sparkles.fill").font(.system(size: 35)).foregroundStyle(.white) }.shadow(color: PrepTheme.primary.opacity(0.5), radius: 30) }
+    var body: some View { ZStack { RoundedRectangle(cornerRadius: 24).fill(MockexaTheme.gradient).frame(width: 82, height: 82); Image(systemName: "bubble.left.and.sparkles.fill").font(.system(size: 35)).foregroundStyle(.white) }.shadow(color: MockexaTheme.primary.opacity(0.5), radius: 30) }
 }
 
 struct MockexaLogoIcon: View {
@@ -2157,10 +2157,10 @@ struct PhoneAuthView: View {
 struct OnboardingView: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var auth: AuthManager
-    @AppStorage("PREPAI_TARGET_ROLE") private var savedTargetRole = ""
-    @AppStorage("PREPAI_TARGET_COMPANIES") private var savedTargetCompanies = ""
-    @AppStorage("PREPAI_STUDY_FIELD") private var savedStudyField = ""
-    @AppStorage("PREPAI_CONFIDENCE_LEVEL") private var savedConfidenceLevel = 1
+    @AppStorage("MOCKEXA_TARGET_ROLE") private var savedTargetRole = ""
+    @AppStorage("MOCKEXA_TARGET_COMPANIES") private var savedTargetCompanies = ""
+    @AppStorage("MOCKEXA_STUDY_FIELD") private var savedStudyField = ""
+    @AppStorage("MOCKEXA_CONFIDENCE_LEVEL") private var savedConfidenceLevel = 1
     @State private var selections: [Int: String] = [:]
     @State private var companies = Set<String>()
     @State private var confidence = 1.0
@@ -2182,17 +2182,17 @@ struct OnboardingView: View {
                             Label("Back", systemImage: "chevron.left")
                                 .font(.caption.bold())
                         }
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                         .accessibilityLabel("Go back to previous onboarding step")
                     }
                     Text("Step \(min(app.onboardingStep + 1, 4)) of 4")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     Spacer()
                 }
                 
                 ProgressView(value: Double(app.onboardingStep + 1), total: 4)
-                    .tint(PrepTheme.primary)
+                    .tint(MockexaTheme.primary)
                 
                 if app.onboardingStep < 2 {
                     choiceStep(app.onboardingStep)
@@ -2229,7 +2229,7 @@ struct OnboardingView: View {
                 .disabled(app.onboardingStep < 2 && selections[app.onboardingStep] == nil)
             }
             .padding(24)
-            .foregroundStyle(PrepTheme.darkNavy)
+            .foregroundStyle(MockexaTheme.darkNavy)
         }
     }
     
@@ -2237,7 +2237,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 18) {
             Text(steps[index].0)
                 .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             ForEach(steps[index].1, id: \.self) { item in
                 SelectableRow(title: item, selected: selections[index] == item) {
                     selections[index] = item
@@ -2250,10 +2250,10 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Where do you want to work?")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             Text("Choose as many as you like.")
                 .font(.subheadline)
-                .foregroundStyle(PrepTheme.textSecondary)
+                .foregroundStyle(MockexaTheme.textSecondary)
             ScrollView {
                 LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 12) {
                     ForEach(CompanyInfo.all.map(\.name), id: \.self) { item in
@@ -2275,16 +2275,16 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 22) {
             Text("How confident do you feel about placements?")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             GlassCard {
                 VStack(spacing: 20) {
                     Text(["😰", "😐", "🙂", "🔥"][Int(confidence)])
                         .font(.system(size: 68))
                     Text(["Not confident", "Getting there", "Pretty confident", "Very confident"][Int(confidence)])
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Slider(value: $confidence, in: 0...3, step: 1)
-                        .tint(PrepTheme.primary)
+                        .tint(MockexaTheme.primary)
                 }
             }
         }
@@ -2300,20 +2300,20 @@ struct SelectableRow: View {
             HStack {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundStyle(selected ? PrepTheme.primary : PrepTheme.darkNavy)
+                    .foregroundStyle(selected ? MockexaTheme.primary : MockexaTheme.darkNavy)
                 Spacer()
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(selected ? PrepTheme.primary : PrepTheme.border)
+                    .foregroundStyle(selected ? MockexaTheme.primary : MockexaTheme.border)
             }
             .padding(18)
             .background(
-                selected ? PrepTheme.primary.opacity(0.08) : PrepTheme.surface,
+                selected ? MockexaTheme.primary.opacity(0.08) : MockexaTheme.surface,
                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18)
-                    .stroke(selected ? PrepTheme.primary : PrepTheme.border, lineWidth: 1)
+                    .stroke(selected ? MockexaTheme.primary : MockexaTheme.border, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.02), radius: 4, y: 2)
         }

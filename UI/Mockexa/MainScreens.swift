@@ -15,7 +15,7 @@ private struct UserProfilePhoto: View {
                     .scaledToFill()
             } else {
                 ZStack {
-                    Circle().fill(PrepTheme.gradient)
+                    Circle().fill(MockexaTheme.gradient)
                     Text(initials)
                         .font(.system(size: size * 0.28, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
@@ -24,7 +24,7 @@ private struct UserProfilePhoto: View {
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay(Circle().stroke(PrepTheme.surface, lineWidth: 3))
+        .overlay(Circle().stroke(MockexaTheme.surface, lineWidth: 3))
         .shadow(color: Color.black.opacity(0.10), radius: 7, y: 3)
         .accessibilityLabel(data == nil ? "Profile initials \(initials)" : "Profile photo")
     }
@@ -86,7 +86,7 @@ struct MainTabView: View {
                 .tabItem { Label(AppTab.profile.rawValue, systemImage: AppTab.profile.icon(isSelected: app.tab == .profile)) }
                 .tag(AppTab.profile)
         }
-        .tint(PrepTheme.primary)
+        .tint(MockexaTheme.primary)
     }
 }
 
@@ -102,8 +102,8 @@ struct ScreenContainer<Content: View>: View {
                     .padding(.bottom, 40)
             }
         }
-        .foregroundStyle(PrepTheme.darkNavy)
-        .toolbarBackground(PrepTheme.background.opacity(0.95), for: .navigationBar)
+        .foregroundStyle(MockexaTheme.darkNavy)
+        .toolbarBackground(MockexaTheme.background.opacity(0.95), for: .navigationBar)
     }
 }
 
@@ -114,30 +114,30 @@ private struct SessionSyncStatus: View {
     var body: some View {
         if app.isLoadingSessions && app.userSessions.isEmpty {
             HStack(spacing: 10) {
-                ProgressView().tint(PrepTheme.primary)
+                ProgressView().tint(MockexaTheme.primary)
                 Text("Loading your practice progress…")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
-            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
         } else if let error = app.sessionFetchError {
             HStack(spacing: 10) {
-                Image(systemName: "wifi.exclamationmark").foregroundStyle(PrepTheme.warning)
+                Image(systemName: "wifi.exclamationmark").foregroundStyle(MockexaTheme.warning)
                 Text("Progress could not be refreshed.")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                 Spacer()
                 Button("Retry") {
                     Task { await app.refreshUserSessions(token: auth.accessToken) }
                 }
                 .font(.caption.bold())
-                .foregroundStyle(PrepTheme.primary)
+                .foregroundStyle(MockexaTheme.primary)
                 .accessibilityHint(error)
             }
             .padding(12)
-            .background(PrepTheme.warning.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+            .background(MockexaTheme.warning.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 }
@@ -155,10 +155,10 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Hey, \(auth.currentFirstName) 👋")
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                         Text("Ready to level up today?")
                             .font(.system(size: 26, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                             .lineLimit(2)
                     }
 
@@ -188,13 +188,13 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 14) {
                                 Label("TODAY’S FOCUS", systemImage: "scope")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("Technical Interview")
                                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text("15-minute guided practice")
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 PrimaryButtonLabel(title: "Start Practice", icon: "arrow.right", isPressed: isPressed)
 
                             }
@@ -211,19 +211,19 @@ struct HomeView: View {
                             HStack(spacing: 16) {
                                 Image(systemName: "folder.fill.badge.gearshape")
                                     .font(.system(size: 28))
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Resume Studio")
                                         .font(.system(size: 17, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                     Text("Build, tailor and check your resume")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.subheadline.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                             }
                         }
                     }
@@ -265,10 +265,10 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("No practice sessions yet")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text("Start a technical, HR, or GD interview above to track your history.")
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -296,7 +296,7 @@ struct PracticeCardContent: View {
     var isPressed: Bool = false
     var color: Color {
         switch kind {
-        case .gd: PrepTheme.primary
+        case .gd: MockexaTheme.primary
         case .technical: Color(red: 37/255, green: 99/255, blue: 235/255)
         case .hr: Color(red: 225/255, green: 29/255, blue: 72/255)
         }
@@ -317,15 +317,15 @@ struct PracticeCardContent: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(kind.displayName)
                         .font(.system(size: 17, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text(kind.subtitle)
                         .font(.system(size: 14, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                     .offset(x: isPressed ? 5 : 0)
             }
         }
@@ -350,10 +350,10 @@ struct PracticeHubView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Practice")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text("Choose your challenge.")
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 .padding(.top, 12)
                 .staggeredEntrance(delay: 0.04)
@@ -375,28 +375,28 @@ struct PracticeHubView: View {
                             HStack(spacing: 16) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .fill(PrepTheme.primary.opacity(0.12))
+                                        .fill(MockexaTheme.primary.opacity(0.12))
                                         .frame(width: 54, height: 54)
                                     Image(systemName: "building.2.crop.circle.fill")
                                         .font(.system(size: 22, weight: .semibold))
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .foregroundStyle(MockexaTheme.primary)
                                         .scaleEffect(isPressed ? 1.06 : 1.0)
                                 }
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Company Question Bank")
                                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.82)
                                     Text("Practice company-specific interview questions.")
                                         .font(.system(size: 14, weight: .regular))
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                         .lineLimit(2)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                     .offset(x: isPressed ? 5 : 0)
                             }
                         }
@@ -420,7 +420,7 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Your Readiness")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .padding(.top, 12)
                     .staggeredEntrance(delay: 0.04)
 
@@ -430,11 +430,11 @@ struct DashboardView: View {
                     VStack(spacing: 16) {
                         Text("PLACEMENT READINESS")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                         ScoreRing(score: app.averageReadinessScore)
                         Text(app.userSessions.isEmpty ? "Complete practice to see readiness." : "Calculated from completed sessions.")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -448,23 +448,23 @@ struct DashboardView: View {
                             HStack(spacing: 14) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                        .fill(PrepTheme.warning.opacity(0.14))
+                                        .fill(MockexaTheme.warning.opacity(0.14))
                                         .frame(width: 54, height: 54)
                                     Image(systemName: "trophy.fill")
                                         .font(.system(size: 23, weight: .bold))
-                                        .foregroundStyle(PrepTheme.warning)
+                                        .foregroundStyle(MockexaTheme.warning)
                                 }
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Leaderboard")
                                         .font(.system(size: 17, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                     Text("Earn XP, climb ranks, unlock achievements.")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                     .offset(x: isPressed ? 4 : 0)
                             }
                         }
@@ -487,7 +487,7 @@ struct DashboardView: View {
                             let techHasSessions = app.userSessions.contains { $0.kind == .technical }
                             let hrHasSessions = app.userSessions.contains { $0.kind == .hr }
 
-                            MetricBar(title: "Group Discussion", value: app.gdAverageScore, color: PrepTheme.primary, hasSessions: gdHasSessions)
+                            MetricBar(title: "Group Discussion", value: app.gdAverageScore, color: MockexaTheme.primary, hasSessions: gdHasSessions)
                             MetricBar(title: "Technical Interview", value: app.techAverageScore, color: Color(red: 37/255, green: 99/255, blue: 235/255), hasSessions: techHasSessions)
                             MetricBar(title: "HR Interview", value: app.hrAverageScore, color: Color(red: 225/255, green: 29/255, blue: 72/255), hasSessions: hrHasSessions)
                         }
@@ -527,13 +527,13 @@ struct LeaderboardView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Label("LEADERBOARD", systemImage: "trophy.fill")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.warning)
+                        .foregroundStyle(MockexaTheme.warning)
                     Text("Top Performers")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text("Practice consistently and earn XP to move up.")
                         .font(.subheadline)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 .padding(.top, 10)
 
@@ -553,16 +553,16 @@ struct LeaderboardView: View {
 
                     Text(board.rankingBasis)
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
-                        .background(PrepTheme.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+                        .background(MockexaTheme.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
                 } else if isLoading {
                     VStack(spacing: 14) {
-                        ProgressView().tint(PrepTheme.primary)
+                        ProgressView().tint(MockexaTheme.primary)
                         Text("Loading rankings…")
                             .font(.subheadline.bold())
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity, minHeight: 240)
                 } else if let errorMessage {
@@ -570,14 +570,14 @@ struct LeaderboardView: View {
                         VStack(spacing: 14) {
                             Image(systemName: "wifi.exclamationmark")
                                 .font(.system(size: 32))
-                                .foregroundStyle(PrepTheme.warning)
+                                .foregroundStyle(MockexaTheme.warning)
                             Text(errorMessage)
                                 .font(.subheadline)
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .multilineTextAlignment(.center)
                             Button("Try Again") { Task { await load() } }
                                 .buttonStyle(.borderedProminent)
-                                .tint(PrepTheme.primary)
+                                .tint(MockexaTheme.primary)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -594,28 +594,28 @@ struct LeaderboardView: View {
         GlassCard {
             HStack(spacing: 16) {
                 ZStack {
-                    Circle().fill(PrepTheme.primary.opacity(0.13)).frame(width: 64, height: 64)
+                    Circle().fill(MockexaTheme.primary.opacity(0.13)).frame(width: 64, height: 64)
                     Text(board.currentUserXP == 0 && board.totalPlayers <= 1 ? "—" : "#\(board.currentUserRank)")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Your Rank")
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                     Text("\(board.currentUserXP) XP")
                         .font(.system(size: 23, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text(board.currentUserXP == 0 && board.totalPlayers <= 1
                          ? "Complete practice to earn a rank"
                          : "among \(board.totalPlayers) player\(board.totalPlayers == 1 ? "" : "s")")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 Spacer()
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(PrepTheme.secondary)
+                    .foregroundStyle(MockexaTheme.secondary)
             }
         }
     }
@@ -625,13 +625,13 @@ struct LeaderboardView: View {
             VStack(spacing: 10) {
                 Image(systemName: "figure.run.circle")
                     .font(.system(size: 38))
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Text("Be the first on the board")
                     .font(.headline)
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                 Text("Complete a practice session to earn your first XP.")
                     .font(.subheadline)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -661,10 +661,10 @@ private struct LeaderboardRow: View {
 
     private var rankColor: Color {
         switch entry.rank {
-        case 1: return PrepTheme.warning
+        case 1: return MockexaTheme.warning
         case 2: return Color.gray
         case 3: return Color(red: 0.72, green: 0.40, blue: 0.20)
-        default: return PrepTheme.primary
+        default: return MockexaTheme.primary
         }
     }
 
@@ -682,29 +682,29 @@ private struct LeaderboardRow: View {
                 HStack(spacing: 6) {
                     Text(entry.displayName)
                         .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     if entry.isCurrentUser {
                         Text("YOU")
                             .font(.system(size: 9, weight: .heavy))
                             .padding(.horizontal, 6).padding(.vertical, 3)
-                            .background(PrepTheme.primary, in: Capsule())
+                            .background(MockexaTheme.primary, in: Capsule())
                             .foregroundStyle(.white)
                     }
                 }
                 Text("Level \(entry.level)  •  \(entry.achievementCount) achievements")
                     .font(.caption)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(entry.xp) XP").font(.subheadline.bold()).foregroundStyle(PrepTheme.primary)
+                Text("\(entry.xp) XP").font(.subheadline.bold()).foregroundStyle(MockexaTheme.primary)
                 Label("\(entry.coins)", systemImage: "circle.hexagongrid.fill")
-                    .font(.caption).foregroundStyle(PrepTheme.warning)
+                    .font(.caption).foregroundStyle(MockexaTheme.warning)
             }
         }
         .padding(14)
-        .background(entry.isCurrentUser ? PrepTheme.primary.opacity(0.09) : PrepTheme.surface, in: RoundedRectangle(cornerRadius: 17))
-        .overlay(RoundedRectangle(cornerRadius: 17).stroke(entry.isCurrentUser ? PrepTheme.primary.opacity(0.45) : PrepTheme.border))
+        .background(entry.isCurrentUser ? MockexaTheme.primary.opacity(0.09) : MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 17))
+        .overlay(RoundedRectangle(cornerRadius: 17).stroke(entry.isCurrentUser ? MockexaTheme.primary.opacity(0.45) : MockexaTheme.border))
     }
 }
 
@@ -730,10 +730,10 @@ struct TrendChart: View {
                     VStack(spacing: 8) {
                         Text("No performance trend yet")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Text("Complete practice sessions to visualize your score progression.")
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                     .frame(height: 130)
                     .frame(maxWidth: .infinity)
@@ -746,7 +746,7 @@ struct TrendChart: View {
                                     p.move(to: .init(x: 0, y: y))
                                     p.addLine(to: .init(x: geo.size.width, y: y))
                                 }
-                                .stroke(PrepTheme.border)
+                                .stroke(MockexaTheme.border)
                             }
                             Path { p in
                                 let total = max(1, points.count - 1)
@@ -757,7 +757,7 @@ struct TrendChart: View {
                                 }
                             }
                             .trim(from: 0, to: trimEnd)
-                            .stroke(PrepTheme.gradient, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                            .stroke(MockexaTheme.gradient, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
                         }
                     }
                     .frame(height: 130)
@@ -766,7 +766,7 @@ struct TrendChart: View {
                         ForEach(0..<points.count, id: \.self) { idx in
                             Text("S\(idx + 1)")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .frame(maxWidth: .infinity)
                         }
                     }
@@ -799,11 +799,11 @@ struct MetricBar: View {
             HStack {
                 Text(title)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                 Spacer()
                 Text(hasSessions ? "\(value)%" : "Not Started")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(hasSessions ? PrepTheme.primary : PrepTheme.textSecondary)
+                    .foregroundStyle(hasSessions ? MockexaTheme.primary : MockexaTheme.textSecondary)
             }
             ProgressView(value: animatedValue, total: 100)
                 .tint(color)
@@ -828,15 +828,15 @@ struct StatTile: View {
         VStack(spacing: 5) {
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             Text(label)
                 .font(.caption)
-                .foregroundStyle(PrepTheme.textSecondary)
+                .foregroundStyle(MockexaTheme.textSecondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
-        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(PrepTheme.border, lineWidth: 1))
+        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MockexaTheme.border, lineWidth: 1))
         .shadow(color: Color.black.opacity(0.03), radius: 6, y: 2)
     }
 }
@@ -851,7 +851,7 @@ struct HistoryView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Practice History")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .padding(.top, 12)
                     .staggeredEntrance(delay: 0.04)
 
@@ -869,9 +869,9 @@ struct HistoryView: View {
                             .font(.system(size: 14, weight: .bold, design: .rounded))
                             .padding(.horizontal, 18)
                             .padding(.vertical, 10)
-                            .background(filter == item ? PrepTheme.primary : PrepTheme.surface, in: Capsule())
-                            .overlay(Capsule().stroke(filter == item ? Color.clear : PrepTheme.border, lineWidth: 1))
-                            .foregroundStyle(filter == item ? .white : PrepTheme.darkNavy)
+                            .background(filter == item ? MockexaTheme.primary : MockexaTheme.surface, in: Capsule())
+                            .overlay(Capsule().stroke(filter == item ? Color.clear : MockexaTheme.border, lineWidth: 1))
+                            .foregroundStyle(filter == item ? .white : MockexaTheme.darkNavy)
                         }
                     }
                 }
@@ -892,22 +892,22 @@ struct HistoryView: View {
                         VStack(spacing: 16) {
                             ZStack {
                                 Circle()
-                                    .fill(PrepTheme.primary.opacity(0.1))
+                                    .fill(MockexaTheme.primary.opacity(0.1))
                                     .frame(width: 64, height: 64)
                                 Image(systemName: "clock.badge.exclamationmark")
                                     .font(.system(size: 28, weight: .semibold))
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                             }
                             .padding(.top, 8)
 
                             VStack(spacing: 6) {
                                 Text("No Sessions Yet")
                                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
 
                                 Text(filter == "All" ? "Complete a practice session and your results will appear here." : "No \(filter) sessions recorded yet. Complete a session to see your progress.")
                                     .font(.system(size: 14, weight: .regular))
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 8)
                             }
@@ -921,8 +921,8 @@ struct HistoryView: View {
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 24)
                                     .padding(.vertical, 12)
-                                    .background(PrepTheme.gradient, in: Capsule())
-                                    .shadow(color: PrepTheme.primary.opacity(0.25), radius: 8, y: 4)
+                                    .background(MockexaTheme.gradient, in: Capsule())
+                                    .shadow(color: MockexaTheme.primary.opacity(0.25), radius: 8, y: 4)
                             }
                             .padding(.bottom, 8)
                         }
@@ -963,25 +963,25 @@ struct SessionCard: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(PrepTheme.primary.opacity(0.12))
+                        .fill(MockexaTheme.primary.opacity(0.12))
                         .frame(width: 44, height: 44)
                     Image(systemName: session.kind?.icon ?? "doc.text.fill")
                         .font(.title3)
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                         .scaleEffect(isPressed ? 1.06 : 1.0)
                 }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(session.kind?.displayName ?? "Practice Session")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text("\(session.date)  •  \(session.duration)")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 Spacer()
                 Text("\(session.score)/100")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
             }
         }
     }
@@ -999,7 +999,7 @@ struct SessionDetailView: View {
             VStack(spacing: 24) {
                 Text(session.kind?.displayName ?? "Practice Session")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 10)
                     .staggeredEntrance(delay: 0.04)
@@ -1010,7 +1010,7 @@ struct SessionDetailView: View {
                 if let err = errorMessage {
                     Text("Note: \(err)")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
 
                 GlassCard {
@@ -1032,8 +1032,8 @@ struct SessionDetailView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
-                            .shadow(color: PrepTheme.primary.opacity(0.22), radius: 12, y: 5)
+                            .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
+                            .shadow(color: MockexaTheme.primary.opacity(0.22), radius: 12, y: 5)
                     }
                     .staggeredEntrance(delay: 0.22)
                 }
@@ -1072,11 +1072,11 @@ struct DetailRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundStyle(PrepTheme.textSecondary)
+                .foregroundStyle(MockexaTheme.textSecondary)
             Spacer()
             Text(value)
                 .fontWeight(.bold)
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
         }
     }
 }
@@ -1094,8 +1094,8 @@ struct ProfileView: View {
     @State private var showSignOutConfirmation: Bool = false
     @State private var selectedPhoto: PhotosPickerItem? = nil
 
-    @AppStorage("PREPAI_TARGET_ROLE") private var targetRole: String = ""
-    @AppStorage("PREPAI_TARGET_COMPANIES") private var targetCompanies: String = ""
+    @AppStorage("MOCKEXA_TARGET_ROLE") private var targetRole: String = ""
+    @AppStorage("MOCKEXA_TARGET_COMPANIES") private var targetCompanies: String = ""
 
     var body: some View {
         let photoData = auth.currentUserPhotoData
@@ -1104,7 +1104,7 @@ struct ProfileView: View {
             VStack(spacing: 20) {
                 Text("Profile")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 12)
                     .staggeredEntrance(delay: 0.04)
@@ -1118,7 +1118,7 @@ struct ProfileView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(.white)
                                 .frame(width: 25, height: 25)
-                                .background(PrepTheme.primary, in: Circle())
+                                .background(MockexaTheme.primary, in: Circle())
                         }
                     }
                     .accessibilityLabel("Add or change profile photo")
@@ -1126,10 +1126,10 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(auth.profileDisplayName)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Text(auth.profileContact)
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
 
                         if let age = auth.currentUserAge {
                             HStack(spacing: 4) {
@@ -1140,16 +1140,16 @@ struct ProfileView: View {
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                            .foregroundStyle(PrepTheme.primary)
+                            .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                            .foregroundStyle(MockexaTheme.primary)
                             .padding(.top, 2)
                         }
                     }
                     Spacer()
                 }
                 .padding(16)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 20))
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 20))
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(MockexaTheme.border, lineWidth: 1))
                 .staggeredEntrance(delay: 0.10)
 
                 // Preparation Snapshot
@@ -1159,7 +1159,7 @@ struct ProfileView: View {
                         Spacer()
                         Text("Completed Sessions")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                     GlassCard {
                         HStack(spacing: 8) {
@@ -1180,12 +1180,12 @@ struct ProfileView: View {
                             ProfileRowButton(icon: "person.fill", title: "My Profile", subtitle: auth.profileDisplayName) {
                                 activeSheet = .myProfile
                             }
-                            Divider().overlay(PrepTheme.border)
+                            Divider().overlay(MockexaTheme.border)
 
                             ProfileRowButton(icon: "scope", title: "Target Role", subtitle: targetRole.isEmpty ? "Not set • Tap to select" : targetRole) {
                                 activeSheet = .targetRole
                             }
-                            Divider().overlay(PrepTheme.border)
+                            Divider().overlay(MockexaTheme.border)
 
                             ProfileRowButton(icon: "building.2.fill", title: "Target Companies", subtitle: targetCompanies.isEmpty ? "Not set • Tap to select" : targetCompanies) {
                                 activeSheet = .targetCompanies
@@ -1201,12 +1201,12 @@ struct ProfileView: View {
                     GlassCard {
                         HStack(spacing: 14) {
                             Image(systemName: "trophy.fill")
-                                .font(.title2).foregroundStyle(PrepTheme.primary).frame(width: 38)
+                                .font(.title2).foregroundStyle(MockexaTheme.primary).frame(width: 38)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Rewards & Perks").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundStyle(PrepTheme.darkNavy)
-                                Text("Spend GD coins on boosts usable across practice modes.").font(.caption).foregroundStyle(PrepTheme.textSecondary)
+                                Text("Rewards & Perks").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundStyle(MockexaTheme.darkNavy)
+                                Text("Spend GD coins on boosts usable across practice modes.").font(.caption).foregroundStyle(MockexaTheme.textSecondary)
                             }
-                            Spacer(); Image(systemName: "chevron.right").foregroundStyle(PrepTheme.primary)
+                            Spacer(); Image(systemName: "chevron.right").foregroundStyle(MockexaTheme.primary)
                         }
                     }
                 }
@@ -1220,7 +1220,7 @@ struct ProfileView: View {
                             ProfileRowButton(icon: "accessibility", title: "Accessibility", subtitle: "Theme, Motion & Display Settings") {
                                 activeSheet = .accessibility
                             }
-                            Divider().overlay(PrepTheme.border)
+                            Divider().overlay(MockexaTheme.border)
 
                             ProfileRowButton(icon: "gearshape.fill", title: "Account Settings", subtitle: auth.profileContact) {
                                 activeSheet = .accountSettings
@@ -1241,9 +1241,9 @@ struct ProfileView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(PrepTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 25))
-                    .overlay(RoundedRectangle(cornerRadius: 25).stroke(PrepTheme.destructive.opacity(0.3), lineWidth: 1))
-                    .foregroundStyle(PrepTheme.destructive)
+                    .background(MockexaTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 25))
+                    .overlay(RoundedRectangle(cornerRadius: 25).stroke(MockexaTheme.destructive.opacity(0.3), lineWidth: 1))
+                    .foregroundStyle(MockexaTheme.destructive)
                 }
                 .buttonStyle(PressButtonStyle())
                 .padding(.top, 4)
@@ -1252,10 +1252,10 @@ struct ProfileView: View {
         }
         .navigationBarHidden(true)
         .onChange(of: targetRole) { _, value in
-            auth.saveTargetPreference(key: "PREPAI_TARGET_ROLE", value: value)
+            auth.saveTargetPreference(key: "MOCKEXA_TARGET_ROLE", value: value)
         }
         .onChange(of: targetCompanies) { _, value in
-            auth.saveTargetPreference(key: "PREPAI_TARGET_COMPANIES", value: value)
+            auth.saveTargetPreference(key: "MOCKEXA_TARGET_COMPANIES", value: value)
         }
         .onChange(of: selectedPhoto) { _, item in
             guard let item else { return }
@@ -1308,16 +1308,16 @@ struct ProfileRowButton: View {
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: icon)
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                     .frame(width: 24)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text(subtitle)
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                         .lineLimit(1)
                 }
 
@@ -1325,7 +1325,7 @@ struct ProfileRowButton: View {
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
             .padding(.vertical, 10)
             .contentShape(Rectangle())
@@ -1363,12 +1363,12 @@ struct MyProfileSheet: View {
                                         .font(.system(size: 12, weight: .bold))
                                         .foregroundStyle(.white)
                                         .frame(width: 28, height: 28)
-                                        .background(PrepTheme.primary, in: Circle())
+                                        .background(MockexaTheme.primary, in: Circle())
                                 }
                             }
                             Text(auth.currentUserPhotoData == nil ? "Add profile photo" : "Change profile photo")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.primary)
+                                .foregroundStyle(MockexaTheme.primary)
                             if auth.currentUserPhotoData != nil {
                                 Button("Remove photo", role: .destructive) {
                                     auth.setProfilePhotoData(nil)
@@ -1382,54 +1382,54 @@ struct MyProfileSheet: View {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text("PERSONAL INFORMATION")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Full Name")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     TextField("Enter full name", text: $fullNameText)
                                         .padding(12)
-                                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                 }
 
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Email Address")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     TextField("Enter email address", text: $emailText)
                                         .keyboardType(.emailAddress)
                                         .textInputAutocapitalization(.never)
                                         .autocorrectionDisabled()
                                         .padding(12)
-                                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                 }
 
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Age")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     TextField("Enter age", text: $ageText)
                                         .keyboardType(.numberPad)
                                         .padding(12)
-                                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                 }
 
                                 if saveSuccess {
                                     Text("Profile saved successfully!")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.success)
+                                        .foregroundStyle(MockexaTheme.success)
                                 }
                                 if let validationMessage {
                                     Text(validationMessage)
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.destructive)
+                                        .foregroundStyle(MockexaTheme.destructive)
                                 }
                             }
                         }
@@ -1464,7 +1464,7 @@ struct MyProfileSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
             .onAppear {
@@ -1504,7 +1504,7 @@ struct TargetRoleSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Select your primary target role for tailored interview questions.")
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .padding(.top, 12)
 
                         GlassCard {
@@ -1517,11 +1517,11 @@ struct TargetRoleSheet: View {
                                         HStack {
                                             Text(role)
                                                 .font(.system(size: 16, weight: .medium))
-                                                .foregroundStyle(PrepTheme.darkNavy)
+                                                .foregroundStyle(MockexaTheme.darkNavy)
                                             Spacer()
                                             if targetRole == role {
                                                 Image(systemName: "checkmark.circle.fill")
-                                                    .foregroundStyle(PrepTheme.primary)
+                                                    .foregroundStyle(MockexaTheme.primary)
                                             }
                                         }
                                         .padding(.vertical, 14)
@@ -1530,7 +1530,7 @@ struct TargetRoleSheet: View {
                                     .buttonStyle(.plain)
 
                                     if idx < roles.count - 1 {
-                                        Divider().overlay(PrepTheme.border)
+                                        Divider().overlay(MockexaTheme.border)
                                     }
                                 }
                             }
@@ -1545,7 +1545,7 @@ struct TargetRoleSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                         .font(.body.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
         }
@@ -1567,7 +1567,7 @@ struct TargetCompaniesSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Select target companies to prioritize relevant question patterns.")
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .padding(.top, 12)
 
                         GlassCard {
@@ -1586,14 +1586,14 @@ struct TargetCompaniesSheet: View {
                                             CompanyLogoView(companyName: comp, containerWidth: 42, containerHeight: 42)
                                             Text(comp)
                                                 .font(.system(size: 16, weight: .medium))
-                                                .foregroundStyle(PrepTheme.darkNavy)
+                                                .foregroundStyle(MockexaTheme.darkNavy)
                                             Spacer()
                                             if selectedSet.contains(comp) {
                                                 Image(systemName: "checkmark.square.fill")
-                                                    .foregroundStyle(PrepTheme.primary)
+                                                    .foregroundStyle(MockexaTheme.primary)
                                             } else {
                                                 Image(systemName: "square")
-                                                    .foregroundStyle(PrepTheme.textSecondary)
+                                                    .foregroundStyle(MockexaTheme.textSecondary)
                                             }
                                         }
                                         .padding(.vertical, 14)
@@ -1602,7 +1602,7 @@ struct TargetCompaniesSheet: View {
                                     .buttonStyle(.plain)
 
                                     if idx < allCompanies.count - 1 {
-                                        Divider().overlay(PrepTheme.border)
+                                        Divider().overlay(MockexaTheme.border)
                                     }
                                 }
                             }
@@ -1617,7 +1617,7 @@ struct TargetCompaniesSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                         .font(.body.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
             .onAppear {
@@ -1639,8 +1639,8 @@ struct TargetCompaniesSheet: View {
 struct AccessibilitySettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AppStorage("PREPAI_HAPTICS_ENABLED") private var hapticsEnabled: Bool = true
-    @AppStorage("PREPAI_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
+    @AppStorage("MOCKEXA_HAPTICS_ENABLED") private var hapticsEnabled: Bool = true
+    @AppStorage("MOCKEXA_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
 
     var body: some View {
         NavigationStack {
@@ -1650,20 +1650,20 @@ struct AccessibilitySettingsSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Choose the app appearance and accessibility feedback preferences.")
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .padding(.top, 12)
 
                         GlassCard {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("APPEARANCE")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 ThemeSelectorControl(selectedRaw: $appearanceRaw)
 
                                 Text("Switch between Light and Dark theme.")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                         }
 
@@ -1673,29 +1673,29 @@ struct AccessibilitySettingsSheet: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Reduce Motion")
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundStyle(PrepTheme.darkNavy)
+                                            .foregroundStyle(MockexaTheme.darkNavy)
                                         Text("System Setting: \(reduceMotion ? "Enabled" : "Disabled")")
                                             .font(.caption)
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                     }
                                     Spacer()
                                     Image(systemName: reduceMotion ? "checkmark.seal.fill" : "app.badge.checkmark")
-                                        .foregroundStyle(reduceMotion ? PrepTheme.primary : PrepTheme.textSecondary)
+                                        .foregroundStyle(reduceMotion ? MockexaTheme.primary : MockexaTheme.textSecondary)
                                 }
 
-                                Divider().overlay(PrepTheme.border)
+                                Divider().overlay(MockexaTheme.border)
 
                                 Toggle(isOn: $hapticsEnabled) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Haptic Feedback")
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundStyle(PrepTheme.darkNavy)
+                                            .foregroundStyle(MockexaTheme.darkNavy)
                                         Text("Tactile responses on button selections")
                                             .font(.caption)
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                     }
                                 }
-                                .tint(PrepTheme.primary)
+                                .tint(MockexaTheme.primary)
                             }
                         }
                     }
@@ -1708,7 +1708,7 @@ struct AccessibilitySettingsSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                         .font(.body.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
         }
@@ -1731,7 +1731,7 @@ struct AccountSettingsSheet: View {
                             VStack(alignment: .leading, spacing: 14) {
                                 Text("ACCOUNT INFORMATION")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 if !auth.currentUserEmail.isEmpty {
                                     DetailRow(label: "Email", value: auth.currentUserEmail)
@@ -1751,7 +1751,7 @@ struct AccountSettingsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
             }
         }

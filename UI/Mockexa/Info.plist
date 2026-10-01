@@ -26,11 +26,11 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.prepai.prototype</string>
+			<string>com.mockexa.prototype</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>prepaai</string>
-				<string>com.prepai.prototype</string>
+				<string>mockexa</string>
+				<string>com.mockexa.prototype</string>
 			</array>
 		</dict>
 	</array>
@@ -60,7 +60,7 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>PREPAI_BACKEND_BASE_URL</key>
-	<string>$(PREPAI_BACKEND_BASE_URL)</string>
+	<key>MOCKEXA_BACKEND_BASE_URL</key>
+	<string>$(MOCKEXA_BACKEND_BASE_URL)</string>
 </dict>
 </plist>

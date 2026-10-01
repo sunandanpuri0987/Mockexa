@@ -18,7 +18,7 @@ from app.controllers.technical_controller import AnswerAnalysis, FollowUpDecisio
 from app.providers.llm_backend import LLMBackendError
 from app.providers.model_router import ModelRouter
 
-logger = logging.getLogger("prepai.technical_gemini_backend")
+logger = logging.getLogger("mockexa.technical_gemini_backend")
 
 _VALID_CLASSIFICATIONS = {
     "CORRECT", "MOSTLY_CORRECT", "PARTIALLY_CORRECT", "INCORRECT",

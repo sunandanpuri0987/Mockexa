@@ -2,7 +2,7 @@
 Deterministic adaptive interview orchestration for Mockexa — Technical track.
 
 PROVENANCE: this is a faithful, modularized port of the tested
-`prepai_colab/controller.py` module written and executed in
+`mockexa_colab/controller.py` module written and executed in
 technical_interview_training_colab_REPAIRED.ipynb (cell 5), which passed its
 existing unit test suite (10/10). Logic is unchanged; only the module
 location and imports changed so it can be imported by FastAPI instead of

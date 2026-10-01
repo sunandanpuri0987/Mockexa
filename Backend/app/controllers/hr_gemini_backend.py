@@ -7,7 +7,7 @@ from app.controllers.hr_controller import HREvaluation, HRQuestion, _STYLE_PROFI
 from app.providers.llm_backend import LLMBackendError
 from app.providers.model_router import ModelRouter
 
-logger = logging.getLogger("prepai.hr_gemini_backend")
+logger = logging.getLogger("mockexa.hr_gemini_backend")
 
 
 _SYSTEM_PROMPT = (

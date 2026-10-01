@@ -1,7 +1,7 @@
 # BACKEND_IMPLEMENTATION_PLAN.md (Historical Initial Plan)
 
 > [!NOTE]  
-> **Historical Archive**: This document represents the initial phase implementation plan. For the current, fully implemented architecture (including active GD, Technical, HR, and Supabase Persistence endpoints), see [`MOCKEXA_CURRENT_PROJECT.md`](file:///Users/dhruvsoni/Desktop/PrepAI/MOCKEXA_CURRENT_PROJECT.md) and [`Backend/README.md`](file:///Users/dhruvsoni/Desktop/PrepAI/Backend/README.md).
+> **Historical Archive**: This document represents the initial phase implementation plan. For the current, fully implemented architecture (including active GD, Technical, HR, and Supabase Persistence endpoints), see [`MOCKEXA_CURRENT_PROJECT.md`](../../MOCKEXA_CURRENT_PROJECT.md) and [`Backend/README.md`](../README.md).
 
 Written after `IMPLEMENTATION_AUDIT_BACKEND.md`. Covers what was originally planned/built in Pass 1.
 

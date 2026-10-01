@@ -183,7 +183,7 @@ public final class HighQualityTTSProvider: NSObject, VoiceProvider, AVAudioPlaye
         }
         
         // Target backend /tts endpoint
-        guard let url = URL(string: "\(PrepConfig.baseURL)/tts") else {
+        guard let url = URL(string: "\(MockexaConfig.baseURL)/tts") else {
             print("[VOICE][TTS] status=fallback reason=Invalid_TTS_URL speaker=\(speakerName)")
             systemFallback.speak(text: cleanText, speakerName: speakerName, completion: completion)
             return

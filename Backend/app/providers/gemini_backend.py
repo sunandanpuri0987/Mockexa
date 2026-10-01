@@ -20,7 +20,7 @@ from app.providers.llm_backend import (
 )
 from app.utils.token_budget import estimate_tokens
 
-logger = logging.getLogger("prepai.gemini")
+logger = logging.getLogger("mockexa.gemini")
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 

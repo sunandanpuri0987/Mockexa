@@ -1,11 +1,11 @@
 import Foundation
 
 /// Centralized configuration layer for backend server endpoints and Supabase authentication.
-struct PrepConfig {
+struct MockexaConfig {
     /// Keys used for UserDefaults configuration overrides
-    private static let baseURLKey = "PREPAI_BACKEND_BASE_URL"
-    private static let supabaseURLKey = "PREPAI_SUPABASE_URL"
-    private static let supabaseAnonKeyKey = "PREPAI_SUPABASE_ANON_KEY"
+    private static let baseURLKey = "MOCKEXA_BACKEND_BASE_URL"
+    private static let supabaseURLKey = "MOCKEXA_SUPABASE_URL"
+    private static let supabaseAnonKeyKey = "MOCKEXA_SUPABASE_ANON_KEY"
     
     /// Default backend URL per target environment.
     /// Simulator: Uses loopback 127.0.0.1:8000
@@ -24,8 +24,8 @@ struct PrepConfig {
     /// Gets or sets the active Backend Base URL.
     /// Priority resolution:
     /// 1. Custom user override in UserDefaults (configurable in App Settings)
-    /// 2. Process environment variable (`PREPAI_BACKEND_BASE_URL`)
-    /// 3. Info.plist configuration (`PREPAI_BACKEND_BASE_URL` or `BackendBaseURL`)
+    /// 2. Process environment variable (`MOCKEXA_BACKEND_BASE_URL`)
+    /// 3. Info.plist configuration (`MOCKEXA_BACKEND_BASE_URL` or `BackendBaseURL`)
     /// 4. Target environment default (Simulator: 127.0.0.1, Physical Device: mDNS .local hostname)
     static var baseURL: String {
         get {

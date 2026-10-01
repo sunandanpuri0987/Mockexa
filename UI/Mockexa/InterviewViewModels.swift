@@ -169,7 +169,7 @@ final class TechnicalViewModel: ObservableObject {
     
     private func handleAPIError(_ error: APIError) {
         if case .unauthorized = error {
-            NotificationCenter.default.post(name: Notification.Name("PREPAI_SESSION_EXPIRED"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("MOCKEXA_SESSION_EXPIRED"), object: nil)
         }
         self.errorMessage = error.localizedDescription
     }
@@ -315,7 +315,7 @@ final class HRViewModel: ObservableObject {
     
     private func handleAPIError(_ error: APIError) {
         if case .unauthorized = error {
-            NotificationCenter.default.post(name: Notification.Name("PREPAI_SESSION_EXPIRED"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("MOCKEXA_SESSION_EXPIRED"), object: nil)
         }
         self.errorMessage = error.localizedDescription
     }
@@ -341,7 +341,7 @@ final class GDViewModel: ObservableObject {
     @Published private(set) var didReachTimeLimit: Bool = false
     
     private let apiClient = APIClient.shared
-    private static let avatarColors: [Color] = [PrepTheme.primary, .blue, .pink, .orange, PrepTheme.secondary]
+    private static let avatarColors: [Color] = [MockexaTheme.primary, .blue, .pink, .orange, MockexaTheme.secondary]
     
     private func updateSpeakerIndex(for speakerName: String) {
         let normSpeaker = speakerName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -607,7 +607,7 @@ final class GDViewModel: ObservableObject {
     
     private func handleAPIError(_ error: APIError) {
         if case .unauthorized = error {
-            NotificationCenter.default.post(name: Notification.Name("PREPAI_SESSION_EXPIRED"), object: nil)
+            NotificationCenter.default.post(name: Notification.Name("MOCKEXA_SESSION_EXPIRED"), object: nil)
         }
         switch error {
         case .serverError(let code, let msg):

@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B10000000000000000000001 /* PrepAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* PrepAIApp.swift */; };
+		B10000000000000000000001 /* MockexaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* MockexaApp.swift */; };
 		B10000000000000000000002 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* DesignSystem.swift */; };
 		B10000000000000000000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* Models.swift */; };
 		B10000000000000000000004 /* RootAndOnboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* RootAndOnboarding.swift */; };
@@ -32,14 +32,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A10000000000000000000001 /* PrepAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrepAIApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000001 /* MockexaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockexaApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		A10000000000000000000004 /* RootAndOnboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootAndOnboarding.swift; sourceTree = "<group>"; };
 		A10000000000000000000005 /* MainScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreens.swift; sourceTree = "<group>"; };
 		A10000000000000000000006 /* PracticeFlows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeFlows.swift; sourceTree = "<group>"; };
 		A10000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A10000000000000000000008 /* PrepAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrepAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000008 /* Mockexa.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mockexa.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000011 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		A10000000000000000000012 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		A10000000000000000000013 /* APISchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISchemas.swift; sourceTree = "<group>"; };
@@ -72,15 +72,15 @@
 		C10000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
-				C10000000000000000000002 /* PrepAI */,
+				C10000000000000000000002 /* Mockexa */,
 				C10000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		C10000000000000000000002 /* PrepAI */ = {
+		C10000000000000000000002 /* Mockexa */ = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000001 /* PrepAIApp.swift */,
+				A10000000000000000000001 /* MockexaApp.swift */,
 				A10000000000000000000002 /* DesignSystem.swift */,
 				A10000000000000000000003 /* Models.swift */,
 				A10000000000000000000004 /* RootAndOnboarding.swift */,
@@ -104,13 +104,13 @@
 				A10000000000000000000025 /* Assets.xcassets */,
 				A10000000000000000000026 /* FriendsGD.swift */,
 			);
-			path = PrepAI;
+			path = Mockexa;
 			sourceTree = "<group>";
 		};
 		C10000000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000008 /* PrepAI.app */,
+				A10000000000000000000008 /* Mockexa.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,9 +118,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E10000000000000000000001 /* PrepAI */ = {
+		E10000000000000000000001 /* Mockexa */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F10000000000000000000002 /* Build configuration list for PBXNativeTarget "PrepAI" */;
+			buildConfigurationList = F10000000000000000000002 /* Build configuration list for PBXNativeTarget "Mockexa" */;
 			buildPhases = (
 				D10000000000000000000001 /* Sources */,
 				D10000000000000000000002 /* Frameworks */,
@@ -130,9 +130,9 @@
 			);
 			dependencies = (
 			);
-			name = PrepAI;
-			productName = PrepAI;
-			productReference = A10000000000000000000008 /* PrepAI.app */;
+			name = Mockexa;
+			productName = Mockexa;
+			productReference = A10000000000000000000008 /* Mockexa.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -150,7 +150,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F10000000000000000000001 /* Build configuration list for PBXProject "PrepAI" */;
+			buildConfigurationList = F10000000000000000000001 /* Build configuration list for PBXProject "Mockexa" */;
 			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -163,7 +163,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E10000000000000000000001 /* PrepAI */,
+				E10000000000000000000001 /* Mockexa */,
 			);
 		};
 /* End PBXProject section */
@@ -184,7 +184,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B10000000000000000000001 /* PrepAIApp.swift in Sources */,
+				B10000000000000000000001 /* MockexaApp.swift in Sources */,
 				B10000000000000000000002 /* DesignSystem.swift in Sources */,
 				B10000000000000000000003 /* Models.swift in Sources */,
 				B10000000000000000000004 /* RootAndOnboarding.swift in Sources */,
@@ -239,9 +239,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R897UQM93C;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PrepAI/Info.plist;
+				INFOPLIST_FILE = Mockexa/Info.plist;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.prepai.prototype;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mockexa.prototype;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;
@@ -257,9 +257,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R897UQM93C;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PrepAI/Info.plist;
+				INFOPLIST_FILE = Mockexa/Info.plist;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.prepai.prototype;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mockexa.prototype;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -271,7 +271,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F10000000000000000000001 /* Build configuration list for PBXProject "PrepAI" */ = {
+		F10000000000000000000001 /* Build configuration list for PBXProject "Mockexa" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F20000000000000000000001 /* Debug */,
@@ -280,7 +280,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F10000000000000000000002 /* Build configuration list for PBXNativeTarget "PrepAI" */ = {
+		F10000000000000000000002 /* Build configuration list for PBXNativeTarget "Mockexa" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F20000000000000000000003 /* Debug */,

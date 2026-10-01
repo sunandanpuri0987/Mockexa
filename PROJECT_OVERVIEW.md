@@ -1,7 +1,7 @@
 # Mockexa — Complete Project Overview & Technical Architecture
 
 > **Document Type**: Comprehensive System Inspection, Architecture Blueprint & Feature Matrix  
-> **Target Project**: Mockexa (Internal/Legacy Identifiers: `PrepAI`, `UI/PrepAI`, `PrepAI.xcodeproj`)  
+> **Target Project**: Mockexa
 > **Status**: Verified Against Full Codebase, Pytest (150/150 Passed), and Native Xcode Build (`BUILD SUCCEEDED`)
 > **Last Inspected**: October 1, 2026
 
@@ -26,8 +26,8 @@ The platform provides a realistic, multimodal practice environment spanning:
 
 | Component | Target Runtime / Framework | Verification Command | Verified Status |
 | :--- | :--- | :--- | :--- |
-| **Backend Test Suite** | Python 3.12 / Pytest / FastAPI | `source .venv/bin/activate && pytest` | **125 Passed, 0 Failed** (5.34s) |
-| **iOS Native Build** | Swift 5 / iOS 17.0+ / Xcode | `xcodebuild -project UI/PrepAI.xcodeproj -scheme PrepAI -destination 'generic/platform=iOS Simulator' clean build` | **`** BUILD SUCCEEDED **`** |
+| **Backend Test Suite** | Python 3.12 / Pytest / FastAPI | `source .venv/bin/activate && pytest` | **150 Passed, 0 Failed** |
+| **iOS Native Build** | Swift 5 / iOS 17.0+ / Xcode | `xcodebuild -project UI/Mockexa.xcodeproj -scheme Mockexa -destination 'generic/platform=iOS Simulator' clean build` | **`** BUILD SUCCEEDED **`** |
 | **LLM Provider** | Google Gemini Cloud API | `gemini_backend.py`, `model_router.py` | Operational with automatic retry and fallback routing |
 | **Authentication** | Supabase REST + JWT | `auth.py`, `AuthManager.swift` | Operational (HS256 local / RS256 JWKS remote) |
 
@@ -38,7 +38,7 @@ The platform provides a realistic, multimodal practice environment spanning:
 ```mermaid
 graph TB
     subgraph Client ["iOS Native Client (SwiftUI / Combine / iOS 17+)"]
-        UI_Main["App Entry & Tab Bar<br/>(PrepAIApp / MainScreens)"]
+        UI_Main["App Entry & Tab Bar<br/>(MockexaApp / MainScreens)"]
         UI_Tech["Technical & HR Practice<br/>(PracticeFlows / InterviewViewModels)"]
         UI_GD["AI Panel & Friends GD<br/>(PanelView / FriendsGD)"]
         UI_Company["Company Question Bank<br/>(CompanyQuestionBank)"]
@@ -90,7 +90,7 @@ graph TB
 ### 4.1. Technical Interview System
 - **Source Files**: 
   - Backend: [`Backend/app/routers/technical.py`](Backend/app/routers/technical.py), [`Backend/app/controllers/technical_controller.py`](Backend/app/controllers/technical_controller.py), [`Backend/app/controllers/technical_gemini_backend.py`](Backend/app/controllers/technical_gemini_backend.py)
-  - iOS: [`UI/PrepAI/PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift), [`UI/PrepAI/InterviewViewModels.swift`](UI/PrepAI/InterviewViewModels.swift)
+  - iOS: [`UI/Mockexa/PracticeFlows.swift`](UI/Mockexa/PracticeFlows.swift), [`UI/Mockexa/InterviewViewModels.swift`](UI/Mockexa/InterviewViewModels.swift)
 - **7 Selectable Core Domains**:
   1. Data Structures
   2. Algorithms
@@ -110,7 +110,7 @@ graph TB
 ### 4.2. Behavioral HR Interview System
 - **Source Files**:
   - Backend: [`Backend/app/routers/hr.py`](Backend/app/routers/hr.py), [`Backend/app/controllers/hr_controller.py`](Backend/app/controllers/hr_controller.py), [`Backend/app/controllers/hr_gemini_backend.py`](Backend/app/controllers/hr_gemini_backend.py)
-  - iOS: [`UI/PrepAI/PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift), [`UI/PrepAI/InterviewViewModels.swift`](UI/PrepAI/InterviewViewModels.swift)
+  - iOS: [`UI/Mockexa/PracticeFlows.swift`](UI/Mockexa/PracticeFlows.swift), [`UI/Mockexa/InterviewViewModels.swift`](UI/Mockexa/InterviewViewModels.swift)
 - **Framework**: Guided STAR (Situation, Task, Action, Result) methodology.
 - **7 Evaluation Dimensions**:
   1. **Clarity**: Structural coherence and conciseness.
@@ -124,7 +124,7 @@ graph TB
 ### 4.3. Multi-Agent Group Discussion (GD) Engine
 - **Source Files**:
   - Backend: [`Backend/app/routers/gd.py`](Backend/app/routers/gd.py), [`Backend/app/controllers/gd_controller.py`](Backend/app/controllers/gd_controller.py)
-  - iOS: [`UI/PrepAI/PracticeFlows.swift`](UI/PrepAI/PracticeFlows.swift) (`PanelView`), [`UI/PrepAI/InterviewViewModels.swift`](UI/PrepAI/InterviewViewModels.swift)
+  - iOS: [`UI/Mockexa/PracticeFlows.swift`](UI/Mockexa/PracticeFlows.swift) (`PanelView`), [`UI/Mockexa/InterviewViewModels.swift`](UI/Mockexa/InterviewViewModels.swift)
 - **AI Participant Personas**:
   - **Dr. Maya Shah**: Clinical Statistician (analytical, cautious, data/evidence-driven).
   - **Jordan Lee**: Public-Interest Ethicist (empathetic, human-centric, societal impact focus).
@@ -139,7 +139,7 @@ graph TB
 ### 4.4. Friends Group Discussion & Social Multiplayer
 - **Source Files**:
   - Backend: [`Backend/app/controllers/gd_friends.py`](Backend/app/controllers/gd_friends.py)
-  - iOS: [`UI/PrepAI/FriendsGD.swift`](UI/PrepAI/FriendsGD.swift)
+  - iOS: [`UI/Mockexa/FriendsGD.swift`](UI/Mockexa/FriendsGD.swift)
 - **Multiplayer Features**:
   - Room Management: Create private rooms with custom topics, or join via 6-character room codes.
   - Matchmaking Queue: Automated matchmaking pool pairing candidates by topic and duration.
@@ -153,7 +153,7 @@ graph TB
 ### 4.5. Company-Specific Question Bank
 - **Source Files**:
   - Backend: [`Backend/app/routers/company.py`](Backend/app/routers/company.py), [`Backend/app/controllers/company_controller.py`](Backend/app/controllers/company_controller.py), [`Backend/app/data/company_questions.py`](Backend/app/data/company_questions.py)
-  - iOS: [`UI/PrepAI/CompanyQuestionBank.swift`](UI/PrepAI/CompanyQuestionBank.swift)
+  - iOS: [`UI/Mockexa/CompanyQuestionBank.swift`](UI/Mockexa/CompanyQuestionBank.swift)
 - **Features**:
   - Comprehensive question catalogs categorized by employer (Google, Amazon, Microsoft, Meta, etc.).
   - Filters by category (`DSA`, `Technical`, `System Design`, `Behavioral`) and job role.
@@ -162,8 +162,8 @@ graph TB
 
 ### 4.6. AI Resume Builder & ATS Score Analyzer
 - **Source Files**:
-  - iOS: [`UI/PrepAI/ResumeModels.swift`](UI/PrepAI/ResumeModels.swift), [`UI/PrepAI/ResumeService.swift`](UI/PrepAI/ResumeService.swift), [`UI/PrepAI/ResumeViewModel.swift`](UI/PrepAI/ResumeViewModel.swift), [`UI/PrepAI/ResumeViews.swift`](UI/PrepAI/ResumeViews.swift)
-  - Exporters: [`UI/PrepAI/PDFExportService.swift`](UI/PrepAI/PDFExportService.swift), [`UI/PrepAI/DOCXExportService.swift`](UI/PrepAI/DOCXExportService.swift)
+  - iOS: [`UI/Mockexa/ResumeModels.swift`](UI/Mockexa/ResumeModels.swift), [`UI/Mockexa/ResumeService.swift`](UI/Mockexa/ResumeService.swift), [`UI/Mockexa/ResumeViewModel.swift`](UI/Mockexa/ResumeViewModel.swift), [`UI/Mockexa/ResumeViews.swift`](UI/Mockexa/ResumeViews.swift)
+  - Exporters: [`UI/Mockexa/PDFExportService.swift`](UI/Mockexa/PDFExportService.swift), [`UI/Mockexa/DOCXExportService.swift`](UI/Mockexa/DOCXExportService.swift)
 - **Capabilities**:
   - **ATS Compatibility Scoring**: Real-time evaluation calculating section completeness, bullet action verb strength, quantification percentage, and structural readability.
   - **AI Bullet Enhancer**: Refactors weak resume bullets into high-impact statements using active verbs and metric placeholders, explaining *why* the revision is stronger.
@@ -174,7 +174,7 @@ graph TB
 ### 4.7. Full-Duplex Voice Engine & Neural TTS
 - **Source Files**:
   - Backend: [`Backend/app/routers/tts.py`](Backend/app/routers/tts.py)
-  - iOS: [`UI/PrepAI/VoiceFoundation.swift`](UI/PrepAI/VoiceFoundation.swift)
+  - iOS: [`UI/Mockexa/VoiceFoundation.swift`](UI/Mockexa/VoiceFoundation.swift)
 - **Features**:
   - **Speech-to-Text (STT)**: Apple `SFSpeechRecognizer` with real-time audio power metering, voice activity detection, and automatic silence commit.
   - **Dual TTS System**:
@@ -185,7 +185,7 @@ graph TB
     - LRU audio cache in backend memory avoiding redundant synthesis charges and network delays.
 
 ### 4.8. Content Moderation & Language Validation
-- **Source File**: [`UI/PrepAI/LanguageValidator.swift`](UI/PrepAI/LanguageValidator.swift)
+- **Source File**: [`UI/Mockexa/LanguageValidator.swift`](UI/Mockexa/LanguageValidator.swift)
 - **Validation Pipeline**:
   - Devanagari script detection to reject non-Latin Hindi text in professional GD practice.
   - Transliterated Hinglish keyword scoring with ratio thresholds.
@@ -197,9 +197,9 @@ graph TB
 
 - **Authentication Providers**: Supabase Auth REST API.
   - Email & Password with secure session tokens.
-  - Google OAuth with PKCE using `ASWebAuthenticationSession` (`prepaai://auth/callback`).
+  - Google OAuth with PKCE using `ASWebAuthenticationSession` (`mockexa://auth/callback`).
   - Apple Sign-In native authorization using `ASAuthorizationAppleIDProvider`.
-- **Token Storage**: Encrypted iOS Keychain via `PREPAI_ACTIVE_SESSION`.
+- **Token Storage**: Encrypted iOS Keychain via `MOCKEXA_ACTIVE_SESSION`.
 - **Backend Verification**: Dual JWT verification (`Backend/app/auth.py`):
   - Local mode: Fast HMAC SHA-256 (`HS256`) secret verification.
   - Production mode: Asymmetric RSA (`RS256`) public key decoding via Supabase JWKS endpoints.
@@ -210,7 +210,7 @@ graph TB
 ## 6. Project Structure Overview
 
 ```
-PrepAI/
+Mockexa/
 ├── Backend/
 │   ├── app/
 │   │   ├── controllers/
@@ -243,13 +243,13 @@ PrepAI/
 │   │   ├── config.py                      # Application environment settings
 │   │   ├── main.py                        # FastAPI application entry point
 │   │   └── repository.py                  # Supabase database operations layer
-│   ├── tests/                             # Pytest test suite (125 tests)
+│   ├── tests/                             # Pytest test suite (150 tests)
 │   ├── requirements.txt                   # Backend dependencies
 │   └── seed_questions_merged.sql          # Question bank database seeds
 │
 ├── UI/
-│   └── PrepAI/
-│       ├── PrepAIApp.swift                # Native iOS @main entry point
+│   └── Mockexa/
+│       ├── MockexaApp.swift                # Native iOS @main entry point
 │       ├── RootAndOnboarding.swift        # Welcome, Auth & Onboarding wizards
 │       ├── MainScreens.swift              # MainTabView, Dashboard & History views
 │       ├── PracticeFlows.swift            # Technical, HR & GD practice screens
@@ -267,7 +267,7 @@ PrepAI/
 │       ├── AuthManager.swift              # Supabase Auth & Keychain session manager
 │       ├── APIClient.swift                # URLSession HTTP REST client
 │       ├── APISchemas.swift               # Swift Decodable/Encodable DTOs
-│       ├── DesignSystem.swift             # PrepTheme palette, GlassCard & 3D tilt
+│       ├── DesignSystem.swift             # MockexaTheme palette, GlassCard & 3D tilt
 │       └── Config.swift                   # Client runtime configurations
 │
 ├── MOCKEXA_CURRENT_PROJECT.md             # Detailed engineering audit log
@@ -296,7 +296,7 @@ pytest -v
 ### Building iOS Project
 ```bash
 cd UI
-xcodebuild -project PrepAI.xcodeproj -scheme PrepAI -destination 'generic/platform=iOS Simulator' clean build CODE_SIGNING_ALLOWED=NO
+xcodebuild -project Mockexa.xcodeproj -scheme Mockexa -destination 'generic/platform=iOS Simulator' clean build CODE_SIGNING_ALLOWED=NO
 ```
 
 ---
@@ -306,4 +306,4 @@ xcodebuild -project PrepAI.xcodeproj -scheme PrepAI -destination 'generic/platfo
 1. **Deterministic Fallbacks**: Every AI-driven feature (company practice, resume improvement, GD turns) includes resilient local heuristic fallback paths to guarantee zero downtime during network or quota constraints.
 2. **True Multimodality**: Combines tactile interactive touch gestures, real-time audio wave analysis, neural voice synthesis, and dynamic code/text editors.
 3. **Strict Security Posture**: Token isolation, row-level security (RLS), and per-session thread locking prevent race conditions and cross-tenant data leakage.
-4. **Clean Codebase**: 100% test pass rate across 125 backend integration/unit tests and clean native Swift compilation on iOS 17+.
+4. **Clean Codebase**: 100% test pass rate across 150 backend integration/unit tests and clean native Swift compilation on iOS 17+.

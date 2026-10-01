@@ -138,7 +138,7 @@ struct FriendsGDRoomView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     if let error = vm.errorMessage {
-                        Text(error).font(.caption).foregroundStyle(PrepTheme.destructive)
+                        Text(error).font(.caption).foregroundStyle(MockexaTheme.destructive)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if let room = vm.room {
@@ -173,15 +173,15 @@ struct FriendsGDRoomView: View {
     private var matchmakingCard: some View {
         GlassCard {
             VStack(spacing: 18) {
-                ProgressView().scaleEffect(1.3).tint(PrepTheme.primary)
+                ProgressView().scaleEffect(1.3).tint(MockexaTheme.primary)
                 Text("Finding your group…").font(.title3.bold())
                 Text("\(vm.playersFound)/4 ready • Starts automatically at 4 • Room stays open up to 6")
-                    .font(.subheadline).foregroundStyle(PrepTheme.textSecondary).multilineTextAlignment(.center)
-                Text("A random topic will be revealed after matching.").font(.caption).foregroundStyle(PrepTheme.primary)
+                    .font(.subheadline).foregroundStyle(MockexaTheme.textSecondary).multilineTextAlignment(.center)
+                Text("A random topic will be revealed after matching.").font(.caption).foregroundStyle(MockexaTheme.primary)
                 Button("Cancel Matchmaking") {
                     guard let token = auth.accessToken else { return }
                     Task { await vm.cancelMatchmaking(token: token); dismiss() }
-                }.foregroundStyle(PrepTheme.destructive)
+                }.foregroundStyle(MockexaTheme.destructive)
             }.frame(maxWidth: .infinity).padding(.vertical, 28)
         }
     }
@@ -191,7 +191,7 @@ struct FriendsGDRoomView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Label(room.status.uppercased(), systemImage: room.status == "live" ? "dot.radiowaves.left.and.right" : "person.3.fill")
-                        .font(.caption.bold()).foregroundStyle(PrepTheme.primary)
+                        .font(.caption.bold()).foregroundStyle(MockexaTheme.primary)
                     Spacer()
                     if intent != .matchmaking {
                         Button { UIPasteboard.general.string = room.roomCode; Haptics.success() } label: {
@@ -199,7 +199,7 @@ struct FriendsGDRoomView: View {
                         }
                     }
                 }
-                Text(room.topic).font(.title3.bold()).foregroundStyle(PrepTheme.darkNavy)
+                Text(room.topic).font(.title3.bold()).foregroundStyle(MockexaTheme.darkNavy)
                 HStack {
                     Label("\(room.participants.count)/\(room.maxParticipants)", systemImage: "person.2.fill")
                     Label(
@@ -208,7 +208,7 @@ struct FriendsGDRoomView: View {
                     )
                     Spacer()
                     if let wallet = vm.wallet { Label("\(wallet.coins)", systemImage: "circle.hexagongrid.fill") }
-                }.font(.caption.bold()).foregroundStyle(PrepTheme.textSecondary)
+                }.font(.caption.bold()).foregroundStyle(MockexaTheme.textSecondary)
             }
         }
     }
@@ -216,18 +216,18 @@ struct FriendsGDRoomView: View {
     private func leaderboard(_ room: FriendsGDRoomResponse) -> some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 10) {
-                Text(room.status == "lobby" ? "PARTICIPANTS" : "LIVE LEADERBOARD").font(.caption.bold()).foregroundStyle(PrepTheme.primary)
+                Text(room.status == "lobby" ? "PARTICIPANTS" : "LIVE LEADERBOARD").font(.caption.bold()).foregroundStyle(MockexaTheme.primary)
                 ForEach(Array(room.participants.enumerated()), id: \.element.id) { index, member in
                     HStack(spacing: 10) {
                         Text("\(index + 1)").font(.caption.bold()).frame(width: 20)
-                        AIAvatar(initials: String(member.name.prefix(1)).uppercased(), color: PrepTheme.primary)
+                        AIAvatar(initials: String(member.name.prefix(1)).uppercased(), color: MockexaTheme.primary)
                             .scaleEffect(0.72).frame(width: 32, height: 32)
                         VStack(alignment: .leading) {
                             Text(member.name + (member.isHost ? " • Host" : "")).font(.subheadline.bold())
-                            Text(member.ready ? "Ready" : "Not ready").font(.caption2).foregroundStyle(member.ready ? PrepTheme.success : PrepTheme.textSecondary)
+                            Text(member.ready ? "Ready" : "Not ready").font(.caption2).foregroundStyle(member.ready ? MockexaTheme.success : MockexaTheme.textSecondary)
                         }
                         Spacer()
-                        if room.status != "lobby" { Text("\(member.points) pts").font(.subheadline.bold()).foregroundStyle(PrepTheme.primary) }
+                        if room.status != "lobby" { Text("\(member.points) pts").font(.subheadline.bold()).foregroundStyle(MockexaTheme.primary) }
                     }
                 }
             }
@@ -237,14 +237,14 @@ struct FriendsGDRoomView: View {
     private func lobby(_ room: FriendsGDRoomResponse) -> some View {
         VStack(spacing: 12) {
             Text("Minimum \(room.minimumParticipants) participants required. Share the code with friends.")
-                .font(.subheadline).foregroundStyle(PrepTheme.textSecondary).multilineTextAlignment(.center)
+                .font(.subheadline).foregroundStyle(MockexaTheme.textSecondary).multilineTextAlignment(.center)
             if !isHost {
                 Button("Toggle Ready") { guard let token = auth.accessToken else { return }; Task { await vm.toggleReady(token: token) } }
-                    .buttonStyle(.borderedProminent).tint(PrepTheme.primary)
+                    .buttonStyle(.borderedProminent).tint(MockexaTheme.primary)
             } else {
                 Button("Start Discussion") { guard let token = auth.accessToken else { return }; Task { await vm.start(token: token) } }
-                    .buttonStyle(.borderedProminent).tint(PrepTheme.primary).disabled(!room.canStart)
-                if !room.canStart { Text("Waiting for enough ready participants").font(.caption).foregroundStyle(PrepTheme.textSecondary) }
+                    .buttonStyle(.borderedProminent).tint(MockexaTheme.primary).disabled(!room.canStart)
+                if !room.canStart { Text("Waiting for enough ready participants").font(.caption).foregroundStyle(MockexaTheme.textSecondary) }
             }
         }
     }
@@ -256,24 +256,24 @@ struct FriendsGDRoomView: View {
                     VStack(alignment: .leading, spacing: 7) {
                         Label("CLOSING PHASE", systemImage: "flag.checkered")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.warning)
+                            .foregroundStyle(MockexaTheme.warning)
                         Text("One member should conclude now: summarise common ground, the remaining trade-off, and the group's practical recommendation.")
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
             if room.transcript.isEmpty {
                 GlassCard { Text("Start with a clear opening position. Evidence, reasoning, collaboration and solutions earn more points.")
-                    .font(.subheadline).foregroundStyle(PrepTheme.textSecondary) }
+                    .font(.subheadline).foregroundStyle(MockexaTheme.textSecondary) }
             } else {
                 ForEach(room.transcript) { item in
                     GlassCard {
                         VStack(alignment: .leading, spacing: 7) {
-                            HStack { Text(item.speaker).font(.subheadline.bold()); Spacer(); Text("+\(item.score) pts  +\(item.coins) coins").font(.caption.bold()).foregroundStyle(PrepTheme.primary) }
+                            HStack { Text(item.speaker).font(.subheadline.bold()); Spacer(); Text("+\(item.score) pts  +\(item.coins) coins").font(.caption.bold()).foregroundStyle(MockexaTheme.primary) }
                             Text(item.text).font(.subheadline)
-                            if !item.signals.isEmpty { Text(item.signals.map { $0.capitalized }.joined(separator: " • ")).font(.caption2).foregroundStyle(PrepTheme.success) }
+                            if !item.signals.isEmpty { Text(item.signals.map { $0.capitalized }.joined(separator: " • ")).font(.caption2).foregroundStyle(MockexaTheme.success) }
                         }
                     }
                 }
@@ -281,25 +281,25 @@ struct FriendsGDRoomView: View {
             if room.status == "live" {
                 HStack(spacing: 10) {
                     TextField("Add your point…", text: $message, axis: .vertical).focused($messageFocused)
-                        .padding(12).background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .padding(12).background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
                     Button {
                         Task {
                             if voice.currentState == .listening { voice.stopListening() }
                             else if await voice.requestPermissions() { try? voice.startListening() }
                         }
                     } label: { Image(systemName: voice.currentState == .listening ? "stop.fill" : "mic.fill") }
-                        .buttonStyle(.bordered).tint(PrepTheme.primary)
+                        .buttonStyle(.bordered).tint(MockexaTheme.primary)
                     Button { submit() } label: { Image(systemName: "paperplane.fill") }
-                        .buttonStyle(.borderedProminent).tint(PrepTheme.primary)
+                        .buttonStyle(.borderedProminent).tint(MockexaTheme.primary)
                         .disabled(message.trimmingCharacters(in: .whitespaces).count < 3 || vm.isContributing)
                 }
-                if voice.currentState == .listening { Text(voice.recognizedText.isEmpty ? "Listening…" : voice.recognizedText).font(.caption).foregroundStyle(PrepTheme.primary) }
+                if voice.currentState == .listening { Text(voice.recognizedText.isEmpty ? "Listening…" : voice.recognizedText).font(.caption).foregroundStyle(MockexaTheme.primary) }
                 if isHost {
                     Button("End & Award Rankings") { guard let token = auth.accessToken else { return }; Task { await vm.finish(token: token) } }
-                        .foregroundStyle(PrepTheme.destructive).padding(.top, 8)
+                        .foregroundStyle(MockexaTheme.destructive).padding(.top, 8)
                 }
             } else {
-                Text("Discussion complete • Ranking bonuses awarded").font(.headline).foregroundStyle(PrepTheme.success)
+                Text("Discussion complete • Ranking bonuses awarded").font(.headline).foregroundStyle(MockexaTheme.success)
             }
         }
     }
@@ -338,28 +338,28 @@ struct RewardsCenterView: View {
                     GlassCard {
                         HStack { rewardStat("Level", "\(wallet.level)", "star.fill"); rewardStat("XP", "\(wallet.xp)", "bolt.fill"); rewardStat("Coins", "\(wallet.coins)", "circle.hexagongrid.fill") }
                     }
-                    Text("Use rewards across GD, Technical, HR and Company practice.").font(.subheadline).foregroundStyle(PrepTheme.textSecondary)
+                    Text("Use rewards across GD, Technical, HR and Company practice.").font(.subheadline).foregroundStyle(MockexaTheme.textSecondary)
                     ForEach(wallet.catalog) { reward in
                         GlassCard {
                             HStack(spacing: 14) {
-                                Image(systemName: reward.icon).font(.title2).foregroundStyle(PrepTheme.primary).frame(width: 36)
+                                Image(systemName: reward.icon).font(.title2).foregroundStyle(MockexaTheme.primary).frame(width: 36)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(reward.title).font(.headline)
-                                    Text(reward.description).font(.caption).foregroundStyle(PrepTheme.textSecondary)
-                                    if let owned = wallet.inventory[reward.id], owned > 0 { Text("Owned: \(owned)").font(.caption.bold()).foregroundStyle(PrepTheme.success) }
+                                    Text(reward.description).font(.caption).foregroundStyle(MockexaTheme.textSecondary)
+                                    if let owned = wallet.inventory[reward.id], owned > 0 { Text("Owned: \(owned)").font(.caption.bold()).foregroundStyle(MockexaTheme.success) }
                                 }
                                 Spacer()
                                 Button("\(reward.cost)") { guard let token = auth.accessToken else { return }; Task { await vm.redeem(reward.id, token: token) } }
-                                    .buttonStyle(.borderedProminent).tint(PrepTheme.primary).disabled(wallet.coins < reward.cost)
+                                    .buttonStyle(.borderedProminent).tint(MockexaTheme.primary).disabled(wallet.coins < reward.cost)
                             }
                         }
                     }
                 } else { ProgressView() }
-                if let error = vm.error { Text(error).font(.caption).foregroundStyle(PrepTheme.destructive) }
+                if let error = vm.error { Text(error).font(.caption).foregroundStyle(MockexaTheme.destructive) }
             }
         }.task { if let token = auth.accessToken { await vm.load(token: token) } }
     }
     private func rewardStat(_ label: String, _ value: String, _ icon: String) -> some View {
-        VStack(spacing: 5) { Image(systemName: icon).foregroundStyle(PrepTheme.primary); Text(value).font(.title3.bold()); Text(label).font(.caption) }.frame(maxWidth: .infinity)
+        VStack(spacing: 5) { Image(systemName: icon).foregroundStyle(MockexaTheme.primary); Text(value).font(.title3.bold()); Text(label).font(.caption) }.frame(maxWidth: .infinity)
     }
 }

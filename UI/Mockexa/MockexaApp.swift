@@ -2,10 +2,10 @@ import SwiftUI
 import UIKit
 
 @main
-struct PrepAIApp: App {
+struct MockexaApp: App {
     @StateObject private var app = AppModel()
     @StateObject private var auth = AuthManager()
-    @AppStorage("PREPAI_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
+    @AppStorage("MOCKEXA_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
 
     private var selectedAppearance: AppAppearance {
         AppAppearance(rawValue: appearanceRaw) ?? .light
@@ -128,7 +128,7 @@ enum AppTab: String, CaseIterable {
 
 enum Haptics {
     private static var enabled: Bool {
-        UserDefaults.standard.object(forKey: "PREPAI_HAPTICS_ENABLED") as? Bool ?? true
+        UserDefaults.standard.object(forKey: "MOCKEXA_HAPTICS_ENABLED") as? Bool ?? true
     }
     static func selection() {
         guard enabled else { return }

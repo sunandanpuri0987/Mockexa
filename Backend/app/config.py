@@ -85,7 +85,7 @@ class Settings(BaseModel):
     feedback_max_output_tokens: int = _int_env("FEEDBACK_MAX_OUTPUT_TOKENS", 400)
 
     # --- App ---
-    environment: str = os.environ.get("PREPAI_ENV", "development")
+    environment: str = os.environ.get("MOCKEXA_ENV", "development")
     host: str = os.environ.get("HOST", "0.0.0.0")
     port: int = _int_env("PORT", 8000)
     cors_origins: str = os.environ.get("CORS_ORIGINS", "*")

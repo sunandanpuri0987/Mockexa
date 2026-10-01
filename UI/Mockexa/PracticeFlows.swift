@@ -68,10 +68,10 @@ struct PracticeSetupView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(setupTitle)
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text(setupSubtitle)
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 .padding(.top, 8)
 
@@ -82,18 +82,18 @@ struct PracticeSetupView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Label("Use Selected Resume (\(active.name))", systemImage: "doc.text.fill")
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                             Text(active.jobDescription.isEmpty
                                  ? "Interview tailored to \(active.name)."
                                  : "Interview tailored to \(active.name) & targeted JD.")
                                 .font(.caption)
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         }
                     }
-                    .tint(PrepTheme.primary)
+                    .tint(MockexaTheme.primary)
                     .padding(14)
-                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(useActiveResume ? PrepTheme.primary : PrepTheme.border))
+                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(useActiveResume ? MockexaTheme.primary : MockexaTheme.border))
                 }
 
                 setupSummary
@@ -106,8 +106,8 @@ struct PracticeSetupView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
-                        .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
-                        .shadow(color: PrepTheme.primary.opacity(0.22), radius: 12, y: 5)
+                        .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
+                        .shadow(color: MockexaTheme.primary.opacity(0.22), radius: 12, y: 5)
                 }
                 .disabled(gdStartDisabled)
                 .opacity(gdStartDisabled ? 0.5 : 1)
@@ -146,13 +146,13 @@ struct PracticeSetupView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Label("YOUR SETUP", systemImage: "checklist")
                     .font(.caption.bold())
-                    .foregroundStyle(PrepTheme.primary)
+                    .foregroundStyle(MockexaTheme.primary)
                 Text(summaryTitle)
                     .font(.subheadline.bold())
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                 Text(summaryDetail)
                     .font(.caption)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -218,8 +218,8 @@ struct PracticeSetupView: View {
                         .autocorrectionDisabled()
                         .onChange(of: roomCode) { _, value in roomCode = String(value.uppercased().filter { $0.isLetter || $0.isNumber }.prefix(6)) }
                         .padding(14)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.border))
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.border))
                 }
             }
             if gdExperience != "friends" || friendsAction == "create" {
@@ -227,7 +227,7 @@ struct PracticeSetupView: View {
                     GDTopicSelector(topic: $selection, topics: Self.gdTopics, onRandom: chooseRandomGDTopic)
                 } else {
                     Text("A random interview-style topic is revealed when 4 users are matched. Up to 6 can join.")
-                        .font(.subheadline).foregroundStyle(PrepTheme.textSecondary)
+                        .font(.subheadline).foregroundStyle(MockexaTheme.textSecondary)
                 }
                 OptionGroup(title: "Duration", values: ["5 min", "10 min", "15 min"], selection: $duration)
                 GDPanelModePicker(selection: $company)
@@ -237,7 +237,7 @@ struct PracticeSetupView: View {
                          ? "You will give the opening view. The panel will respond to your exact point."
                          : "The first panelist will introduce themselves, frame the topic, and open the discussion.")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
             }
         } else if kind == .technical {
@@ -304,12 +304,12 @@ private struct GDExperiencePicker: View {
                         Image(systemName: item.2).frame(width: 28)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(item.1).font(.subheadline.bold())
-                            Text(item.3).font(.caption).foregroundStyle(selection == item.0 ? .white.opacity(0.85) : PrepTheme.textSecondary)
+                            Text(item.3).font(.caption).foregroundStyle(selection == item.0 ? .white.opacity(0.85) : MockexaTheme.textSecondary)
                         }
                         Spacer(); Image(systemName: selection == item.0 ? "checkmark.circle.fill" : "circle")
                     }
-                    .padding(14).foregroundStyle(selection == item.0 ? .white : PrepTheme.darkNavy)
-                    .background(selection == item.0 ? PrepTheme.primary : PrepTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+                    .padding(14).foregroundStyle(selection == item.0 ? .white : MockexaTheme.darkNavy)
+                    .background(selection == item.0 ? MockexaTheme.primary : MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain)
             }
         }
@@ -340,19 +340,19 @@ private struct GDTopicSelector: View {
             HStack {
                 Text("Discussion Topic")
                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                 Spacer()
                 Button(action: onRandom) {
                     Label("Random", systemImage: "dice.fill")
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
                 .buttonStyle(.bordered)
-                .tint(PrepTheme.primary)
+                .tint(MockexaTheme.primary)
             }
 
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                 TextField("Type any topic, e.g. Remote work…", text: $topic)
                     .focused($focused)
                     .textInputAutocapitalization(.sentences)
@@ -364,14 +364,14 @@ private struct GDTopicSelector: View {
                         focused = true
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                 }
             }
             .padding(.horizontal, 14)
             .frame(height: 50)
-            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(focused ? PrepTheme.primary : PrepTheme.border, lineWidth: focused ? 1.5 : 1))
+            .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(focused ? MockexaTheme.primary : MockexaTheme.border, lineWidth: focused ? 1.5 : 1))
 
             if !suggestions.isEmpty {
                 VStack(spacing: 0) {
@@ -383,10 +383,10 @@ private struct GDTopicSelector: View {
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "text.badge.checkmark")
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text(suggestion)
                                     .font(.system(size: 14, weight: .medium, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                     .multilineTextAlignment(.leading)
                                 Spacer()
                             }
@@ -398,12 +398,12 @@ private struct GDTopicSelector: View {
                         }
                     }
                 }
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.border, lineWidth: 1))
             } else if !focused {
                 Text("Enter your own topic, choose a suggestion, or let Random pick one.")
                     .font(.caption)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
         }
     }
@@ -431,7 +431,7 @@ private struct GDPanelModePicker: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Panel Mode")
                 .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
 
             ForEach(modes, id: \.id) { mode in
                 Button {
@@ -441,23 +441,23 @@ private struct GDPanelModePicker: View {
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: mode.icon)
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(selection == mode.id ? .white : PrepTheme.primary)
+                            .foregroundStyle(selection == mode.id ? .white : MockexaTheme.primary)
                             .frame(width: 30)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(mode.title)
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
                             Text(mode.description)
                                 .font(.caption)
-                                .foregroundStyle(selection == mode.id ? Color.white.opacity(0.85) : PrepTheme.textSecondary)
+                                .foregroundStyle(selection == mode.id ? Color.white.opacity(0.85) : MockexaTheme.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer()
                         Image(systemName: selection == mode.id ? "checkmark.circle.fill" : "circle")
                     }
-                    .foregroundStyle(selection == mode.id ? .white : PrepTheme.darkNavy)
+                    .foregroundStyle(selection == mode.id ? .white : MockexaTheme.darkNavy)
                     .padding(14)
-                    .background(selection == mode.id ? PrepTheme.primary : PrepTheme.surface, in: RoundedRectangle(cornerRadius: 16))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(selection == mode.id ? Color.clear : PrepTheme.border, lineWidth: 1))
+                    .background(selection == mode.id ? MockexaTheme.primary : MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(selection == mode.id ? Color.clear : MockexaTheme.border, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
@@ -474,7 +474,7 @@ struct OptionGroup: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundStyle(PrepTheme.darkNavy)
+                .foregroundStyle(MockexaTheme.darkNavy)
             FlowLayout(spacing: 9) {
                 ForEach(values, id: \.self) { item in
                     Button(item) {
@@ -484,9 +484,9 @@ struct OptionGroup: View {
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(selection == item ? PrepTheme.primary : PrepTheme.surface, in: Capsule())
-                    .overlay(Capsule().stroke(selection == item ? Color.clear : PrepTheme.border, lineWidth: 1))
-                    .foregroundStyle(selection == item ? .white : PrepTheme.darkNavy)
+                    .background(selection == item ? MockexaTheme.primary : MockexaTheme.surface, in: Capsule())
+                    .overlay(Capsule().stroke(selection == item ? Color.clear : MockexaTheme.border, lineWidth: 1))
+                    .foregroundStyle(selection == item ? .white : MockexaTheme.darkNavy)
                 }
             }
         }
@@ -615,10 +615,10 @@ struct PanelView: View {
                                 VStack(alignment: .leading, spacing: 9) {
                                     Label("CLOSING PHASE", systemImage: "flag.checkered")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.warning)
+                                        .foregroundStyle(MockexaTheme.warning)
                                     Text("Give your final synthesis: common ground, the key trade-off, and one practical recommendation.")
                                         .font(.subheadline)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                         .fixedSize(horizontal: false, vertical: true)
                                     if !userConcluded && !didRequestAIConclusion {
                                         Button {
@@ -628,12 +628,12 @@ struct PanelView: View {
                                                 .font(.caption.bold())
                                         }
                                         .buttonStyle(.bordered)
-                                        .tint(PrepTheme.primary)
+                                        .tint(MockexaTheme.primary)
                                         .disabled(gdVM.isGeneratingTurn || voice.isSpeaking)
                                     } else {
                                         Text(userConcluded ? "Your closing contribution is recorded." : "AI is preparing the closing synthesis.")
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.success)
+                                            .foregroundStyle(MockexaTheme.success)
                                     }
                                 }
                             }
@@ -673,14 +673,14 @@ struct PanelView: View {
                             } else if gdVM.isGeneratingTurn {
                                 GlassCard {
                                     HStack(spacing: 12) {
-                                        ProgressView().tint(PrepTheme.primary)
+                                        ProgressView().tint(MockexaTheme.primary)
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Discussion Starting…")
                                                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                                                .foregroundStyle(PrepTheme.darkNavy)
+                                                .foregroundStyle(MockexaTheme.darkNavy)
                                             Text("AI panel members are preparing opening positions")
                                                 .font(.caption)
-                                                .foregroundStyle(PrepTheme.textSecondary)
+                                                .foregroundStyle(MockexaTheme.textSecondary)
                                         }
                                         Spacer()
                                     }
@@ -691,15 +691,15 @@ struct PanelView: View {
                                     VStack(spacing: 8) {
                                         Image(systemName: "person.3.sequence.fill")
                                             .font(.system(size: 28))
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .foregroundStyle(MockexaTheme.primary)
                                         Text("Welcome to the GD Room")
                                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                                            .foregroundStyle(PrepTheme.darkNavy)
+                                            .foregroundStyle(MockexaTheme.darkNavy)
                                         Text(aiStarts
                                              ? "Tap microphone or pass turn to continue the discussion."
                                              : "You chose to open. Share your view by voice or text; the panel will respond to your point.")
                                             .font(.caption)
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                             .multilineTextAlignment(.center)
                                     }
                                     .frame(maxWidth: .infinity)
@@ -757,9 +757,9 @@ struct PanelView: View {
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
-                                .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 25))
+                                .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 25))
                                 .foregroundStyle(.white)
-                                .shadow(color: PrepTheme.primary.opacity(0.25), radius: 6, y: 2)
+                                .shadow(color: MockexaTheme.primary.opacity(0.25), radius: 6, y: 2)
                         }
                     } else {
                         HStack(spacing: 12) {
@@ -777,9 +777,9 @@ struct PanelView: View {
                                 }
                                 .frame(height: 40)
                                 .padding(.horizontal, 16)
-                                .background(PrepTheme.surface, in: Capsule())
-                                .overlay(Capsule().stroke(PrepTheme.primary.opacity(0.4), lineWidth: 1))
-                                .foregroundStyle(PrepTheme.primary)
+                                .background(MockexaTheme.surface, in: Capsule())
+                                .overlay(Capsule().stroke(MockexaTheme.primary.opacity(0.4), lineWidth: 1))
+                                .foregroundStyle(MockexaTheme.primary)
                             }
                             .disabled(gdVM.isGeneratingTurn)
 
@@ -792,9 +792,9 @@ struct PanelView: View {
                                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                                     .frame(height: 40)
                                     .padding(.horizontal, 16)
-                                    .background(PrepTheme.destructive.opacity(0.08), in: Capsule())
-                                    .overlay(Capsule().stroke(PrepTheme.destructive.opacity(0.3), lineWidth: 1))
-                                    .foregroundStyle(PrepTheme.destructive)
+                                    .background(MockexaTheme.destructive.opacity(0.08), in: Capsule())
+                                    .overlay(Capsule().stroke(MockexaTheme.destructive.opacity(0.3), lineWidth: 1))
+                                    .foregroundStyle(MockexaTheme.destructive)
                             }
                             .disabled(gdVM.isFinishing)
                         }
@@ -803,11 +803,11 @@ struct PanelView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
                 .padding(.bottom, 24)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(MockexaTheme.border, lineWidth: 1))
                 .shadow(color: Color.black.opacity(0.04), radius: 8, y: -2)
             }
-            .foregroundStyle(PrepTheme.darkNavy)
+            .foregroundStyle(MockexaTheme.darkNavy)
         }
         .onAppear {
             remainingSeconds = initialSeconds
@@ -866,7 +866,7 @@ struct PanelView: View {
                     isInputFocused = false
                 }
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(PrepTheme.primary)
+                .foregroundStyle(MockexaTheme.primary)
             }
         }
         .confirmationDialog("End this session?", isPresented: $showEnd, titleVisibility: .visible) {
@@ -977,16 +977,16 @@ struct GDSessionHeader: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(PrepTheme.primary)
+                        .fill(MockexaTheme.primary)
                         .frame(width: 6, height: 6)
                     Text("LIVE GROUP DISCUSSION")
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                 }
 
                 Text(topic)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .lineLimit(1)
             }
 
@@ -998,8 +998,8 @@ struct GDSessionHeader: View {
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(PrepTheme.primary.opacity(0.1), in: Capsule())
-                    .foregroundStyle(PrepTheme.primary)
+                    .background(MockexaTheme.primary.opacity(0.1), in: Capsule())
+                    .foregroundStyle(MockexaTheme.primary)
 
                 // Timer Pill
                 HStack(spacing: 4) {
@@ -1011,13 +1011,13 @@ struct GDSessionHeader: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(
-                    remainingSeconds <= 60 ? PrepTheme.destructive.opacity(0.12) : PrepTheme.surface,
+                    remainingSeconds <= 60 ? MockexaTheme.destructive.opacity(0.12) : MockexaTheme.surface,
                     in: Capsule()
                 )
                 .overlay(
-                    Capsule().stroke(remainingSeconds <= 60 ? PrepTheme.destructive.opacity(0.4) : PrepTheme.border, lineWidth: 1)
+                    Capsule().stroke(remainingSeconds <= 60 ? MockexaTheme.destructive.opacity(0.4) : MockexaTheme.border, lineWidth: 1)
                 )
-                .foregroundStyle(remainingSeconds <= 60 ? PrepTheme.destructive : PrepTheme.darkNavy)
+                .foregroundStyle(remainingSeconds <= 60 ? MockexaTheme.destructive : MockexaTheme.darkNavy)
             }
         }
     }
@@ -1035,11 +1035,11 @@ struct GDDiscussionRoomView: View {
             HStack {
                 Text("DISCUSSION PANEL")
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
                 Spacer()
                 Text("4 AI Participants + You")
                     .font(.caption2)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             }
 
             // 4 Participants Grid
@@ -1063,23 +1063,23 @@ struct GDDiscussionRoomView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(p.name)
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(isActive ? PrepTheme.primary : PrepTheme.darkNavy)
+                                .foregroundStyle(isActive ? MockexaTheme.primary : MockexaTheme.darkNavy)
                                 .lineLimit(1)
 
                             Text(p.role)
                                 .font(.system(size: 10, weight: .regular))
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .lineLimit(1)
 
                             if isActive {
                                 HStack(spacing: 4) {
                                     Image(systemName: "waveform")
                                         .font(.system(size: 9, weight: .bold))
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .foregroundStyle(MockexaTheme.primary)
                                         .symbolEffect(.variableColor.iterative, options: .repeating)
                                     Text("Speaking")
                                         .font(.system(size: 10, weight: .bold))
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .foregroundStyle(MockexaTheme.primary)
                                 }
                                 .padding(.top, 1)
                             }
@@ -1087,18 +1087,18 @@ struct GDDiscussionRoomView: View {
                         Spacer(minLength: 0)
                     }
                     .padding(10)
-                    .background(isActive ? PrepTheme.primary.opacity(0.06) : PrepTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                    .background(isActive ? MockexaTheme.primary.opacity(0.06) : MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 14))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(isActive ? PrepTheme.primary : PrepTheme.border, lineWidth: isActive ? 1.5 : 1)
+                            .stroke(isActive ? MockexaTheme.primary : MockexaTheme.border, lineWidth: isActive ? 1.5 : 1)
                     )
-                    .shadow(color: isActive ? PrepTheme.primary.opacity(0.1) : Color.black.opacity(0.02), radius: 4, y: 2)
+                    .shadow(color: isActive ? MockexaTheme.primary.opacity(0.1) : Color.black.opacity(0.02), radius: 4, y: 2)
                 }
             }
         }
         .padding(12)
-        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 18))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(PrepTheme.border, lineWidth: 1))
+        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MockexaTheme.border, lineWidth: 1))
     }
 }
 
@@ -1119,7 +1119,7 @@ struct GDFeaturedContributionCard: View {
     var speakerName: String { activeParticipant?.name ?? turn.speaker }
     var speakerRole: String { activeParticipant?.role ?? "GD Panelist" }
     var initials: String { activeParticipant?.initials ?? String(speakerName.prefix(1)).uppercased() }
-    var avatarColor: Color { activeParticipant?.color ?? PrepTheme.primary }
+    var avatarColor: Color { activeParticipant?.color ?? MockexaTheme.primary }
 
     var body: some View {
         GlassCard {
@@ -1132,16 +1132,16 @@ struct GDFeaturedContributionCard: View {
                         HStack(spacing: 6) {
                             Text(speakerName)
                                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
 
                             Text("• Latest")
                                 .font(.caption2.bold())
-                                .foregroundStyle(PrepTheme.primary)
+                                .foregroundStyle(MockexaTheme.primary)
                         }
 
                         Text(speakerRole)
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
 
                     Spacer()
@@ -1158,20 +1158,20 @@ struct GDFeaturedContributionCard: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(PrepTheme.destructive.opacity(0.1), in: Capsule())
-                            .foregroundStyle(PrepTheme.destructive)
+                            .background(MockexaTheme.destructive.opacity(0.1), in: Capsule())
+                            .foregroundStyle(MockexaTheme.destructive)
                         }
                     }
                 }
 
                 Text("\"\(turn.response)\"")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .lineSpacing(4)
                     .multilineTextAlignment(.leading)
                     .padding(12)
-                    .background(PrepTheme.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.primary.opacity(0.15), lineWidth: 1))
+                    .background(MockexaTheme.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.primary.opacity(0.15), lineWidth: 1))
             }
             .padding(.vertical, 4)
         }
@@ -1185,35 +1185,35 @@ struct GDConversationFeed: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("PREVIOUS CONTRIBUTIONS")
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundStyle(PrepTheme.textSecondary)
+                .foregroundStyle(MockexaTheme.textSecondary)
                 .padding(.leading, 4)
 
             ForEach(Array(entries.suffix(6).reversed().enumerated()), id: \.offset) { _, entry in
                 HStack(alignment: .top, spacing: 10) {
                     Circle()
-                        .fill((entry.speaker == "You" ? PrepTheme.secondary : PrepTheme.primary).opacity(0.15))
+                        .fill((entry.speaker == "You" ? MockexaTheme.secondary : MockexaTheme.primary).opacity(0.15))
                         .frame(width: 28, height: 28)
                         .overlay(
                             Text(entry.speaker == "You" ? "Y" : String(entry.speaker.prefix(1)).uppercased())
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(entry.speaker == "You" ? PrepTheme.secondary : PrepTheme.primary)
+                                .foregroundStyle(entry.speaker == "You" ? MockexaTheme.secondary : MockexaTheme.primary)
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(entry.speaker)
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
 
                         Text(entry.text)
                             .font(.system(size: 12))
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .lineLimit(3)
                     }
                     Spacer()
                 }
                 .padding(10)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
             }
         }
     }
@@ -1253,14 +1253,14 @@ struct GDInputBar: View {
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 32)
-                        .background(inputMode == mode ? PrepTheme.surface : Color.clear, in: Capsule())
+                        .background(inputMode == mode ? MockexaTheme.surface : Color.clear, in: Capsule())
                         .shadow(color: inputMode == mode ? Color.black.opacity(0.06) : Color.clear, radius: 2, y: 1)
-                        .foregroundStyle(inputMode == mode ? PrepTheme.primary : PrepTheme.textSecondary)
+                        .foregroundStyle(inputMode == mode ? MockexaTheme.primary : MockexaTheme.textSecondary)
                     }
                 }
             }
             .padding(3)
-            .background(PrepTheme.border.opacity(0.5), in: Capsule())
+            .background(MockexaTheme.border.opacity(0.5), in: Capsule())
 
             if inputMode == .voice {
                 // VOICE MODE UI
@@ -1269,13 +1269,13 @@ struct GDInputBar: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(PrepTheme.primary.opacity(0.15))
+                                    .fill(MockexaTheme.primary.opacity(0.15))
                                     .frame(width: 48, height: 48)
                                     .scaleEffect(isSilenceTimerRunning ? 1.2 : 1.0)
                                     .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isSilenceTimerRunning)
 
                                 Circle()
-                                    .fill(PrepTheme.primary)
+                                    .fill(MockexaTheme.primary)
                                     .frame(width: 40, height: 40)
 
                                 Image(systemName: "mic.fill")
@@ -1286,17 +1286,17 @@ struct GDInputBar: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(sttStatusText)
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text("Speak in English — auto-submits on pause")
                                     .font(.caption2)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
 
                             Spacer()
 
                             Button("Cancel", action: onCancelVoice)
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         }
 
                         // Live transcript preview box
@@ -1304,41 +1304,41 @@ struct GDInputBar: View {
                             HStack {
                                 Image(systemName: "waveform")
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                     .symbolEffect(.variableColor.iterative, options: .repeating)
                                 Text("Live Speech Preview")
                                     .font(.caption2.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Spacer()
                             }
 
                             Text(recognizedText.isEmpty ? "Start speaking your contribution..." : recognizedText)
                                 .font(.system(size: 13, weight: recognizedText.isEmpty ? .regular : .medium))
-                                .foregroundStyle(recognizedText.isEmpty ? PrepTheme.textSecondary : PrepTheme.darkNavy)
+                                .foregroundStyle(recognizedText.isEmpty ? MockexaTheme.textSecondary : MockexaTheme.darkNavy)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(8)
-                                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(PrepTheme.border, lineWidth: 1))
+                                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(MockexaTheme.border, lineWidth: 1))
                         }
                     }
                 } else if voiceState == .processing || isGeneratingTurn {
                     HStack(spacing: 10) {
-                        ProgressView().tint(PrepTheme.primary)
+                        ProgressView().tint(MockexaTheme.primary)
                         Text("Processing discussion turn...")
                             .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                         Spacer()
                     }
                     .padding(12)
-                    .background(PrepTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+                    .background(MockexaTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
                 } else {
                     Button(action: onMicTap) {
                         HStack(spacing: 10) {
                             ZStack {
                                 Circle()
-                                    .fill(PrepTheme.primary)
+                                    .fill(MockexaTheme.primary)
                                     .frame(width: 44, height: 44)
-                                    .shadow(color: PrepTheme.primary.opacity(0.3), radius: 4, y: 2)
+                                    .shadow(color: MockexaTheme.primary.opacity(0.3), radius: 4, y: 2)
                                 Image(systemName: "mic.fill")
                                     .font(.system(size: 20, weight: .bold))
                                     .foregroundStyle(.white)
@@ -1347,16 +1347,16 @@ struct GDInputBar: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Tap Microphone to Speak")
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("English communication practice")
                                     .font(.caption2)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                             Spacer()
                         }
                         .padding(8)
-                        .background(PrepTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(PrepTheme.primary.opacity(0.2), lineWidth: 1))
+                        .background(MockexaTheme.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(MockexaTheme.primary.opacity(0.2), lineWidth: 1))
                     }
                     .disabled(isGeneratingTurn || isFinished)
                 }
@@ -1367,9 +1367,9 @@ struct GDInputBar: View {
                         .focused(isInputFocused)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
-                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 20))
-                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(PrepTheme.border, lineWidth: 1))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 20))
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(MockexaTheme.border, lineWidth: 1))
+                        .foregroundStyle(MockexaTheme.darkNavy)
                         .disabled(isFinished || isGeneratingTurn)
 
                     Button {
@@ -1379,8 +1379,8 @@ struct GDInputBar: View {
                             .font(.subheadline.bold())
                             .foregroundStyle(.white)
                             .frame(width: 40, height: 40)
-                            .background(PrepTheme.primary, in: Circle())
-                            .shadow(color: PrepTheme.primary.opacity(0.22), radius: 4, y: 2)
+                            .background(MockexaTheme.primary, in: Circle())
+                            .shadow(color: MockexaTheme.primary.opacity(0.22), radius: 4, y: 2)
                     }
                     .disabled(userTextContribution.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isGeneratingTurn || isFinished)
                 }
@@ -1396,16 +1396,16 @@ struct GDContextualErrorView: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(PrepTheme.destructive)
+                .foregroundStyle(MockexaTheme.destructive)
                 .font(.system(size: 16))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Connection Alert")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.destructive)
+                    .foregroundStyle(MockexaTheme.destructive)
                 Text(errorMessage)
                     .font(.caption2)
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .lineLimit(2)
             }
 
@@ -1415,12 +1415,12 @@ struct GDContextualErrorView: View {
                 .font(.system(size: 12, weight: .bold, design: .rounded))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(PrepTheme.primary, in: Capsule())
+                .background(MockexaTheme.primary, in: Capsule())
                 .foregroundStyle(.white)
         }
         .padding(10)
-        .background(PrepTheme.destructive.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.destructive.opacity(0.25), lineWidth: 1))
+        .background(MockexaTheme.destructive.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.destructive.opacity(0.25), lineWidth: 1))
     }
 }
 
@@ -1437,7 +1437,7 @@ struct LiveInterviewView: View {
     @StateObject private var hrVM = HRViewModel()
     @StateObject private var voice = VoiceFoundation.shared
     @EnvironmentObject var auth: AuthManager
-    @AppStorage("PREPAI_TARGET_ROLE") private var savedTargetRole: String = ""
+    @AppStorage("MOCKEXA_TARGET_ROLE") private var savedTargetRole: String = ""
 
     @State private var answerText: String = ""
     @State private var hrInputMode: GDInputMode = .voice
@@ -1483,16 +1483,16 @@ struct LiveInterviewView: View {
                     HStack {
                         Label(kind.displayName, systemImage: kind.icon)
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Spacer()
                         if !isCompleted {
                             Text("Question \(kind == .technical ? techVM.questionIndex : hrVM.questionIndex) of \(kind == .technical ? techVM.totalQuestions : hrVM.totalQuestions)")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         } else {
                             Text("Interview Complete")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.success)
+                                .foregroundStyle(MockexaTheme.success)
                         }
                     }
 
@@ -1503,24 +1503,24 @@ struct LiveInterviewView: View {
                             Text("Personalized to Candidate Resume & Projects")
                                 .font(.caption2.bold())
                         }
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(PrepTheme.primary.opacity(0.1), in: Capsule())
+                        .background(MockexaTheme.primary.opacity(0.1), in: Capsule())
                     }
 
-                    AIAvatar(initials: "AI", color: kind == .hr ? Color(red: 225/255, green: 29/255, blue: 72/255) : PrepTheme.primary, active: isLoading || (kind == .hr && voice.isSpeaking))
+                    AIAvatar(initials: "AI", color: kind == .hr ? Color(red: 225/255, green: 29/255, blue: 72/255) : MockexaTheme.primary, active: isLoading || (kind == .hr && voice.isSpeaking))
                         .scaleEffect(1.4)
                         .padding(12)
 
                     if let err = errorMessage {
                         Text("Error: \(err)")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.destructive)
+                            .foregroundStyle(MockexaTheme.destructive)
                             .padding(12)
                             .frame(maxWidth: .infinity)
-                            .background(PrepTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
-                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(PrepTheme.destructive.opacity(0.3), lineWidth: 1))
+                            .background(MockexaTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(MockexaTheme.destructive.opacity(0.3), lineWidth: 1))
                     }
 
                     if !isCompleted {
@@ -1529,15 +1529,15 @@ struct LiveInterviewView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(kind == .technical ? "\(selectedDomain.uppercased())  •  DIFFICULTY \(difficultyInt)/5" : "HR • \(selectedDomain.uppercased())")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
 
                                 if isLoading && currentQuestionText == nil {
-                                    ProgressView().tint(PrepTheme.primary)
+                                    ProgressView().tint(MockexaTheme.primary)
                                 } else {
                                     HStack(alignment: .top, spacing: 12) {
                                         Text(currentQuestionText ?? "Formulating question...")
                                             .font(.system(size: 19, weight: .bold, design: .rounded))
-                                            .foregroundStyle(PrepTheme.darkNavy)
+                                            .foregroundStyle(MockexaTheme.darkNavy)
                                             .lineSpacing(4)
                                         Spacer(minLength: 4)
                                         if kind == .hr, let question = currentQuestionText {
@@ -1555,8 +1555,8 @@ struct LiveInterviewView: View {
                                                 Image(systemName: voice.isSpeaking ? "stop.fill" : "speaker.wave.2.fill")
                                                     .font(.system(size: 14, weight: .bold))
                                                     .frame(width: 38, height: 38)
-                                                    .background(PrepTheme.primary.opacity(0.10), in: Circle())
-                                                    .foregroundStyle(PrepTheme.primary)
+                                                    .background(MockexaTheme.primary.opacity(0.10), in: Circle())
+                                                    .foregroundStyle(MockexaTheme.primary)
                                             }
                                             .accessibilityLabel("Replay HR question")
                                         }
@@ -1571,7 +1571,7 @@ struct LiveInterviewView: View {
                                 HStack {
                                     Text(isCodeMode ? "Solution Code Editor" : "Your Text Response")
                                         .font(.system(size: 16, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                     Spacer()
                                     if kind == .hr {
                                         Picker("Response mode", selection: $hrInputMode) {
@@ -1585,7 +1585,7 @@ struct LiveInterviewView: View {
                                     } else {
                                         Text(isCodeMode ? "Code" : "Plain Text")
                                             .font(.caption.bold())
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                     }
                                 }
 
@@ -1608,15 +1608,15 @@ struct LiveInterviewView: View {
                                         .padding(8)
                                         .scrollContentBackground(.hidden)
                                         .background(
-                                            isCodeMode ? Color(red: 15/255, green: 23/255, blue: 42/255) : PrepTheme.surface,
+                                            isCodeMode ? Color(red: 15/255, green: 23/255, blue: 42/255) : MockexaTheme.surface,
                                             in: RoundedRectangle(cornerRadius: 12)
                                         )
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 12)
-                                                .stroke(isCodeMode ? Color.clear : PrepTheme.border, lineWidth: 1)
+                                                .stroke(isCodeMode ? Color.clear : MockexaTheme.border, lineWidth: 1)
                                         )
                                         .font(isCodeMode ? .system(.subheadline, design: .monospaced) : .body)
-                                        .foregroundStyle(isCodeMode ? Color(red: 186/255, green: 230/255, blue: 253/255) : PrepTheme.textPrimary)
+                                        .foregroundStyle(isCodeMode ? Color(red: 186/255, green: 230/255, blue: 253/255) : MockexaTheme.textPrimary)
                                 }
                             }
                         }
@@ -1647,36 +1647,36 @@ struct LiveInterviewView: View {
                                 HStack {
                                     Text("LATEST EVALUATION")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .foregroundStyle(MockexaTheme.primary)
                                     Spacer()
                                     Text(analysis.classification.replacingOccurrences(of: "_", with: " "))
                                         .font(.caption2.bold())
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 3)
-                                        .background(PrepTheme.primary.opacity(0.12), in: Capsule())
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .background(MockexaTheme.primary.opacity(0.12), in: Capsule())
+                                        .foregroundStyle(MockexaTheme.primary)
                                 }
                                 Text("Overall Score: \(Int(analysis.overallScore * 100))/100")
                                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text("Correctness: \(Int(analysis.correctness * 100))%  •  Completeness: \(Int(analysis.completeness * 100))%")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 if let fb = analysis.feedback, !fb.isEmpty {
                                     Text(fb)
                                         .font(.subheadline)
-                                        .foregroundStyle(PrepTheme.textPrimary)
+                                        .foregroundStyle(MockexaTheme.textPrimary)
                                         .padding(.top, 2)
                                 }
                                 if !analysis.missingConcepts.isEmpty {
                                     Text("Missing concepts: \(analysis.missingConcepts.joined(separator: ", "))")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.warning)
+                                        .foregroundStyle(MockexaTheme.warning)
                                 }
                                 if !analysis.misconceptions.isEmpty {
                                     Text("Misconceptions: \(analysis.misconceptions.joined(separator: ", "))")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.destructive)
+                                        .foregroundStyle(MockexaTheme.destructive)
                                 }
                             }
                         }
@@ -1685,13 +1685,13 @@ struct LiveInterviewView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("LATEST EVALUATION")
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                 Text("Score: \(Int(eval.overallScore * 100))/100")
                                     .font(.system(size: 17, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text(eval.feedback)
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                         }
                     }
@@ -1705,8 +1705,8 @@ struct LiveInterviewView: View {
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
-                                .shadow(color: PrepTheme.primary.opacity(0.22), radius: 12, y: 5)
+                                .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
+                                .shadow(color: MockexaTheme.primary.opacity(0.22), radius: 12, y: 5)
                         }
                     }
                 }
@@ -1715,7 +1715,7 @@ struct LiveInterviewView: View {
                 .padding(.bottom, 36)
             }
         }
-        .foregroundStyle(PrepTheme.darkNavy)
+        .foregroundStyle(MockexaTheme.darkNavy)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if kind == .hr {
@@ -1758,7 +1758,7 @@ struct LiveInterviewView: View {
                     isAnswerFocused = false
                 }
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(PrepTheme.primary)
+                .foregroundStyle(MockexaTheme.primary)
             }
         }
         .task {
@@ -1868,21 +1868,21 @@ private struct HRVoiceAnswerPanel: View {
         VStack(spacing: 14) {
             Image(systemName: voice.isListening ? "waveform.circle.fill" : (voice.isSpeaking ? "speaker.wave.2.circle.fill" : "mic.circle.fill"))
                 .font(.system(size: 46))
-                .foregroundStyle(voice.isListening ? PrepTheme.secondary : PrepTheme.primary)
+                .foregroundStyle(voice.isListening ? MockexaTheme.secondary : MockexaTheme.primary)
                 .symbolEffect(.pulse, isActive: voice.isListening || voice.isSpeaking)
 
             Text(voice.isListening ? voice.sttStatusText : (voice.isSpeaking ? "Interviewer is speaking…" : (isLoading ? "Evaluating your answer…" : "Tap the microphone and answer naturally")))
                 .font(.system(size: 15, weight: .bold, design: .rounded))
-                .foregroundStyle(voice.silenceCountdown != nil ? PrepTheme.warning : PrepTheme.darkNavy)
+                .foregroundStyle(voice.silenceCountdown != nil ? MockexaTheme.warning : MockexaTheme.darkNavy)
                 .animation(.easeInOut(duration: 0.2), value: voice.silenceCountdown)
 
             Text(transcript.isEmpty ? "Speak your answer. You can pause to think, or tap Submit when done." : transcript)
                 .font(.subheadline)
-                .foregroundStyle(transcript.isEmpty ? PrepTheme.textSecondary : PrepTheme.darkNavy)
+                .foregroundStyle(transcript.isEmpty ? MockexaTheme.textSecondary : MockexaTheme.darkNavy)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 54)
                 .padding(12)
-                .background(PrepTheme.background, in: RoundedRectangle(cornerRadius: 12))
+                .background(MockexaTheme.background, in: RoundedRectangle(cornerRadius: 12))
 
             HStack(spacing: 12) {
                 if voice.isListening {
@@ -1926,21 +1926,21 @@ struct SessionCompleteView: View {
             VStack(spacing: 22) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 86))
-                    .foregroundStyle(PrepTheme.success)
+                    .foregroundStyle(MockexaTheme.success)
                     .symbolEffect(.bounce, value: ready)
 
                 Text("Session Complete")
                     .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                 Text(ready ? "Your performance report is ready" : "Preparing your practice summary…")
                     .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
 
                 if let err = (kind == .technical ? techVM?.errorMessage : hrVM?.errorMessage) {
                     VStack(spacing: 12) {
                         Text("Session completion failed: \(err)")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.destructive)
+                            .foregroundStyle(MockexaTheme.destructive)
                             .multilineTextAlignment(.center)
                         Button("Retry Finishing Session") {
                             Task {
@@ -1959,10 +1959,10 @@ struct SessionCompleteView: View {
                             }
                         }
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     }
                     .padding(14)
-                    .background(PrepTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+                    .background(MockexaTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
                 }
 
                 if ready {
@@ -1974,8 +1974,8 @@ struct SessionCompleteView: View {
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
-                            .shadow(color: PrepTheme.primary.opacity(0.22), radius: 12, y: 5)
+                            .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 28))
+                            .shadow(color: MockexaTheme.primary.opacity(0.22), radius: 12, y: 5)
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
 
@@ -1990,7 +1990,7 @@ struct SessionCompleteView: View {
                 }
             }
             .padding(24)
-            .foregroundStyle(PrepTheme.darkNavy)
+            .foregroundStyle(MockexaTheme.darkNavy)
         }
         .task {
             var finishSuccess = true
@@ -2065,7 +2065,7 @@ struct ReportView: View {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Your Performance")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .padding(.top, 8)
 
                 if kind == .gd, let gVM = gdVM {
@@ -2079,13 +2079,13 @@ struct ReportView: View {
                             VStack(spacing: 4) {
                                 Text("N/A")
                                     .font(.system(size: 44, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text("Not available")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                             .frame(width: 180, height: 180)
-                            .background(Circle().stroke(PrepTheme.border, lineWidth: 12))
+                            .background(Circle().stroke(MockexaTheme.border, lineWidth: 12))
                         }
                         Spacer()
                     }
@@ -2094,7 +2094,7 @@ struct ReportView: View {
                         ReportSection(
                             title: "Saved Session Metrics",
                             icon: "doc.text.fill",
-                            color: PrepTheme.primary,
+                            color: MockexaTheme.primary,
                             items: [
                                 "Topic: \(detail.topic)",
                                 "Planned duration: \(detail.duration)",
@@ -2106,7 +2106,7 @@ struct ReportView: View {
                             ReportSection(
                                 title: "Summary & Feedback",
                                 icon: "quote.bubble.fill",
-                                color: PrepTheme.secondary,
+                                color: MockexaTheme.secondary,
                                 items: [summary]
                             )
                         }
@@ -2122,21 +2122,21 @@ struct ReportView: View {
                         ReportSection(
                             title: "Overall Assessment",
                             icon: "checkmark.seal.fill",
-                            color: PrepTheme.primary,
+                            color: MockexaTheme.primary,
                             items: ["Performance band: \(band)", "Questions evaluated: \(answered)"]
                         )
                         if let summary = report["summary"]?.value as? String, !summary.isEmpty {
                             ReportSection(
                                 title: "Interviewer Assessment",
                                 icon: "quote.bubble.fill",
-                                color: PrepTheme.primary,
+                                color: MockexaTheme.primary,
                                 items: [summary]
                             )
                         }
                         ReportSection(
                             title: "Domain Performance",
                             icon: "chart.bar.fill",
-                            color: PrepTheme.secondary,
+                            color: MockexaTheme.secondary,
                             items: domainScores.isEmpty ? ["No domain breakdown available"] : domainScores.map { "\($0.0): \(Int($0.1.rounded()))%" }
                         )
                         if let qlog = report["question_log"]?.value as? [[String: Any]] {
@@ -2152,7 +2152,7 @@ struct ReportView: View {
                                 ReportSection(
                                     title: "Question-by-Question Feedback",
                                     icon: "list.bullet.clipboard.fill",
-                                    color: PrepTheme.primary,
+                                    color: MockexaTheme.primary,
                                     items: feedbackItems
                                 )
                             }
@@ -2160,16 +2160,16 @@ struct ReportView: View {
                         let strong = stringArray(report["strong_areas"]?.value)
                         let focus = stringArray(report["focus_areas"]?.value)
                         if !strong.isEmpty {
-                            ReportSection(title: "Strong Areas", icon: "checkmark.circle.fill", color: PrepTheme.success, items: strong)
+                            ReportSection(title: "Strong Areas", icon: "checkmark.circle.fill", color: MockexaTheme.success, items: strong)
                         }
                         if !focus.isEmpty {
-                            ReportSection(title: "Focus Next", icon: "scope", color: PrepTheme.warning, items: focus)
+                            ReportSection(title: "Focus Next", icon: "scope", color: MockexaTheme.warning, items: focus)
                         }
                     } else if kind == .technical, let analysis = techVM?.lastAnalysis {
                         ReportSection(
                             title: "Evaluation Metrics",
                             icon: "chart.bar.fill",
-                            color: PrepTheme.primary,
+                            color: MockexaTheme.primary,
                             items: [
                                 "Classification: \(analysis.classification)",
                                 "Correctness: \(Int(analysis.correctness * 100))%",
@@ -2183,7 +2183,7 @@ struct ReportView: View {
                             ReportSection(
                                 title: "Missing Concepts",
                                 icon: "exclamationmark.triangle.fill",
-                                color: PrepTheme.warning,
+                                color: MockexaTheme.warning,
                                 items: analysis.missingConcepts
                             )
                         }
@@ -2192,7 +2192,7 @@ struct ReportView: View {
                             ReportSection(
                                 title: "Misconceptions Identified",
                                 icon: "xmark.octagon.fill",
-                                color: PrepTheme.destructive,
+                                color: MockexaTheme.destructive,
                                 items: analysis.misconceptions
                             )
                         }
@@ -2206,25 +2206,25 @@ struct ReportView: View {
                         ReportSection(
                             title: "Behavioral Ratings",
                             icon: "star.fill",
-                            color: PrepTheme.secondary,
+                            color: MockexaTheme.secondary,
                             items: ratings.isEmpty ? ["No rating breakdown available"] : ratings.map { "\($0.0): \(Int($0.1.rounded()))%" }
                         )
                         let strengths = stringArray(report["strengths"]?.value).map(formattedMetricName)
                         let weaknesses = stringArray(report["weaknesses"]?.value).map(formattedMetricName)
                         if !strengths.isEmpty {
-                            ReportSection(title: "Strong Signals", icon: "checkmark.circle.fill", color: PrepTheme.success, items: strengths)
+                            ReportSection(title: "Strong Signals", icon: "checkmark.circle.fill", color: MockexaTheme.success, items: strengths)
                         }
                         if !weaknesses.isEmpty {
-                            ReportSection(title: "Develop Next", icon: "arrow.up.right.circle.fill", color: PrepTheme.warning, items: weaknesses)
+                            ReportSection(title: "Develop Next", icon: "arrow.up.right.circle.fill", color: MockexaTheme.warning, items: weaknesses)
                         }
                         if let feedback = hrVM?.lastEvaluation?.feedback, !feedback.isEmpty {
-                            ReportSection(title: "Latest Interviewer Feedback", icon: "quote.bubble.fill", color: PrepTheme.primary, items: [feedback])
+                            ReportSection(title: "Latest Interviewer Feedback", icon: "quote.bubble.fill", color: MockexaTheme.primary, items: [feedback])
                         }
                     } else if kind == .hr, let eval = hrVM?.lastEvaluation {
                         ReportSection(
                             title: "Behavioral Ratings",
                             icon: "star.fill",
-                            color: PrepTheme.secondary,
+                            color: MockexaTheme.secondary,
                             items: [
                                 "Clarity: \(Int(eval.clarity * 100))%",
                                 "Specificity: \(Int(eval.specificity * 100))%",
@@ -2239,24 +2239,24 @@ struct ReportView: View {
                         ReportSection(
                             title: "Interviewer Feedback",
                             icon: "quote.bubble.fill",
-                            color: PrepTheme.primary,
+                            color: MockexaTheme.primary,
                             items: [eval.feedback]
                         )
                     } else {
                         ReportSection(
                             title: "Session Feedback",
                             icon: "info.circle",
-                            color: PrepTheme.textSecondary,
+                            color: MockexaTheme.textSecondary,
                             items: ["Evaluation data recorded for session."]
                         )
                     }
 
                     Text("Scores reflect evidence in this practice session and are coaching signals—not a hiring prediction.")
                         .font(.caption)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
-                        .background(PrepTheme.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+                        .background(MockexaTheme.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
 
                     NavigationLink {
                         TranscriptView(
@@ -2338,26 +2338,26 @@ struct GDReportContentView: View {
                 Spacer()
                 if isLoadingMetrics {
                     VStack(spacing: 8) {
-                        ProgressView().tint(PrepTheme.primary)
+                        ProgressView().tint(MockexaTheme.primary)
                         Text("Evaluating GD...")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                     }
                     .frame(width: 180, height: 180)
-                    .background(Circle().stroke(PrepTheme.border, lineWidth: 12))
+                    .background(Circle().stroke(MockexaTheme.border, lineWidth: 12))
                 } else if let scoreVal = score {
                     ScoreRing(score: scoreVal, size: 180)
                 } else {
                     VStack(spacing: 4) {
                         Text("N/A")
                             .font(.system(size: 44, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Text("Not available")
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                     .frame(width: 180, height: 180)
-                    .background(Circle().stroke(PrepTheme.border, lineWidth: 12))
+                    .background(Circle().stroke(MockexaTheme.border, lineWidth: 12))
                 }
                 Spacer()
             }
@@ -2366,7 +2366,7 @@ struct GDReportContentView: View {
                 ReportSection(
                     title: "Evaluation Status",
                     icon: "exclamationmark.triangle.fill",
-                    color: PrepTheme.warning,
+                    color: MockexaTheme.warning,
                     items: ["Couldn't evaluate this discussion: \(err)"]
                 )
 
@@ -2380,21 +2380,21 @@ struct GDReportContentView: View {
                         .font(.system(size: 14, weight: .bold))
                         .frame(height: 44)
                         .frame(maxWidth: .infinity)
-                        .background(PrepTheme.primary, in: RoundedRectangle(cornerRadius: 22))
+                        .background(MockexaTheme.primary, in: RoundedRectangle(cornerRadius: 22))
                         .foregroundStyle(.white)
                 }
             } else if effectiveMetrics == nil && detail == nil && (gVM.errorMessage == nil || gVM.errorMessage!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
                 GlassCard {
                     VStack(spacing: 16) {
                         ProgressView()
-                            .tint(PrepTheme.primary)
+                            .tint(MockexaTheme.primary)
                             .scaleEffect(1.2)
                         Text("Evaluating Discussion Performance...")
                             .font(.headline)
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Text("Generating metrics on topic relevance, coherence, and counterarguments")
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 30)
@@ -2410,18 +2410,18 @@ struct GDReportContentView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             Label("HUMAN CANDIDATE ASSESSMENT", systemImage: "person.crop.circle.badge.checkmark")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.primary)
+                                .foregroundStyle(MockexaTheme.primary)
                             Text(band)
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                             Text(overview)
                                 .font(.subheadline)
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                                 .fixedSize(horizontal: false, vertical: true)
                             if let scoreRationale, !scoreRationale.isEmpty {
                                 Text(scoreRationale)
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             HStack(spacing: 10) {
@@ -2429,43 +2429,43 @@ struct GDReportContentView: View {
                                 Label("~\(averageWords) words each", systemImage: "text.word.spacing")
                             }
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.secondary)
+                            .foregroundStyle(MockexaTheme.secondary)
                         }
                     }
 
                     let strengths = strings(feedback["strengths"])
                     if !strengths.isEmpty {
-                        ReportSection(title: "What You Did Well", icon: "checkmark.seal.fill", color: PrepTheme.success, items: strengths)
+                        ReportSection(title: "What You Did Well", icon: "checkmark.seal.fill", color: MockexaTheme.success, items: strengths)
                     }
                     let improvements = strings(feedback["improvement_areas"])
                     if !improvements.isEmpty {
-                        ReportSection(title: "Improve Next", icon: "arrow.up.right.circle.fill", color: PrepTheme.warning, items: improvements)
+                        ReportSection(title: "Improve Next", icon: "arrow.up.right.circle.fill", color: MockexaTheme.warning, items: improvements)
                     }
                     let observations = strings(feedback["judge_observations"])
                     if !observations.isEmpty {
-                        ReportSection(title: "Judge's Evidence", icon: "text.magnifyingglass", color: PrepTheme.primary, items: observations)
+                        ReportSection(title: "Judge's Evidence", icon: "text.magnifyingglass", color: MockexaTheme.primary, items: observations)
                     }
                     if let best = feedback["best_contribution"] as? String, !best.isEmpty {
-                        ReportSection(title: "Your Strongest Contribution", icon: "quote.opening", color: PrepTheme.primary, items: [best])
+                        ReportSection(title: "Your Strongest Contribution", icon: "quote.opening", color: MockexaTheme.primary, items: [best])
                     }
                     if let goal = feedback["next_session_goal"] as? String, !goal.isEmpty {
-                        ReportSection(title: "Next Session Goal", icon: "target", color: PrepTheme.secondary, items: [goal])
+                        ReportSection(title: "Next Session Goal", icon: "target", color: MockexaTheme.secondary, items: [goal])
                     }
                 } else if let report = detail?.report {
                     if let overview = report["summary"]?.value as? String, !overview.isEmpty {
-                        ReportSection(title: "Judge Overview", icon: "scale.3d", color: PrepTheme.primary, items: [overview])
+                        ReportSection(title: "Judge Overview", icon: "scale.3d", color: MockexaTheme.primary, items: [overview])
                     }
                     let savedStrengths = strings(report["strengths"]?.value)
                     let savedWeaknesses = strings(report["weaknesses"]?.value)
                     if !savedStrengths.isEmpty {
-                        ReportSection(title: "What You Did Well", icon: "checkmark.seal.fill", color: PrepTheme.success, items: savedStrengths)
+                        ReportSection(title: "What You Did Well", icon: "checkmark.seal.fill", color: MockexaTheme.success, items: savedStrengths)
                     }
                     if !savedWeaknesses.isEmpty {
-                        ReportSection(title: "Improve Next", icon: "arrow.up.right.circle.fill", color: PrepTheme.warning, items: savedWeaknesses)
+                        ReportSection(title: "Improve Next", icon: "arrow.up.right.circle.fill", color: MockexaTheme.warning, items: savedWeaknesses)
                     }
                     let savedRecommendations = strings(report["recommendations"]?.value).filter { !$0.isEmpty }
                     if !savedRecommendations.isEmpty {
-                        ReportSection(title: "Next Session Goal", icon: "target", color: PrepTheme.secondary, items: savedRecommendations)
+                        ReportSection(title: "Next Session Goal", icon: "target", color: MockexaTheme.secondary, items: savedRecommendations)
                     }
                 }
                 let candidateKeys = [
@@ -2492,14 +2492,14 @@ struct GDReportContentView: View {
                 ReportSection(
                     title: "Your Skill Breakdown",
                     icon: "person.3.fill",
-                    color: PrepTheme.secondary,
+                    color: MockexaTheme.secondary,
                     items: metricList.isEmpty ? ["Not available"] : metricList
                 )
                 if let judgingStandard = candidateFeedback?["judging_standard"] as? String {
                     ReportSection(
                         title: "How This Was Judged",
                         icon: "scale.3d",
-                        color: PrepTheme.primary,
+                        color: MockexaTheme.primary,
                         items: [judgingStandard]
                     )
                 }
@@ -2507,18 +2507,18 @@ struct GDReportContentView: View {
                     ReportSection(
                         title: "Discussion Environment",
                         icon: "bubble.left.and.bubble.right.fill",
-                        color: PrepTheme.primary,
+                        color: MockexaTheme.primary,
                         items: ["Panel discussion quality: \(Int(panel.rounded()))%"]
                     )
                 }
                 Text("Your score is based on your contributions; panel dynamics are shown separately.")
                     .font(.caption)
-                    .foregroundStyle(PrepTheme.textSecondary)
+                    .foregroundStyle(MockexaTheme.textSecondary)
             } else {
                 ReportSection(
                     title: "Session Feedback",
                     icon: "info.circle",
-                    color: PrepTheme.textSecondary,
+                    color: MockexaTheme.textSecondary,
                     items: ["Evaluation data recorded for session."]
                 )
             }
@@ -2568,9 +2568,9 @@ struct ReportSection: View {
                     ForEach(items, id: \.self) { item in
                         Label(item, systemImage: icon)
                             .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         if item != items.last {
-                            Divider().overlay(PrepTheme.border)
+                            Divider().overlay(MockexaTheme.border)
                         }
                     }
                 }
@@ -2589,20 +2589,20 @@ struct TranscriptView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Transcript")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .padding(.top, 8)
 
                 if entries.isEmpty {
                     Text("No transcript records available for this session.")
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                         .padding(.top, 10)
                 } else {
                     ForEach(entries) { entry in
                         HStack(alignment: .top, spacing: 12) {
                             AIAvatar(
                                 initials: entry.speaker == "You" ? "YOU" : String(entry.speaker.prefix(2)).uppercased(),
-                                color: entry.speaker == "You" ? PrepTheme.secondary : PrepTheme.primary
+                                color: entry.speaker == "You" ? MockexaTheme.secondary : MockexaTheme.primary
                             )
                             .accessibilityLabel(entry.speaker == "You" ? "Your contribution" : "AI participant \(entry.speaker)")
                             .scaleEffect(0.72)
@@ -2612,25 +2612,25 @@ struct TranscriptView: View {
                                 HStack {
                                     Text(entry.speaker)
                                         .font(.system(size: 15, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                     Spacer()
                                     Text(entry.timestamp)
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                 }
                                 Text(entry.text)
                                     .font(.system(size: 15, weight: .regular))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                     .lineSpacing(4)
                             }
                             .padding(15)
                             .background(
-                                entry.speaker == "You" ? PrepTheme.primary.opacity(0.08) : PrepTheme.surface,
+                                entry.speaker == "You" ? MockexaTheme.primary.opacity(0.08) : MockexaTheme.surface,
                                 in: RoundedRectangle(cornerRadius: 18, style: .continuous)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 18)
-                                    .stroke(entry.speaker == "You" ? PrepTheme.primary.opacity(0.2) : PrepTheme.border, lineWidth: 1)
+                                    .stroke(entry.speaker == "You" ? MockexaTheme.primary.opacity(0.2) : MockexaTheme.border, lineWidth: 1)
                             )
                         }
                     }

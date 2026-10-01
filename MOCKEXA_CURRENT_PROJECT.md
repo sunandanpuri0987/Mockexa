@@ -1,7 +1,7 @@
 # Mockexa Current Project State & Architecture Specification
 
 > **Document Type**: Comprehensive Repository Audit & Architectural Specification  
-> **Target Project**: Mockexa (internal/legacy codebase names: `PrepAI`, `PREPAI_`, `prepai`)  
+> **Target Project**: Mockexa
 > **Document Date**: September 4, 2026  
 > **Status**: Verified Against Current Repository Files, Pytest Results, and Native Xcode Build  
 
@@ -22,11 +22,9 @@
 - **Architecture**: Client-Server architecture over HTTP REST (JSON envelopes) with Supabase JWT authentication, per-session locking for concurrency safety, local state caches, and database/in-memory persistence.
 - **AI Integration**: Gemini Cloud API (`gemini-3.8-flash`) with model routing, input token budgeting, candidate-statement verifier steps, and mock fallback providers for unit testing.
 
-### Legacy Identifier Clarification
+### Naming Standard
 
-The codebase originated as `PrepAI`. The user-facing product name is **Mockexa**, but internal names are intentionally preserved to avoid breaking existing bindings:
-- **Product Name**: Mockexa
-- **Legacy Identifiers Retained**: `PrepAI.xcodeproj`, `UI/PrepAI/`, `PrepTheme`, `PREPAI_SESSION_EXPIRED` (NotificationCenter key), and `prepai` logger names.
+The product and its internal identifiers are standardized on **Mockexa**: `Mockexa.xcodeproj`, `UI/Mockexa/`, `MockexaApp`, `MockexaTheme`, `MockexaConfig`, `MOCKEXA_*` storage/environment keys, and `mockexa` logger names.
 
 ---
 
@@ -55,11 +53,11 @@ The codebase originated as `PrepAI`. The user-facing product name is **Mockexa**
 
 ## 3. iOS ARCHITECTURE
 
-The native iOS client (`UI/PrepAI/`) is structured using the **MVVM (Model-View-ViewModel)** pattern:
+The native iOS client (`UI/Mockexa/`) is structured using the **MVVM (Model-View-ViewModel)** pattern:
 
 ```mermaid
 graph TD
-    AppEntryPoint[PrepAIApp] --> RootView[RootView]
+    AppEntryPoint[MockexaApp] --> RootView[RootView]
     RootView -->|Unauthenticated| AuthSwitch{Has Valid Token?}
     AuthSwitch -->|No| WelcomeView[WelcomeView / AuthView]
     RootView -->|Auth Valid & Onboarding Pending| OnboardingFlowView[OnboardingFlowView]
@@ -80,7 +78,7 @@ graph TD
 
 ### Key Source Files & Responsibilities
 
-- **`PrepAIApp.swift`**: Application root entry point (`@main`). Manages top-level state and injects `AuthManager` as `@EnvironmentObject`.
+- **`MockexaApp.swift`**: Application root entry point (`@main`). Manages top-level state and injects `AuthManager` as `@EnvironmentObject`.
 - **`RootAndOnboarding.swift`**: Contains `RootView`, `WelcomeView`, `AuthView`, `OnboardingFlowView` (4-step setup), and `ProfileView`.
 - **`MainScreens.swift`**: Houses `MainTabView`, `HomeView` (dashboard & shortcuts), and `HistoryView` (session log).
 - **`PracticeFlows.swift`**: Houses `PracticeSetupView`, `PanelView` (GD panel screen), `LiveInterviewView` (Tech/HR screen), `ReportView`, `ReportSection`, and `TranscriptView`.
@@ -90,7 +88,7 @@ graph TD
   - `HRViewModel`: Manages HR questions, answer submission, and behavioral evaluations.
 - **`AuthManager.swift`**: Manages Supabase Auth session token, user metadata (`onboarding_completed`, `full_name`), Keychain token caching, and sign-out logic.
 - **`APIClient.swift`**: `URLSession` REST wrapper handling JSON encoding/decoding, JWT authorization headers, and status error mapping.
-- **`DesignSystem.swift`**: Contains `PrepTheme` color definitions, typography, `GlassCard`, `InteractiveTouchCard`, `PrimaryButton`, `SecondaryButton`, and `Haptics`.
+- **`DesignSystem.swift`**: Contains `MockexaTheme` color definitions, typography, `GlassCard`, `InteractiveTouchCard`, `PrimaryButton`, `SecondaryButton`, and `Haptics`.
 
 ---
 
@@ -281,7 +279,7 @@ Four fixed participant agents are initialized in `default_profiles()` (`gd_contr
 - **Provider**: Supabase Auth.
 - **Supported Auth Flows**: Email/Password, Google OAuth UI, Apple Sign-in UI.
 - **JWT Verification**: `Backend/app/auth.py` validates JWTs via HS256 secret (in local dev mode) or RS256 JWKS public key decoding (in production mode with Supabase URL).
-- **Session Expiration**: iOS `APIClient` broadcasts `PREPAI_SESSION_EXPIRED` on HTTP 401, returning user to `WelcomeView`.
+- **Session Expiration**: iOS `APIClient` broadcasts `MOCKEXA_SESSION_EXPIRED` on HTTP 401, returning user to `WelcomeView`.
 
 ---
 
@@ -301,15 +299,15 @@ Four fixed participant agents are initialized in `default_profiles()` (`gd_contr
 ### Verified Backend Test Results
 
 - **Command Executed**: `source .venv/bin/activate && pytest`
-- **Date Verified**: September 24, 2026
+- **Date Verified**: October 1, 2026
 - **Result Summary**:
-  - **Total Collected**: `125`
-  - **Passed**: `125` (100% pass rate)
+  - **Total Collected**: `150`
+  - **Passed**: `150` (100% pass rate)
   - **Failed**: `0`
   - **Skipped**: `0`
   - **Errors**: `0`
   - **Warnings**: `2` (Starlette testclient deprecation warning, PyJWT test key length warning)
-  - **Duration**: `5.34s`
+  - **Duration**: `8.92s`
 - **Modules Covered**: Technical flow, HR behavioral assessment, GD multi-agent simulation, Friends GD lobbies & rewards, Gemini provider, Company question bank & drills, Neural TTS and sanitization, Session history, and token budget estimators.
 
 ---
@@ -318,8 +316,8 @@ Four fixed participant agents are initialized in `default_profiles()` (`gd_contr
 
 ### Verified Native Xcode Build Result
 
-- **Command Executed**: `xcodebuild -project UI/PrepAI.xcodeproj -scheme PrepAI -destination 'generic/platform=iOS Simulator' clean build CODE_SIGNING_ALLOWED=NO`
-- **Date Verified**: September 24, 2026
+- **Command Executed**: `xcodebuild -project UI/Mockexa.xcodeproj -scheme Mockexa -destination 'generic/platform=iOS Simulator' clean build CODE_SIGNING_ALLOWED=NO`
+- **Date Verified**: October 1, 2026
 - **Destination**: Generic iOS Simulator (iOS 17+)
 - **Result**: **`** BUILD SUCCEEDED **`**
 
@@ -327,7 +325,7 @@ Four fixed participant agents are initialized in `default_profiles()` (`gd_contr
 
 ## 14. DESIGN SYSTEM
 
-Implemented in `DesignSystem.swift` under `PrepTheme`:
+Implemented in `DesignSystem.swift` under `MockexaTheme`:
 - **Palette**: `darkNavy` (`#0F172A`), `primary` (`#6366F1`), `secondary` (`#8B5CF6`), surface cards, crimson `destructive` (`#EF4444`).
 - **Gradients**: Linear gradient from primary indigo to secondary violet (`LinearGradient(colors: [primary, secondary], ...)`).
 - **Cards**: `GlassCard` wrapper with subtle translucent borders.
@@ -339,16 +337,15 @@ Implemented in `DesignSystem.swift` under `PrepTheme`:
 
 1. **Static Code Evaluation**: Technical coding problem answers are evaluated via LLM static reasoning rather than executing code in a isolated sandboxed environment.
 2. **Coding Domain Hidden in iOS UI**: "Coding" is supported in backend schemas and evaluation logic, but is not present in the iOS setup grid picker.
-3. **Legacy File Naming**: Project folder (`UI/PrepAI`) and project file (`PrepAI.xcodeproj`) use legacy name `PrepAI`.
+3. **OAuth Redirect Configuration**: Supabase must allow `mockexa://auth/callback` for Google sign-in after the product-wide identifier rename.
 
 ---
 
 ## 16. PLANNED IMPROVEMENTS
 
-1. **Voice / Audio Streaming**: Adding Speech-to-Text (STT) and Text-to-Speech (TTS) for hands-free oral interviews and audio GDs.
-2. **Sandboxed Code Execution Engine**: Running user code in Docker/Pyodide containers for runtime test case verification.
-3. **PDF Report Export**: Generating downloadable PDF summaries of session evaluation metrics.
-4. **Exposing Coding Domain in iOS UI**: Adding a dedicated coding entry point in `PracticeSetupView`.
+1. **Sandboxed Code Execution Engine**: Run user code in isolated containers for runtime test-case verification.
+2. **Durable Multiplayer Coordination**: Move friends-GD room and matchmaking state from process memory to a shared store.
+3. **Exposing Coding Domain in iOS UI**: Add a dedicated coding entry point in `PracticeSetupView`.
 
 ---
 
@@ -364,7 +361,7 @@ Implemented in `DesignSystem.swift` under `PrepTheme`:
 
 ### Status Classification
 
-> **Functionally Complete & Verified (Text-Based Platform)**  
-> Mockexa is fully functional for text-based Group Discussions, Technical Interviews, and HR Interviews. All 95 backend tests pass cleanly, and the native iOS project compiles with `BUILD SUCCEEDED`.
+> **Functionally Complete & Verified**
+> Mockexa supports text and voice practice across Group Discussions, Technical Interviews, HR Interviews, company drills, and resume workflows. All 150 backend tests pass, and the renamed native iOS project compiles with `BUILD SUCCEEDED`.
 
 ---

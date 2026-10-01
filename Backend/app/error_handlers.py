@@ -19,7 +19,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-logger = logging.getLogger("prepai.errors")
+logger = logging.getLogger("mockexa.errors")
 
 
 def register_error_handlers(app: FastAPI) -> None:

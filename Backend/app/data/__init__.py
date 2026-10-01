@@ -1,1 +1,1 @@
-"""Static, reviewable data used by PrepAI features."""
+"""Static, reviewable data used by Mockexa features."""

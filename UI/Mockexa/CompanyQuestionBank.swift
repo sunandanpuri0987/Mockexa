@@ -429,9 +429,9 @@ struct CompanyLogoView: View {
     var body: some View {
         ZStack(alignment: .center) {
             RoundedRectangle(cornerRadius: min(14, containerHeight * 0.28), style: .continuous)
-                .fill((company?.brandColor ?? PrepTheme.primary).opacity(0.09))
+                .fill((company?.brandColor ?? MockexaTheme.primary).opacity(0.09))
             RoundedRectangle(cornerRadius: min(14, containerHeight * 0.28), style: .continuous)
-                .stroke((company?.brandColor ?? PrepTheme.primary).opacity(0.16), lineWidth: 1)
+                .stroke((company?.brandColor ?? MockexaTheme.primary).opacity(0.16), lineWidth: 1)
             if let company {
                 Image(company.logoAssetName)
                     .resizable()
@@ -440,7 +440,7 @@ struct CompanyLogoView: View {
             } else {
                 Text(initialsFor(fallbackName))
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(company?.brandColor ?? PrepTheme.primary)
+                    .foregroundStyle(company?.brandColor ?? MockexaTheme.primary)
             }
         }
         .frame(width: containerWidth, height: containerHeight, alignment: .center)
@@ -458,7 +458,7 @@ struct CompanyLogoView: View {
 // MARK: - Company Question Bank Home (Tasks 4, 6, 11, 12)
 struct CompanyQuestionBankView: View {
     @State private var searchText = ""
-    @AppStorage("PREPAI_TARGET_COMPANIES") private var targetCompanies = ""
+    @AppStorage("MOCKEXA_TARGET_COMPANIES") private var targetCompanies = ""
     @Environment(\.dismiss) private var dismiss
 
     private var filteredPopular: [CompanyInfo] {
@@ -485,10 +485,10 @@ struct CompanyQuestionBankView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Company Question Bank")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text("Practice reported interview questions from top companies.")
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 .padding(.top, 8)
                 .staggeredEntrance(delay: 0.04)
@@ -497,23 +497,23 @@ struct CompanyQuestionBankView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                     TextField("Search company...", text: $searchText)
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 16))
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         }
                     }
                 }
                 .padding(14)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MockexaTheme.border, lineWidth: 1))
                 .staggeredEntrance(delay: 0.08)
 
                 // Popular Companies Section (Task 4)
@@ -540,14 +540,14 @@ struct CompanyQuestionBankView: View {
                             VStack(spacing: 8) {
                                 Image(systemName: "magnifyingglass")
                                     .font(.title2)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 Text("No supported company matches “\(searchText)”.")
                                     .font(.subheadline.bold())
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                     .multilineTextAlignment(.center)
                                 Button("Clear Search") { searchText = "" }
                                     .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
+                                    .foregroundStyle(MockexaTheme.primary)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -560,10 +560,10 @@ struct CompanyQuestionBankView: View {
                     HStack {
                         Text("View All Companies")
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                         Image(systemName: "arrow.right")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                         Spacer()
                     }
                     .padding(.vertical, 8)
@@ -588,7 +588,7 @@ private struct CompanyCompactCard: View {
                     .scaleEffect(isPressed ? 1.05 : 1.0)
                 Text(company.name)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
                 Spacer(minLength: 0)
@@ -620,10 +620,10 @@ struct CompanyListView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("All Companies")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     Text("Browse supported companies and practice reported interview questions.")
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 .padding(.top, 8)
                 .staggeredEntrance(delay: 0.04)
@@ -632,23 +632,23 @@ struct CompanyListView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                     TextField("Search company (e.g. Google, Amazon)...", text: $searchText)
                         .font(.system(size: 16, weight: .regular, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                        .foregroundStyle(MockexaTheme.darkNavy)
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: 16))
-                                .foregroundStyle(PrepTheme.textSecondary)
+                                .foregroundStyle(MockexaTheme.textSecondary)
                         }
                     }
                 }
                 .padding(14)
-                .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(PrepTheme.border, lineWidth: 1))
+                .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MockexaTheme.border, lineWidth: 1))
                 .staggeredEntrance(delay: 0.08)
 
                 // Company Rows: [ REAL LOGO ]   Company Name   >
@@ -661,11 +661,11 @@ struct CompanyListView: View {
                                         CompanyLogoView(company: company, containerWidth: 50, containerHeight: 50)
                                         Text(company.name)
                                             .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                            .foregroundStyle(PrepTheme.darkNavy)
+                                            .foregroundStyle(MockexaTheme.darkNavy)
                                         Spacer()
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 13, weight: .semibold))
-                                            .foregroundStyle(PrepTheme.textSecondary)
+                                            .foregroundStyle(MockexaTheme.textSecondary)
                                     }
                                 }
                             }
@@ -680,10 +680,10 @@ struct CompanyListView: View {
                         VStack(spacing: 8) {
                             Text("No supported company found.")
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                             Button("Clear Search") { searchText = "" }
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.primary)
+                                .foregroundStyle(MockexaTheme.primary)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -729,10 +729,10 @@ struct CompanyQuestionListView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(companyName) Interview Questions")
                             .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Text("Reported questions from \(companyName) interviews.")
                             .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
                 }
                 .padding(.top, 8)
@@ -742,11 +742,11 @@ struct CompanyQuestionListView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Build a shuffled practice session")
                             .font(.system(size: 17, weight: .bold, design: .rounded))
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
 
                         Text("Choose interview areas, or leave all unselected to mix every type. Each prompt includes its source link.")
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
 
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                                 ForEach(categories, id: \.self) { category in
@@ -761,14 +761,14 @@ struct CompanyQuestionListView: View {
                                         Text(category)
                                             .font(.caption.bold())
                                             .frame(maxWidth: .infinity)
-                                            .foregroundStyle(selectedCategories.contains(category) ? .white : PrepTheme.darkNavy)
+                                            .foregroundStyle(selectedCategories.contains(category) ? .white : MockexaTheme.darkNavy)
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 8)
                                             .background(
-                                                selectedCategories.contains(category) ? PrepTheme.primary : PrepTheme.surface,
+                                                selectedCategories.contains(category) ? MockexaTheme.primary : MockexaTheme.surface,
                                                 in: Capsule()
                                             )
-                                            .overlay(Capsule().stroke(PrepTheme.border, lineWidth: 1))
+                                            .overlay(Capsule().stroke(MockexaTheme.border, lineWidth: 1))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -780,19 +780,19 @@ struct CompanyQuestionListView: View {
                             in: 1...max(1, min(10, availableQuestionCount))
                         )
                             .font(.subheadline.bold())
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
 
                         Toggle(isOn: $useDeepAI) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(useDeepAI ? "Deep AI evaluation" : "Fast evaluation")
                                     .font(.subheadline.bold())
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text(useDeepAI ? "Richer feedback • may take a few seconds" : "Instant scoring • recommended for practice")
                                     .font(.caption)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                             }
                         }
-                        .tint(PrepTheme.primary)
+                        .tint(MockexaTheme.primary)
 
                         NavigationLink {
                             CompanyPracticeView(
@@ -807,7 +807,7 @@ struct CompanyQuestionListView: View {
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 52)
-                                .background(PrepTheme.gradient, in: RoundedRectangle(cornerRadius: 18))
+                                .background(MockexaTheme.gradient, in: RoundedRectangle(cornerRadius: 18))
                         }
                         .disabled(!canStartPractice)
                         .opacity(canStartPractice ? 1 : 0.5)
@@ -819,7 +819,7 @@ struct CompanyQuestionListView: View {
                     HStack {
                         Spacer()
                         ProgressView("Loading reported questions…")
-                            .tint(PrepTheme.primary)
+                            .tint(MockexaTheme.primary)
                         Spacer()
                     }
                     .padding(.vertical, 24)
@@ -827,37 +827,37 @@ struct CompanyQuestionListView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Questions could not be loaded.")
                             .font(.subheadline.bold())
-                            .foregroundStyle(PrepTheme.darkNavy)
+                            .foregroundStyle(MockexaTheme.darkNavy)
                         Text(error)
                             .font(.caption)
-                            .foregroundStyle(PrepTheme.destructive)
+                            .foregroundStyle(MockexaTheme.destructive)
                         Button("Retry") {
                             guard let company else { return }
                             Task { await viewModel.load(companyId: company.id, token: auth.accessToken) }
                         }
                         .font(.caption.bold())
-                        .foregroundStyle(PrepTheme.primary)
+                        .foregroundStyle(MockexaTheme.primary)
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(PrepTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                    .background(MockexaTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
                 } else {
                     HStack {
                         SectionHeader(title: "Reported Question Preview")
                         Spacer()
                         Text("\(filteredQuestions.count) available")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                     }
 
                     ForEach(filteredQuestions) { question in
-                        CompanyQuestionPreviewCard(question: question, brandColor: company?.brandColor ?? PrepTheme.primary)
+                        CompanyQuestionPreviewCard(question: question, brandColor: company?.brandColor ?? MockexaTheme.primary)
                     }
 
                     if filteredQuestions.isEmpty {
                         Text("No reported questions are available for the selected areas. Choose another interview area.")
                             .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
+                            .foregroundStyle(MockexaTheme.textSecondary)
                             .padding(.vertical, 12)
                     }
                 }
@@ -892,21 +892,21 @@ private struct CompanyQuestionPreviewCard: View {
                         .foregroundStyle(brandColor)
                     Text("• \(question.round) • \(question.formattedYear)")
                         .font(.caption2)
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                     Spacer()
                     Text("Level \(question.difficulty)/5")
                         .font(.caption2.bold())
-                        .foregroundStyle(PrepTheme.textSecondary)
+                        .foregroundStyle(MockexaTheme.textSecondary)
                 }
                 Text(question.prompt)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(PrepTheme.darkNavy)
+                    .foregroundStyle(MockexaTheme.darkNavy)
                     .lineLimit(4)
                 if let url = URL(string: question.sourceURL) {
                     Link(destination: url) {
                         Label(question.sourceKind == "candidate_report" ? "Candidate-reported source" : "Frequently-asked collection", systemImage: "link")
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.primary)
+                            .foregroundStyle(MockexaTheme.primary)
                     }
                 }
             }
@@ -935,31 +935,31 @@ struct CompanyPracticeView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("\(company?.name ?? "Company") Practice")
                                 .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                             Text(viewModel.isCompleted ? "Session complete" : "Question \(viewModel.questionNumber) of \(viewModel.totalQuestions)")
                                 .font(.caption.bold())
-                                .foregroundStyle(viewModel.isCompleted ? PrepTheme.success : PrepTheme.textSecondary)
+                                .foregroundStyle(viewModel.isCompleted ? MockexaTheme.success : MockexaTheme.textSecondary)
                         }
                         Spacer()
                         if !viewModel.isCompleted {
                             Text("\(Int(viewModel.averageScore * 100)) avg")
                                 .font(.caption.bold())
-                                .foregroundStyle(PrepTheme.primary)
+                                .foregroundStyle(MockexaTheme.primary)
                         }
                     }
 
                     if let error = viewModel.errorMessage {
                         Text(error)
                             .font(.caption.bold())
-                            .foregroundStyle(PrepTheme.destructive)
+                            .foregroundStyle(MockexaTheme.destructive)
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(PrepTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                            .background(MockexaTheme.destructive.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
                     }
 
                     if viewModel.isLoading && viewModel.currentQuestion == nil && !viewModel.isCompleted {
                         ProgressView("Preparing a shuffled interview…")
-                            .tint(PrepTheme.primary)
+                            .tint(MockexaTheme.primary)
                             .padding(.vertical, 50)
                     } else if let question = viewModel.currentQuestion {
                         GlassCard {
@@ -967,7 +967,7 @@ struct CompanyPracticeView: View {
                                 HStack {
                                     Text("\(question.category.uppercased()) • \(question.round.uppercased())")
                                         .font(.caption.bold())
-                                        .foregroundStyle(company?.brandColor ?? PrepTheme.primary)
+                                        .foregroundStyle(company?.brandColor ?? MockexaTheme.primary)
                                     Spacer()
                                     Button {
                                         if voice.isSpeaking {
@@ -978,18 +978,18 @@ struct CompanyPracticeView: View {
                                     } label: {
                                         Image(systemName: voice.isSpeaking ? "stop.fill" : "speaker.wave.2.fill")
                                             .frame(width: 38, height: 38)
-                                            .background(PrepTheme.primary.opacity(0.10), in: Circle())
-                                            .foregroundStyle(PrepTheme.primary)
+                                            .background(MockexaTheme.primary.opacity(0.10), in: Circle())
+                                            .foregroundStyle(MockexaTheme.primary)
                                     }
                                 }
                                 Text(question.prompt)
                                     .font(.system(size: 19, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                     .lineSpacing(4)
                                 HStack {
                                     Text("\(question.role) • \(question.formattedYear) • Level \(question.difficulty)/5")
                                         .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                     Spacer()
                                     if let url = URL(string: question.sourceURL) {
                                         Link("Source", destination: url)
@@ -1003,14 +1003,14 @@ struct CompanyPracticeView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text("Your answer")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 TextEditor(text: $answer)
                                     .frame(minHeight: 150)
                                     .padding(8)
                                     .scrollContentBackground(.hidden)
-                                    .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
-                                    .foregroundStyle(PrepTheme.textPrimary)
+                                    .background(MockexaTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
+                                    .foregroundStyle(MockexaTheme.textPrimary)
                                     .disabled(viewModel.isLoading)
                             }
                         }
@@ -1029,28 +1029,28 @@ struct CompanyPracticeView: View {
                                 HStack {
                                     Text("LATEST FEEDBACK")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.primary)
+                                        .foregroundStyle(MockexaTheme.primary)
                                     Spacer()
                                     Text("\(Int(evaluation.overallScore * 100))/100")
                                         .font(.headline.bold())
-                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .foregroundStyle(MockexaTheme.darkNavy)
                                 }
                                 Text(evaluation.feedback)
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 if !evaluation.missingConcepts.isEmpty {
                                     Text("Revisit: \(evaluation.missingConcepts.joined(separator: ", "))")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.warning)
+                                        .foregroundStyle(MockexaTheme.warning)
                                 }
                                 DisclosureGroup("Suggested answer direction") {
                                     Text(review.answerOutline)
                                         .font(.subheadline)
-                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .foregroundStyle(MockexaTheme.textSecondary)
                                         .padding(.top, 6)
                                 }
                                 .font(.subheadline.bold())
-                                .foregroundStyle(PrepTheme.darkNavy)
+                                .foregroundStyle(MockexaTheme.darkNavy)
                             }
                         }
                     }
@@ -1060,13 +1060,13 @@ struct CompanyPracticeView: View {
                             VStack(alignment: .leading, spacing: 14) {
                                 Text("Practice Summary")
                                     .font(.system(size: 21, weight: .bold, design: .rounded))
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 Text("\(report.overallScore)/100")
                                     .font(.system(size: 44, weight: .bold, design: .rounded))
-                                    .foregroundStyle(report.overallScore >= 70 ? PrepTheme.success : PrepTheme.warning)
+                                    .foregroundStyle(report.overallScore >= 70 ? MockexaTheme.success : MockexaTheme.warning)
                                 Text("\(report.questionsAnswered) questions answered")
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 ForEach(report.categoryScores.keys.sorted(), id: \.self) { category in
                                     HStack {
                                         Text(category)
@@ -1074,12 +1074,12 @@ struct CompanyPracticeView: View {
                                         Text("\(report.categoryScores[category] ?? 0)%").bold()
                                     }
                                     .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.darkNavy)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
                                 }
                                 if !report.focusAreas.isEmpty {
                                     Text("Focus next: \(report.focusAreas.joined(separator: ", "))")
                                         .font(.caption.bold())
-                                        .foregroundStyle(PrepTheme.warning)
+                                        .foregroundStyle(MockexaTheme.warning)
                                 }
                             }
                         }
