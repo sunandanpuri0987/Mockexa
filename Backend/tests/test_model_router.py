@@ -19,7 +19,7 @@ def make_settings() -> Settings:
 def test_generate_uses_task_specific_output_budget():
     backend = MagicMock()
     backend.generate.return_value = GenerationResult(
-        text="ok", provider="groq", model="m", input_tokens=1, output_tokens=1,
+        text="ok", provider="gemini", model="m", input_tokens=1, output_tokens=1,
         latency_seconds=0.1, retry_count=0,
     )
     router = ModelRouter(make_settings(), backend)

@@ -107,6 +107,16 @@ final class APIClient {
         
         return try await execute(request: request)
     }
+
+    func delete<Res: Decodable>(endpoint: String, token: String? = nil) async throws -> Res {
+        let urlString = "\(PrepConfig.baseURL)\(endpoint)"
+        guard let url = URL(string: urlString) else { throw APIError.unreachable("Invalid URL format: \(urlString)") }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token, !token.isEmpty { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        return try await execute(request: request)
+    }
     
     /// Checks backend `/health` endpoint
     func checkHealth() async throws -> HealthResponse {
@@ -121,6 +131,10 @@ final class APIClient {
     /// Fetches detailed session report and transcript from backend
     func fetchSessionDetail(sessionId: String, token: String?) async throws -> SessionDetailItem {
         return try await get(endpoint: "/sessions/\(sessionId)", token: token)
+    }
+
+    func fetchLeaderboard(token: String?) async throws -> LeaderboardResponse {
+        return try await get(endpoint: "/gd/rewards/leaderboard", token: token)
     }
 
 

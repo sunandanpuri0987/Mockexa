@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.error_handlers import register_error_handlers
-from app.routers import gd, health, hr, sessions, technical
+from app.routers import company, gd, health, hr, sessions, technical, tts
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("prepai.app")
@@ -19,7 +19,7 @@ app = FastAPI(
     version="0.2.0",
     description=(
         "Backend API for the Mockexa interview preparation platform.\n\n"
-        "**Implemented:** Technical Interview, HR Interview, Group Discussion, Health Check, Sessions History.\n\n"
+        "**Implemented:** Technical Interview, HR Interview, Group Discussion, Health Check, Sessions History, Neural TTS.\n\n"
         "**Authentication:** JWT Bearer token required for interview & sessions routes. "
         "Send `Authorization: Bearer <token>` header. "
         "Tokens are issued by Supabase Auth (or HS256 JWT signer sharing secret).\n\n"
@@ -52,4 +52,5 @@ app.include_router(technical.router)
 app.include_router(gd.router)
 app.include_router(hr.router)
 app.include_router(sessions.router)
-
+app.include_router(tts.router)
+app.include_router(company.router)

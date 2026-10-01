@@ -8,6 +8,9 @@ class HRStartRequest(BaseModel):
     target_role: str
     experience: str
     max_questions: int = Field(default=5, ge=1, le=10)
+    interview_style: str = "General HR"
+    resume_context: str | None = None
+    job_description: str | None = None
 
 
 class HRQuestionOut(BaseModel):

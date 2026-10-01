@@ -5,7 +5,7 @@ This is deliberately a heuristic (chars/4), not a real tokenizer, so it adds
 no heavy dependency to the FastAPI process. It is used only to REJECT or
 TRUNCATE oversized requests before they're sent — never to bill or report
 actual usage (actual usage, where available, comes from the provider
-response and is logged separately; see providers/groq_backend.py).
+response and is logged separately; see providers/gemini_backend.py).
 """
 from __future__ import annotations
 

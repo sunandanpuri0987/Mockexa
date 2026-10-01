@@ -1,6 +1,7 @@
 """Supabase PostgREST persistence. Every request carries the caller's JWT so RLS applies."""
 from __future__ import annotations
 from typing import Any
+import asyncio
 import httpx
 from app.config import get_settings
 
@@ -70,5 +71,17 @@ class SupabaseRepository:
     async def feedback(self,session_id:str,token:str)->dict | None:
         rows=await self._request("GET","feedback",token,params={"session_id":f"eq.{session_id}","select":"*"})
         return rows[0] if rows else None
+    async def feedback_for_sessions(self, session_ids: list[str], token: str) -> dict[str, dict]:
+        """Fetch history scores in batches instead of one network call per session."""
+        if not session_ids:
+            return {}
+        batches = [session_ids[index:index + 40] for index in range(0, len(session_ids), 40)]
+        async def fetch_batch(ids: list[str]) -> list[dict]:
+            return await self._request(
+                "GET", "feedback", token,
+                params={"session_id": f"in.({','.join(ids)})", "select": "session_id,overall_score"},
+            )
+        results = await asyncio.gather(*(fetch_batch(ids) for ids in batches))
+        return {row["session_id"]: row for rows in results for row in rows}
     async def sessions(self,user_id:str,token:str)->list[dict]:
-        return await self._request("GET","sessions",token,params={"user_id":f"eq.{user_id}","select":"*","order":"started_at.desc"})
+        return await self._request("GET","sessions",token,params={"user_id":f"eq.{user_id}","status":"eq.completed","select":"*","order":"started_at.desc"})

@@ -118,11 +118,19 @@ private struct KeychainHelper {
 
 @MainActor
 final class AuthManager: ObservableObject {
+#if targetEnvironment(simulator)
+    /// Free, no-SMS credentials used only by local prototype builds.
+    static let prototypePhoneNumber = "+12025550123"
+    static let prototypePhoneOTP = "789012"
+#endif
+
     @Published var isAuthenticated: Bool = false
     @Published var currentUserEmail: String = ""
+    @Published var currentUserPhone: String = ""
     @Published var currentUserId: String = ""
     @Published var currentUserFullName: String = ""
     @Published var currentUserAge: Int? = nil
+    @Published var currentUserPhotoData: Data? = nil
     @Published var accessToken: String? = nil
     @Published var authError: String? = nil
     @Published var isLoading: Bool = false
@@ -158,6 +166,12 @@ final class AuthManager: ObservableObject {
         }
         return "Your Profile"
     }
+
+    var profileContact: String {
+        if !currentUserEmail.isEmpty { return currentUserEmail }
+        if !currentUserPhone.isEmpty { return currentUserPhone }
+        return "Candidate"
+    }
     
     /// Returns 2-letter uppercase initials for profile avatar
     var profileInitials: String {
@@ -180,6 +194,7 @@ final class AuthManager: ObservableObject {
     
     private let keychainKey = "PREPAI_ACTIVE_SESSION"
     private let installFlagKey = "PREPAI_APP_INSTALLED_FLAG"
+    private let preferencesOwnerKey = "PREPAI_PREFERENCES_OWNER"
     
     init() {
         restoreSession()
@@ -220,11 +235,21 @@ final class AuthManager: ObservableObject {
             self.accessToken = session.accessToken
             self.currentUserId = session.userId
             self.currentUserEmail = session.email
+            if self.currentUserEmail.isEmpty,
+               let cachedEmail = UserDefaults.standard.string(forKey: "PREPAI_USER_EMAIL_\(session.userId)"), !cachedEmail.isEmpty {
+                self.currentUserEmail = cachedEmail
+            }
+            self.currentUserPhone = UserDefaults.standard.string(forKey: "PREPAI_USER_PHONE_\(session.userId)") ?? ""
+            if UserDefaults.standard.bool(forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(session.userId)") {
+                self.currentUserEmail = ""
+            }
             self.isAuthenticated = true
+            activatePreferences(for: session.userId)
             
             if let cachedName = UserDefaults.standard.string(forKey: "PREPAI_USER_FULL_NAME_\(session.userId)"), !cachedName.isEmpty {
                 self.currentUserFullName = cachedName
             }
+            self.currentUserPhotoData = UserDefaults.standard.data(forKey: "PREPAI_USER_PHOTO_\(session.userId)")
             
             let ageKey = "PREPAI_USER_AGE_\(session.userId)"
             if UserDefaults.standard.object(forKey: ageKey) != nil {
@@ -269,6 +294,160 @@ final class AuthManager: ObservableObject {
         // Sync to Supabase Auth user_metadata asynchronously
         Task {
             await self.syncOnboardingCompletionToSupabase(completed: completed)
+        }
+    }
+
+    func updateProfile(fullName: String, age: Int?, email: String? = nil) {
+        let cleanName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !currentUserId.isEmpty, !cleanName.isEmpty else { return }
+        currentUserFullName = cleanName
+        currentUserAge = age
+        UserDefaults.standard.set(cleanName, forKey: "PREPAI_USER_FULL_NAME_\(currentUserId)")
+        if let age {
+            UserDefaults.standard.set(age, forKey: "PREPAI_USER_AGE_\(currentUserId)")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "PREPAI_USER_AGE_\(currentUserId)")
+        }
+        if let email {
+            let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !cleanEmail.isEmpty {
+                currentUserEmail = cleanEmail
+                UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
+                UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_LAST_EMAIL")
+                persistUpdatedEmailInSession(cleanEmail)
+            }
+        }
+        Task {
+            await syncProfileMetadataToSupabase(fullName: cleanName, age: age)
+            if let email, !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                await syncEmailToSupabase(email.trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+        }
+    }
+
+    func updateEmail(_ newEmail: String) {
+        let cleanEmail = newEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanEmail.isEmpty else { return }
+        currentUserEmail = cleanEmail
+        if !currentUserId.isEmpty {
+            UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
+        }
+        UserDefaults.standard.set(cleanEmail, forKey: "PREPAI_LAST_EMAIL")
+        persistUpdatedEmailInSession(cleanEmail)
+        Task {
+            await syncEmailToSupabase(cleanEmail)
+        }
+    }
+
+    private func persistUpdatedEmailInSession(_ newEmail: String) {
+        if let savedData = KeychainHelper.load(key: keychainKey) ?? UserDefaults.standard.data(forKey: keychainKey),
+           let session = try? JSONDecoder().decode(AuthSession.self, from: savedData) {
+            let updated = AuthSession(
+                accessToken: session.accessToken,
+                userId: session.userId,
+                email: newEmail,
+                expiresIn: session.expiresIn,
+                refreshToken: session.refreshToken,
+                createdAt: session.createdAt
+            )
+            if let data = try? JSONEncoder().encode(updated) {
+                KeychainHelper.save(key: keychainKey, data: data)
+                UserDefaults.standard.set(data, forKey: keychainKey)
+            }
+        }
+    }
+
+    private func syncEmailToSupabase(_ email: String) async {
+        guard let token = accessToken, !token.isEmpty,
+              let url = URL(string: "\(PrepConfig.supabaseURL)/auth/v1/user") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(PrepConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["email": email, "data": ["email": email]])
+        _ = try? await URLSession.shared.data(for: request)
+    }
+
+    func setProfilePhotoData(_ data: Data?) {
+        guard !currentUserId.isEmpty else { return }
+        currentUserPhotoData = data
+        let key = "PREPAI_USER_PHOTO_\(currentUserId)"
+        if let data {
+            UserDefaults.standard.set(data, forKey: key)
+        } else {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+    }
+
+    func saveOnboardingPreferences(study: String, role: String, companies: String, confidence: Int) {
+        guard !currentUserId.isEmpty else { return }
+        let defaults = UserDefaults.standard
+        let values: [(String, Any)] = [
+            ("PREPAI_STUDY_FIELD", study),
+            ("PREPAI_TARGET_ROLE", role),
+            ("PREPAI_TARGET_COMPANIES", companies),
+            ("PREPAI_CONFIDENCE_LEVEL", confidence),
+        ]
+        for (key, value) in values {
+            defaults.set(value, forKey: key)
+            defaults.set(value, forKey: "\(key)_\(currentUserId)")
+        }
+        defaults.set(currentUserId, forKey: preferencesOwnerKey)
+    }
+
+    func saveTargetPreference(key: String, value: String) {
+        guard !currentUserId.isEmpty,
+              key == "PREPAI_TARGET_ROLE" || key == "PREPAI_TARGET_COMPANIES" else { return }
+        UserDefaults.standard.set(value, forKey: key)
+        UserDefaults.standard.set(value, forKey: "\(key)_\(currentUserId)")
+        UserDefaults.standard.set(currentUserId, forKey: preferencesOwnerKey)
+    }
+
+    private func activatePreferences(for userId: String) {
+        guard !userId.isEmpty else { return }
+        let defaults = UserDefaults.standard
+        let keys = ["PREPAI_STUDY_FIELD", "PREPAI_TARGET_ROLE", "PREPAI_TARGET_COMPANIES", "PREPAI_CONFIDENCE_LEVEL"]
+        let owner = defaults.string(forKey: preferencesOwnerKey)
+
+        // One-time migration for an existing installation created before
+        // preferences became account-scoped.
+        if owner == nil {
+            for key in keys where defaults.object(forKey: key) != nil {
+                defaults.set(defaults.object(forKey: key), forKey: "\(key)_\(userId)")
+            }
+        }
+
+        for key in keys {
+            let scopedKey = "\(key)_\(userId)"
+            if let value = defaults.object(forKey: scopedKey) {
+                defaults.set(value, forKey: key)
+            } else {
+                defaults.removeObject(forKey: key)
+            }
+        }
+        defaults.set(userId, forKey: preferencesOwnerKey)
+    }
+
+    private func syncProfileMetadataToSupabase(fullName: String, age: Int?) async {
+        guard let token = accessToken, !token.isEmpty,
+              let url = URL(string: "\(PrepConfig.supabaseURL)/auth/v1/user") else { return }
+        var metadata: [String: Any] = ["full_name": fullName]
+        if let age { metadata["age"] = age }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(PrepConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["data": metadata])
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                print("Supabase profile metadata sync failed")
+                return
+            }
+        } catch {
+            print("Supabase profile metadata sync error: \(error.localizedDescription)")
         }
     }
     
@@ -329,6 +508,16 @@ final class AuthManager: ObservableObject {
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else { return }
             
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let isPrototypePhoneUser = UserDefaults.standard.bool(forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(currentUserId)")
+                if !isPrototypePhoneUser, let email = json["email"] as? String, !email.isEmpty {
+                    self.currentUserEmail = email
+                    UserDefaults.standard.set(email, forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
+                    UserDefaults.standard.set(email, forKey: "PREPAI_LAST_EMAIL")
+                }
+                if let phone = json["phone"] as? String, !phone.isEmpty {
+                    self.currentUserPhone = phone
+                    UserDefaults.standard.set(phone, forKey: "PREPAI_USER_PHONE_\(currentUserId)")
+                }
                 let metadata = json["user_metadata"] as? [String: Any]
                 if let completed = metadata?["onboarding_completed"] as? Bool, completed {
                     UserDefaults.standard.set(true, forKey: "PREPAI_ONBOARDING_COMPLETED_\(currentUserId)")
@@ -432,7 +621,18 @@ final class AuthManager: ObservableObject {
             }
             
             if httpResponse.statusCode == 200 {
-                let session = try JSONDecoder().decode(AuthSession.self, from: data)
+                UserDefaults.standard.set(trimmedEmail, forKey: "PREPAI_LAST_EMAIL")
+                var session = try JSONDecoder().decode(AuthSession.self, from: data)
+                if session.email.isEmpty && !trimmedEmail.isEmpty {
+                    session = AuthSession(
+                        accessToken: session.accessToken,
+                        userId: session.userId,
+                        email: trimmedEmail,
+                        expiresIn: session.expiresIn,
+                        refreshToken: session.refreshToken,
+                        createdAt: session.createdAt
+                    )
+                }
                 saveSession(session, rawData: data)
                 return true
             } else {
@@ -515,7 +715,18 @@ final class AuthManager: ObservableObject {
             }
             
             if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
-                if let session = try? JSONDecoder().decode(AuthSession.self, from: data) {
+                UserDefaults.standard.set(trimmedEmail, forKey: "PREPAI_LAST_EMAIL")
+                if var session = try? JSONDecoder().decode(AuthSession.self, from: data) {
+                    if session.email.isEmpty && !trimmedEmail.isEmpty {
+                        session = AuthSession(
+                            accessToken: session.accessToken,
+                            userId: session.userId,
+                            email: trimmedEmail,
+                            expiresIn: session.expiresIn,
+                            refreshToken: session.refreshToken,
+                            createdAt: session.createdAt
+                        )
+                    }
                     saveSession(session, rawData: data)
                     return true
                 }
@@ -602,19 +813,65 @@ final class AuthManager: ObservableObject {
         accessToken = nil
         currentUserId = ""
         currentUserEmail = ""
+        currentUserPhone = ""
         currentUserFullName = ""
+        currentUserAge = nil
+        currentUserPhotoData = nil
         isAuthenticated = false
     }
     
     private func saveSession(_ session: AuthSession, rawData: Data? = nil) {
-        if let data = try? JSONEncoder().encode(session) {
+        self.accessToken = session.accessToken
+        self.currentUserId = session.userId
+        
+        var effectiveEmail = session.email
+        if let rawData = rawData,
+           let json = try? JSONSerialization.jsonObject(with: rawData) as? [String: Any] {
+            let userObj = json["user"] as? [String: Any]
+            if let email = (userObj?["email"] as? String ?? json["email"] as? String), !email.isEmpty {
+                effectiveEmail = email
+            }
+        }
+        if effectiveEmail.isEmpty,
+           let cachedEmail = UserDefaults.standard.string(forKey: "PREPAI_USER_EMAIL_\(session.userId)"), !cachedEmail.isEmpty {
+            effectiveEmail = cachedEmail
+        }
+        self.currentUserEmail = effectiveEmail
+        if !effectiveEmail.isEmpty {
+            UserDefaults.standard.set(effectiveEmail, forKey: "PREPAI_USER_EMAIL_\(session.userId)")
+            UserDefaults.standard.set(effectiveEmail, forKey: "PREPAI_LAST_EMAIL")
+        }
+        if let rawData,
+           let json = try? JSONSerialization.jsonObject(with: rawData) as? [String: Any],
+           let phone = ((json["user"] as? [String: Any])?["phone"] as? String ?? json["phone"] as? String),
+           !phone.isEmpty {
+            self.currentUserPhone = phone
+            UserDefaults.standard.set(phone, forKey: "PREPAI_USER_PHONE_\(session.userId)")
+        } else {
+            self.currentUserPhone = UserDefaults.standard.string(forKey: "PREPAI_USER_PHONE_\(session.userId)") ?? ""
+        }
+
+        let sessionToStore = (session.email.isEmpty && !effectiveEmail.isEmpty)
+            ? AuthSession(
+                accessToken: session.accessToken,
+                userId: session.userId,
+                email: effectiveEmail,
+                expiresIn: session.expiresIn,
+                refreshToken: session.refreshToken,
+                createdAt: session.createdAt
+            )
+            : session
+
+        if let data = try? JSONEncoder().encode(sessionToStore) {
             KeychainHelper.save(key: keychainKey, data: data)
             UserDefaults.standard.set(data, forKey: keychainKey)
         }
-        self.accessToken = session.accessToken
-        self.currentUserId = session.userId
-        self.currentUserEmail = session.email
         self.isAuthenticated = true
+        activatePreferences(for: session.userId)
+        self.currentUserPhotoData = UserDefaults.standard.data(forKey: "PREPAI_USER_PHOTO_\(session.userId)")
+        if UserDefaults.standard.bool(forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(session.userId)") {
+            self.currentUserEmail = ""
+        }
         
         // Extract onboarding_completed & full_name from raw user_metadata in Supabase response if available
         if let rawData = rawData,
@@ -657,7 +914,8 @@ final class AuthManager: ObservableObject {
                         let success = await self.signInWithApple(
                             idToken: payload.idToken,
                             rawNonce: payload.rawNonce,
-                            fullName: payload.fullName
+                            fullName: payload.fullName,
+                            email: payload.email
                         )
                         continuation.resume(returning: success)
                     case .failure(let error):
@@ -674,7 +932,7 @@ final class AuthManager: ObservableObject {
         }
     }
     
-    func signInWithApple(idToken: String, rawNonce: String, fullName: String? = nil) async -> Bool {
+    func signInWithApple(idToken: String, rawNonce: String, fullName: String? = nil, email: String? = nil) async -> Bool {
         let supabaseURL = PrepConfig.supabaseURL
         let anonKey = PrepConfig.supabaseAnonKey
         
@@ -694,8 +952,15 @@ final class AuthManager: ObservableObject {
             "nonce": rawNonce
         ]
         
+        var userMetadata: [String: Any] = [:]
         if let fullName, !fullName.isEmpty {
-            body["user_metadata"] = ["full_name": fullName]
+            userMetadata["full_name"] = fullName
+        }
+        if let email, !email.isEmpty {
+            userMetadata["email"] = email
+        }
+        if !userMetadata.isEmpty {
+            body["user_metadata"] = userMetadata
         }
         
         do {
@@ -708,7 +973,17 @@ final class AuthManager: ObservableObject {
             }
             
             if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
-                let session = try JSONDecoder().decode(AuthSession.self, from: data)
+                var session = try JSONDecoder().decode(AuthSession.self, from: data)
+                if session.email.isEmpty, let email, !email.isEmpty {
+                    session = AuthSession(
+                        accessToken: session.accessToken,
+                        userId: session.userId,
+                        email: email,
+                        expiresIn: session.expiresIn,
+                        refreshToken: session.refreshToken,
+                        createdAt: session.createdAt
+                    )
+                }
                 saveSession(session, rawData: data)
                 return true
             } else {
@@ -803,7 +1078,8 @@ final class AuthManager: ObservableObject {
         
         let refreshToken = params["refresh_token"]
         let expiresIn = Int(params["expires_in"] ?? "3600") ?? 3600
-        let email = params["email"] ?? ""
+        let tokenEmail = extractEmailFromJWT(accessToken)
+        let email = params["email"] ?? tokenEmail ?? ""
         let userId = params["user_id"] ?? extractSubjectFromJWT(accessToken) ?? (!email.isEmpty ? "google_\(email)" : "google_user")
         
         let session = AuthSession(
@@ -853,28 +1129,137 @@ final class AuthManager: ObservableObject {
         return sub
     }
 
+    private func extractEmailFromJWT(_ jwt: String) -> String? {
+        let parts = jwt.components(separatedBy: ".")
+        guard parts.count > 1 else { return nil }
+        var base64 = parts[1]
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 {
+            base64.append("=")
+        }
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return (json["email"] as? String ?? (json["user_metadata"] as? [String: Any])?["email"] as? String)
+    }
+
     // MARK: - Phone Authentication (SMS OTP)
+#if targetEnvironment(simulator)
+    private struct PrototypePhoneCredentials: Codable {
+        let email: String
+        let password: String
+    }
+
+    private var prototypeCredentialsKey: String { "PREPAI_PROTOTYPE_PHONE_CREDENTIALS" }
+
+    private func finishPrototypePhoneLogin(phone: String) {
+        guard !currentUserId.isEmpty else { return }
+        UserDefaults.standard.set(phone, forKey: "PREPAI_USER_PHONE_\(currentUserId)")
+        UserDefaults.standard.set(true, forKey: "PREPAI_PROTOTYPE_PHONE_USER_\(currentUserId)")
+        UserDefaults.standard.removeObject(forKey: "PREPAI_USER_EMAIL_\(currentUserId)")
+        currentUserPhone = phone
+        currentUserEmail = ""
+    }
+
+    /// Creates/reuses a real Supabase session behind the prototype phone UI so every
+    /// authenticated backend feature continues to receive a valid JWT.
+    private func authenticatePrototypePhone(_ phone: String) async -> Bool {
+        if let saved = KeychainHelper.load(key: prototypeCredentialsKey),
+           let credentials = try? JSONDecoder().decode(PrototypePhoneCredentials.self, from: saved),
+           await signIn(email: credentials.email, password: credentials.password) {
+            finishPrototypePhoneLogin(phone: phone)
+            return true
+        }
+
+        let id = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        let credentials = PrototypePhoneCredentials(
+            email: "prototype.phone.\(id)@example.com",
+            password: "\(UUID().uuidString)Aa1!\(UUID().uuidString.prefix(20))"
+        )
+        guard await signUp(email: credentials.email, password: credentials.password) else {
+            authError = authError ?? "Prototype sign-in could not be created. Please try again."
+            return false
+        }
+        if let data = try? JSONEncoder().encode(credentials) {
+            KeychainHelper.save(key: prototypeCredentialsKey, data: data)
+        }
+        finishPrototypePhoneLogin(phone: phone)
+        return true
+    }
+#endif
+
+    private func isPhoneAuthEnabled(supabaseURL: String, anonKey: String) async -> Bool? {
+        guard let url = URL(string: "\(supabaseURL)/auth/v1/settings") else { return nil }
+        var request = URLRequest(url: url, timeoutInterval: 10)
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+                  let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let external = json["external"] as? [String: Any] else { return nil }
+            return external["phone"] as? Bool
+        } catch {
+            // The OTP request below remains the source of truth if settings are unavailable.
+            return nil
+        }
+    }
+
+    private func phoneAuthError(from data: Data, fallback: String) -> String {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let raw = json["error_description"] as? String ?? json["message"] as? String ?? json["msg"] as? String ?? json["error"] as? String else {
+            return fallback
+        }
+        let lower = raw.lowercased()
+        if lower.contains("phone provider") || lower.contains("unsupported provider") {
+            return "Phone sign-in is temporarily unavailable. Please use email or Google while SMS setup is completed."
+        }
+        if lower.contains("rate") || lower.contains("too many") {
+            return "Too many code requests. Please wait a few minutes and try again."
+        }
+        if lower.contains("valid phone") {
+            return "That mobile number is not valid for the selected country."
+        }
+        return raw
+    }
+
     func sendPhoneOTP(phone: String) async -> Bool {
+        let digits = phone.dropFirst()
+        guard phone.hasPrefix("+"), (8...15).contains(digits.count),
+              digits.allSatisfy({ $0 >= "0" && $0 <= "9" }) else {
+            authError = "Enter a valid phone number with country code."
+            return false
+        }
+#if targetEnvironment(simulator)
+        if phone == Self.prototypePhoneNumber {
+            authError = nil
+            return true
+        }
+#endif
         isLoading = true
         authError = nil
         defer { isLoading = false }
         
         let supabaseURL = PrepConfig.supabaseURL
         let anonKey = PrepConfig.supabaseAnonKey
+
+        if await isPhoneAuthEnabled(supabaseURL: supabaseURL, anonKey: anonKey) == false {
+            authError = "Phone sign-in is temporarily unavailable. Please use email or Google while SMS setup is completed."
+            return false
+        }
         
         guard let url = URL(string: "\(supabaseURL)/auth/v1/otp") else {
             authError = "Invalid Supabase URL"
             return false
         }
         
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: 15)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
         
-        let body: [String: Any] = [
-            "phone": phone
-        ]
+        let body: [String: Any] = ["phone": phone, "create_user": true]
         
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -888,12 +1273,10 @@ final class AuthManager: ObservableObject {
             if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
                 return true
             } else {
-                if let errJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let msg = errJson["error_description"] as? String ?? errJson["msg"] as? String ?? errJson["error"] as? String {
-                    authError = msg
-                } else {
-                    authError = "Sending OTP failed (\(httpResponse.statusCode)). Please check Supabase Phone Provider & SMS gateway setup."
-                }
+                authError = phoneAuthError(
+                    from: data,
+                    fallback: "We couldn't send the code right now. Please try again shortly."
+                )
                 return false
             }
         } catch {
@@ -903,6 +1286,20 @@ final class AuthManager: ObservableObject {
     }
 
     func verifyPhoneOTP(phone: String, token: String) async -> Bool {
+        guard token.count == 6, token.allSatisfy({ $0 >= "0" && $0 <= "9" }) else {
+            authError = "Enter the 6-digit verification code."
+            return false
+        }
+#if targetEnvironment(simulator)
+        if phone == Self.prototypePhoneNumber {
+            guard token == Self.prototypePhoneOTP else {
+                authError = "Incorrect prototype code. Use \(Self.prototypePhoneOTP)."
+                return false
+            }
+            authError = nil
+            return await authenticatePrototypePhone(phone)
+        }
+#endif
         isLoading = true
         authError = nil
         defer { isLoading = false }
@@ -915,7 +1312,7 @@ final class AuthManager: ObservableObject {
             return false
         }
         
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: 15)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
@@ -940,12 +1337,10 @@ final class AuthManager: ObservableObject {
                 saveSession(session, rawData: data)
                 return true
             } else {
-                if let errJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let msg = errJson["error_description"] as? String ?? errJson["msg"] as? String ?? errJson["error"] as? String {
-                    authError = msg
-                } else {
-                    authError = "Verification failed (\(httpResponse.statusCode)). Please check your code and try again."
-                }
+                authError = phoneAuthError(
+                    from: data,
+                    fallback: "That code is invalid or expired. Request a new code and try again."
+                )
                 return false
             }
         } catch {
@@ -991,9 +1386,9 @@ private func sha256(_ input: String) -> String {
 @MainActor
 final class AppleAuthDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     private var currentNonce: String?
-    private var completion: ((Result<(idToken: String, rawNonce: String, fullName: String?), Error>) -> Void)?
+    private var completion: ((Result<(idToken: String, rawNonce: String, fullName: String?, email: String?), Error>) -> Void)?
 
-    func startSignIn(completion: @escaping (Result<(idToken: String, rawNonce: String, fullName: String?), Error>) -> Void) {
+    func startSignIn(completion: @escaping (Result<(idToken: String, rawNonce: String, fullName: String?, email: String?), Error>) -> Void) {
         let rawNonce = randomNonceString()
         self.currentNonce = rawNonce
         self.completion = completion
@@ -1028,7 +1423,24 @@ final class AppleAuthDelegate: NSObject, ASAuthorizationControllerDelegate, ASAu
             }
         }
 
-        completion?(.success((idToken: idTokenString, rawNonce: rawNonce, fullName: fullNameString)))
+        var emailString = appleIDCredential.email
+        if emailString == nil || emailString!.isEmpty {
+            let parts = idTokenString.components(separatedBy: ".")
+            if parts.count > 1 {
+                var base64 = parts[1]
+                    .replacingOccurrences(of: "-", with: "+")
+                    .replacingOccurrences(of: "_", with: "/")
+                while base64.count % 4 != 0 {
+                    base64.append("=")
+                }
+                if let data = Data(base64Encoded: base64),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    emailString = json["email"] as? String
+                }
+            }
+        }
+
+        completion?(.success((idToken: idTokenString, rawNonce: rawNonce, fullName: fullNameString, email: emailString)))
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {

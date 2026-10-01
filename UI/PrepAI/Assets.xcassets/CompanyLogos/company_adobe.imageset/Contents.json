@@ -1,0 +1,23 @@
+{
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "images" : [
+    {
+      "scale" : "1x",
+      "filename" : "company_adobe.png",
+      "idiom" : "universal"
+    },
+    {
+      "filename" : "company_adobe@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "company_adobe@3x.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ]
+}

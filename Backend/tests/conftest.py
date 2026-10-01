@@ -21,16 +21,21 @@ def get_test_token(user_id: str = "test-user-123") -> str:
 
 @pytest.fixture(autouse=True)
 def clean_session_stores():
-    from app.utils.session_store import technical_sessions, gd_sessions, hr_sessions, completed_sessions
+    from app.utils.session_store import technical_sessions, gd_sessions, hr_sessions, company_sessions, completed_sessions
+    from app.controllers.gd_friends import reward_wallets
     technical_sessions.clear()
     gd_sessions.clear()
     hr_sessions.clear()
+    company_sessions.clear()
     completed_sessions.clear()
+    reward_wallets.clear()
     yield
     technical_sessions.clear()
     gd_sessions.clear()
     hr_sessions.clear()
+    company_sessions.clear()
     completed_sessions.clear()
+    reward_wallets.clear()
 
 @pytest.fixture
 def client():
@@ -46,4 +51,3 @@ def auth_headers():
 def second_auth_headers():
     token = get_test_token("user-456-other")
     return {"Authorization": f"Bearer {token}"}
-

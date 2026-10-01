@@ -5,13 +5,18 @@ import UIKit
 struct PrepAIApp: App {
     @StateObject private var app = AppModel()
     @StateObject private var auth = AuthManager()
+    @AppStorage("PREPAI_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
+
+    private var selectedAppearance: AppAppearance {
+        AppAppearance(rawValue: appearanceRaw) ?? .light
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(app)
                 .environmentObject(auth)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(selectedAppearance.colorScheme)
                 .onOpenURL { url in
                     if auth.handleOAuthCallback(url: url) {
                         if auth.isOnboardingCompleted(for: auth.currentUserId) {
@@ -39,11 +44,13 @@ final class AppModel: ObservableObject {
     @Published var sessionFetchError: String? = nil
 
     func enterApp() {
+        tab = .home
         withAnimation(.spring(response: 0.55, dampingFraction: 0.86)) { route = .main }
         Haptics.success()
     }
     
     func refreshUserSessions(token: String?) async {
+        guard !isLoadingSessions else { return }
         guard let token = token, !token.isEmpty else {
             self.userSessions = []
             return
@@ -85,17 +92,50 @@ final class AppModel: ObservableObject {
         guard !hrSessions.isEmpty else { return 0 }
         return hrSessions.reduce(0) { $0 + $1.score } / hrSessions.count
     }
+
+    var bestReadinessScore: Int? {
+        userSessions.filter { $0.kind != nil }.map(\.score).max()
+    }
 }
 
 
 enum AppTab: String, CaseIterable {
     case home = "Home", practice = "Practice", dashboard = "Dashboard", history = "History", profile = "Profile"
+
+    func icon(isSelected: Bool) -> String {
+        switch self {
+        case .home:
+            return isSelected ? "house.fill" : "house"
+        case .practice:
+            return isSelected ? "brain.head.profile.fill" : "brain.head.profile"
+        case .dashboard:
+            return isSelected ? "chart.bar.fill" : "chart.bar"
+        case .history:
+            return isSelected ? "clock.fill" : "clock"
+        case .profile:
+            return isSelected ? "person.crop.circle.fill" : "person.crop.circle"
+        }
+    }
+
     var icon: String {
-        switch self { case .home: "house.fill"; case .practice: "sparkles"; case .dashboard: "chart.line.uptrend.xyaxis"; case .history: "clock.arrow.circlepath"; case .profile: "person.crop.circle" }
+        icon(isSelected: false)
+    }
+
+    var selectedIcon: String {
+        icon(isSelected: true)
     }
 }
 
 enum Haptics {
-    static func selection() { UISelectionFeedbackGenerator().selectionChanged() }
-    static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    private static var enabled: Bool {
+        UserDefaults.standard.object(forKey: "PREPAI_HAPTICS_ENABLED") as? Bool ?? true
+    }
+    static func selection() {
+        guard enabled else { return }
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+    static func success() {
+        guard enabled else { return }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
 }

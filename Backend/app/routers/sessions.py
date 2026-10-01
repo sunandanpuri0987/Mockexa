@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Any
 from datetime import datetime
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -58,14 +59,16 @@ async def list_user_sessions(
         repo = SupabaseRepository()
         try:
             db_sessions = await repo.sessions(user_id, raw_token)
+            try:
+                feedback_by_session = await repo.feedback_for_sessions(
+                    [s["id"] for s in db_sessions], raw_token
+                )
+            except RepositoryError:
+                feedback_by_session = {}
             result = []
             for s in db_sessions:
                 sid = s["id"]
-                fb = None
-                try:
-                    fb = await repo.feedback(sid, raw_token)
-                except Exception:
-                    fb = None
+                fb = feedback_by_session.get(sid)
                 score = fb.get("overall_score", 0) if (fb and isinstance(fb, dict)) else 0
                 kind = s.get("kind", "technical")
                 topic = s.get("topic") or s.get("role") or "Interview Practice"
@@ -142,7 +145,21 @@ async def get_user_session_detail(
             elif kind == "gd":
                 msgs = await repo.messages(session_id, raw_token)
                 for m in msgs:
-                    transcript.append({"speaker": m.get("speaker", "Speaker"), "text": m.get("content", "")})
+                    content = m.get("content", "")
+                    speaker = m.get("speaker", "Speaker")
+                    text = content
+                    # GD messages are stored as a JSON envelope so the manager
+                    # can reconstruct state. The transcript must show only the
+                    # spoken response, never that internal JSON payload.
+                    if isinstance(content, str):
+                        try:
+                            envelope = json.loads(content)
+                            if isinstance(envelope, dict):
+                                speaker = envelope.get("speaker") or speaker
+                                text = envelope.get("response") or envelope.get("claim") or ""
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+                    transcript.append({"speaker": speaker, "text": str(text or "")})
         except Exception:
             pass
 

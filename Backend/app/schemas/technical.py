@@ -12,6 +12,8 @@ class TechnicalStartRequest(BaseModel):
     desired_difficulty: int = Field(default=3, ge=1, le=5)
     mode: str = Field(default="PRACTICE")
     max_questions: int = Field(default=10, ge=1, le=15)
+    resume_context: str | None = None
+    job_description: str | None = None
 
 
 class QuestionOut(BaseModel):
@@ -40,8 +42,9 @@ class AnswerAnalysisOut(BaseModel):
     completeness: float
     relevance: float
     reasoning: float
-    missing_concepts: list[str]
-    misconceptions: list[str]
+    feedback: str = ""
+    missing_concepts: list[str] = Field(default_factory=list)
+    misconceptions: list[str] = Field(default_factory=list)
     overall_score: float
 
 

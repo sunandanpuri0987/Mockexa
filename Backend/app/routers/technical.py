@@ -14,7 +14,7 @@ from app.controllers.technical_controller import (
     InterviewMode,
     CURATED_QUESTION_BANK,
 )
-from app.controllers.technical_groq_backend import GroqTechnicalBackend
+from app.controllers.technical_gemini_backend import GeminiTechnicalBackend
 from app.providers.model_router import ModelRouter
 from app.schemas.technical import (
     AnswerAnalysisOut,
@@ -30,18 +30,18 @@ from app.utils.session_store import technical_sessions
 router = APIRouter(prefix="/technical", tags=["technical"])
 
 
-def _backend_for(settings: Settings, use_groq: bool):
-    """Choose the evaluation backend. Defaults to the deterministic curated
-    backend, which is fully tested and needs no external credentials — this
-    keeps the Expo demo working even if Groq is unreachable. Pass
-    use_groq=True (or set it once a real toggle/env var exists) to route
-    evaluation through Groq, with the curated backend as the automatic
-    fallback InterviewController already applies on invalid output."""
-    if use_groq and settings.groq_api_key:
-        from app.providers.groq_backend import GroqBackend
+def _backend_for(settings: Settings, use_gemini: bool):
+    """Choose the evaluation backend. Defaults to GeminiBackend when use_gemini
+    is enabled and GEMINI_API_KEY is configured, with robust retries and fallback.
+    CuratedTechnicalBackend is used as fallback on unparseable output or when offline."""
+    if use_gemini and settings.gemini_api_key:
+        from app.providers.gemini_backend import GeminiBackend
 
-        router_ = ModelRouter(settings, GroqBackend(settings))
-        return GroqTechnicalBackend(router_)
+        timeout = max(15.0, settings.gemini_timeout_seconds)
+        retries = max(2, settings.gemini_max_retries)
+        eval_settings = settings.model_copy(update={"gemini_timeout_seconds": timeout, "gemini_max_retries": retries})
+        router_ = ModelRouter(eval_settings, GeminiBackend(eval_settings))
+        return GeminiTechnicalBackend(router_)
     return CuratedTechnicalBackend()
 
 
@@ -70,13 +70,15 @@ async def start(
         skills=tuple(request.skills),
         selected_domains=tuple(request.selected_domains),
         desired_difficulty=request.desired_difficulty,
+        resume_context=request.resume_context,
+        job_description=request.job_description,
     )
     try:
         mode = InterviewMode(request.mode)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=f"invalid mode: {request.mode}") from exc
 
-    backend = _backend_for(settings, use_groq=settings.use_groq)  # configured via settings
+    backend = _backend_for(settings, use_gemini=settings.use_gemini)  # configured via settings
     controller = InterviewController(CURATED_QUESTION_BANK, backend=backend)
     try:
         first_question = controller.start(profile, mode, max_questions=request.max_questions)
@@ -115,7 +117,7 @@ async def answer(
     raw_token: str = Depends(get_raw_jwt_token),
     settings: Settings = Depends(get_settings),
 ):
-    backend = _backend_for(settings, use_groq=settings.use_groq)
+    backend = _backend_for(settings, use_gemini=settings.use_gemini)
 
     if settings.use_supabase_persistence:
         repo = SupabaseRepository()
@@ -193,6 +195,7 @@ async def answer(
             "completeness": analysis.completeness,
             "relevance": analysis.relevance,
             "reasoning": analysis.reasoning,
+            "feedback": analysis.feedback,
             "missing_concepts": list(analysis.missing_concepts),
             "misconceptions": list(analysis.misconceptions),
             "overall_score": analysis.overall_score,
@@ -219,6 +222,7 @@ async def answer(
             completeness=analysis.completeness,
             relevance=analysis.relevance,
             reasoning=analysis.reasoning,
+            feedback=analysis.feedback,
             missing_concepts=list(analysis.missing_concepts),
             misconceptions=list(analysis.misconceptions),
             overall_score=analysis.overall_score,
@@ -240,7 +244,7 @@ async def finish(
     raw_token: str = Depends(get_raw_jwt_token),
     settings: Settings = Depends(get_settings),
 ):
-    backend = _backend_for(settings, use_groq=settings.use_groq)
+    backend = _backend_for(settings, use_gemini=settings.use_gemini)
 
     if settings.use_supabase_persistence:
         repo = SupabaseRepository()
@@ -291,10 +295,10 @@ async def finish(
             "overall_score": overall_score_int,
             "scores": {"domain_scores": domain_scores, "mastery": mastery},
             "strengths": [d for d, s in domain_scores.items() if s >= 70],
-            "weaknesses": report.get("persistent_misconceptions", []),
+            "weaknesses": report.get("persistent_misconceptions", []) or report.get("focus_areas", []),
             "missing_concepts": [],
-            "recommendations": [],
-            "summary": f"Band: {report.get('performance_band')}. Questions Answered: {report.get('questions_answered')}"
+            "recommendations": report.get("focus_areas", []),
+            "summary": report.get("summary") or f"Band: {report.get('performance_band')}. Questions Answered: {report.get('questions_answered')}"
         }
         await repo.upsert_feedback(feedback_data, raw_token)
         await repo.update_session(session_id, user_id, raw_token, {"status": "completed"})
@@ -315,8 +319,8 @@ async def finish(
         from app.utils.session_store import completed_sessions
         completed_sessions.add_completed_session(user_id, session_summary)
 
+    from app.controllers.gd_friends import grant_session_reward
+    grant_session_reward(user_id, session_id, report.get("overall_score", 0.0), "technical")
     return TechnicalFinishResponse(session_id=session_id, report=report)
-
-
 
 

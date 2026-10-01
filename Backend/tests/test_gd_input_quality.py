@@ -1,8 +1,21 @@
 import pytest
 from app.controllers.gd_controller import is_meaningless_user_input, DiscussionManager, default_profiles
 from app.config import get_settings
-from app.providers.groq_backend import GroqBackend
+from app.providers.llm_backend import GenerationResult, LLMBackend
 from app.providers.model_router import ModelRouter
+
+
+class DeterministicGDBackend(LLMBackend):
+    def generate(self, request):
+        return GenerationResult(
+            text="AI can improve diagnostic consistency, but clinicians must retain oversight for unusual cases.",
+            provider="test",
+            model="deterministic",
+            input_tokens=10,
+            output_tokens=15,
+            latency_seconds=0.0,
+            retry_count=0,
+        )
 
 def test_is_meaningless_user_input_cases():
     # True cases (gibberish / random)
@@ -24,8 +37,8 @@ def test_is_meaningless_user_input_cases():
 
 def test_gibberish_input_triggers_clarification():
     settings = get_settings()
-    groq_backend = GroqBackend(settings)
-    router = ModelRouter(settings, {"gd_generation": groq_backend, "gd_verification": groq_backend})
+    backend = DeterministicGDBackend()
+    router = ModelRouter(settings, {"gd_generation": backend, "gd_verification": backend})
     
     profiles = default_profiles()
     config = {"num_rounds": 2, "mode": "balanced", "user_name": "Arjun Mehta"}

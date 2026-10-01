@@ -44,12 +44,14 @@ final class TechnicalViewModel: ObservableObject {
     private let apiClient = APIClient.shared
     
     func startSession(
-        name: String = "Ananya",
+        name: String = "Candidate",
         targetRole: String = "Software Engineer",
         experience: String = "0-1 years",
         domains: [String] = ["Data Structures"],
         difficulty: Int = 3,
         maxQuestions: Int = 5,
+        resumeContext: String? = nil,
+        jobDescription: String? = nil,
         token: String?
     ) async {
         isLoading = true
@@ -64,7 +66,11 @@ final class TechnicalViewModel: ObservableObject {
         questionIndex = 1
         totalQuestions = maxQuestions
 
-        
+        // Fallback to active resume context if not explicitly provided
+        let activeCtx = ResumeViewModel.getActiveResumeContext()
+        let resolvedResumeContext = resumeContext ?? activeCtx?.context
+        let resolvedJobDescription = jobDescription ?? (activeCtx?.jobDescription.isEmpty == false ? activeCtx?.jobDescription : nil)
+
         let request = TechnicalStartRequest(
             name: name,
             targetRole: targetRole,
@@ -73,9 +79,11 @@ final class TechnicalViewModel: ObservableObject {
             selectedDomains: domains,
             desiredDifficulty: difficulty,
             mode: "PRACTICE",
-            maxQuestions: maxQuestions
+            maxQuestions: maxQuestions,
+            resumeContext: resolvedResumeContext,
+            jobDescription: resolvedJobDescription
         )
-        
+
         do {
             let response: TechnicalStartResponse = try await apiClient.post(endpoint: "/technical/start", body: request, token: token)
             self.sessionId = response.sessionId
@@ -99,13 +107,12 @@ final class TechnicalViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        answersHistory.append(cleanAnswer)
-        transcriptEntries.append(TranscriptEntry(speaker: "You", text: cleanAnswer, timestamp: currentTimeString()))
-        
         let request = TechnicalAnswerRequest(sessionId: sid, answer: cleanAnswer, hintsUsed: hintsUsed)
         
         do {
             let response: TechnicalAnswerResponse = try await apiClient.post(endpoint: "/technical/answer", body: request, token: token)
+            self.answersHistory.append(cleanAnswer)
+            self.transcriptEntries.append(TranscriptEntry(speaker: "You", text: cleanAnswer, timestamp: currentTimeString()))
             self.lastAnalysis = response.analysis
             
             if response.completed || response.nextQuestion == nil {
@@ -187,26 +194,40 @@ final class HRViewModel: ObservableObject {
     private let apiClient = APIClient.shared
     
     func startSession(
-        name: String = "Ananya",
+        name: String = "Candidate",
         targetRole: String = "Software Engineer",
         experience: String = "0-1 years",
         maxQuestions: Int = 5,
+        interviewStyle: String = "General HR",
+        resumeContext: String? = nil,
+        jobDescription: String? = nil,
         token: String?
     ) async {
         isLoading = true
         errorMessage = nil
         isCompleted = false
+        currentQuestion = nil
+        lastEvaluation = nil
+        reportData = nil
         questionHistory = []
         answersHistory = []
         transcriptEntries = []
         questionIndex = 1
         totalQuestions = maxQuestions
         
+        // Fallback to active resume context if not explicitly provided
+        let activeCtx = ResumeViewModel.getActiveResumeContext()
+        let resolvedResumeContext = resumeContext ?? activeCtx?.context
+        let resolvedJobDescription = jobDescription ?? (activeCtx?.jobDescription.isEmpty == false ? activeCtx?.jobDescription : nil)
+
         let request = HRStartRequest(
             name: name,
             targetRole: targetRole,
             experience: experience,
-            maxQuestions: maxQuestions
+            maxQuestions: maxQuestions,
+            interviewStyle: interviewStyle,
+            resumeContext: resolvedResumeContext,
+            jobDescription: resolvedJobDescription
         )
         
         do {
@@ -232,13 +253,12 @@ final class HRViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        answersHistory.append(cleanAnswer)
-        transcriptEntries.append(TranscriptEntry(speaker: "You", text: cleanAnswer, timestamp: currentTimeString()))
-        
         let request = HRAnswerRequest(sessionId: sid, answer: cleanAnswer)
         
         do {
             let response: HRAnswerResponse = try await apiClient.post(endpoint: "/hr/answer", body: request, token: token)
+            self.answersHistory.append(cleanAnswer)
+            self.transcriptEntries.append(TranscriptEntry(speaker: "You", text: cleanAnswer, timestamp: currentTimeString()))
             self.lastEvaluation = response.evaluation
             
             if response.completed || response.nextQuestion == nil {
@@ -317,6 +337,8 @@ final class GDViewModel: ObservableObject {
     @Published var summary: [String: AnyCodable]? = nil
     @Published var errorMessage: String? = nil
     @Published var currentSpeakerIndex: Int = 0
+    @Published var interruptionCount: Int = 0
+    @Published private(set) var didReachTimeLimit: Bool = false
     
     private let apiClient = APIClient.shared
     private static let avatarColors: [Color] = [PrepTheme.primary, .blue, .pink, .orange, PrepTheme.secondary]
@@ -331,7 +353,7 @@ final class GDViewModel: ObservableObject {
         }
     }
     
-    func startGD(topic: String = "Remote work and productivity", numRounds: Int = 4, mode: String = "balanced", durationStr: String? = nil, token: String?) async {
+    func startGD(topic: String = "Remote work and productivity", numRounds: Int = 4, mode: String = "balanced", durationStr: String? = nil, aiStarts: Bool = true, resumeContext: String? = nil, jobDescription: String? = nil, token: String?) async {
         guard !isGeneratingTurn else { return }
         isGeneratingTurn = true
         errorMessage = nil
@@ -343,6 +365,8 @@ final class GDViewModel: ObservableObject {
         metrics = nil
         summary = nil
         currentSpeakerIndex = 0
+        interruptionCount = 0
+        didReachTimeLimit = false
         self.topic = topic
         
         var resolvedRounds = numRounds
@@ -357,8 +381,23 @@ final class GDViewModel: ObservableObject {
             }
         }
         let resolvedMode = mode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "balanced" : mode
+
+        let durationDigits = durationStr?.components(separatedBy: CharacterSet.decimalDigits.inverted).joined() ?? ""
+        let durationMinutes = Int(durationDigits)
         
-        let request = GDStartRequest(topic: topic, numRounds: resolvedRounds, mode: resolvedMode)
+        // Fallback to active resume context if not explicitly provided
+        let activeCtx = ResumeViewModel.getActiveResumeContext()
+        let resolvedResumeContext = resumeContext ?? activeCtx?.context
+        let resolvedJobDescription = jobDescription ?? (activeCtx?.jobDescription.isEmpty == false ? activeCtx?.jobDescription : nil)
+
+        let request = GDStartRequest(
+            topic: topic,
+            numRounds: resolvedRounds,
+            durationMinutes: durationMinutes,
+            mode: resolvedMode,
+            resumeContext: resolvedResumeContext,
+            jobDescription: resolvedJobDescription
+        )
         
         do {
             let response: GDStartResponse = try await apiClient.post(endpoint: "/gd/start", body: request, token: token)
@@ -376,7 +415,7 @@ final class GDViewModel: ObservableObject {
             
             self.participants = parsedParticipants
             
-            if let sid = self.sessionId {
+            if aiStarts, let sid = self.sessionId {
                 let respondReq = GDRespondRequest(sessionId: sid, userContribution: nil)
                 let respondResp: GDRespondResponse = try await apiClient.post(endpoint: "/gd/respond", body: respondReq, token: token)
                 
@@ -409,6 +448,10 @@ final class GDViewModel: ObservableObject {
         
         do {
             let response: GDRespondResponse = try await apiClient.post(endpoint: "/gd/respond", body: request, token: token)
+            guard !didReachTimeLimit else {
+                isGeneratingTurn = false
+                return
+            }
             
             if let turn = response.turn {
                 self.currentTurn = turn
@@ -447,6 +490,10 @@ final class GDViewModel: ObservableObject {
         
         do {
             let response: GDRespondResponse = try await apiClient.post(endpoint: "/gd/respond", body: request, token: token)
+            guard !didReachTimeLimit else {
+                isGeneratingTurn = false
+                return
+            }
             
             if let turn = response.turn {
                 self.currentTurn = turn
@@ -457,7 +504,11 @@ final class GDViewModel: ObservableObject {
             
             self.isFinished = response.finished
         } catch let err as APIError {
-            self.transcriptEntries.removeAll(where: { $0.id == pendingUserEntry.id })
+            // A timeout can happen after the backend has already saved the
+            // user's turn. Keep it visible so Retry does not erase their words.
+            if case .serverError(let code, _) = err, code == 400 || code == 422 {
+                self.transcriptEntries.removeAll(where: { $0.id == pendingUserEntry.id })
+            }
             if case .serverError(let code, _) = err, code == 409 {
                 self.isFinished = true
                 self.errorMessage = nil
@@ -465,10 +516,36 @@ final class GDViewModel: ObservableObject {
                 handleAPIError(err)
             }
         } catch {
-            self.transcriptEntries.removeAll(where: { $0.id == pendingUserEntry.id })
             self.errorMessage = error.localizedDescription
         }
         
+        isGeneratingTurn = false
+    }
+
+    func requestConclusion(token: String?) async {
+        guard let sid = sessionId, !isFinished, !isGeneratingTurn, !didReachTimeLimit else { return }
+        isGeneratingTurn = true
+        errorMessage = nil
+
+        do {
+            let request = GDRespondRequest(sessionId: sid, userContribution: nil, conclude: true)
+            let response: GDRespondResponse = try await apiClient.post(endpoint: "/gd/respond", body: request, token: token)
+            guard !didReachTimeLimit else {
+                isGeneratingTurn = false
+                return
+            }
+            if let turn = response.turn {
+                currentTurn = turn
+                turnsHistory.append(turn)
+                transcriptEntries.append(TranscriptEntry(speaker: turn.speaker, text: turn.response, timestamp: currentTimeString()))
+                updateSpeakerIndex(for: turn.speaker)
+            }
+            isFinished = response.finished
+        } catch let err as APIError {
+            handleAPIError(err)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
         isGeneratingTurn = false
     }
     
@@ -495,7 +572,8 @@ final class GDViewModel: ObservableObject {
         
         do {
             print("[GD API] Requesting /gd/finish/\(sid)...")
-            let response: GDFinishResponse = try await apiClient.postEmpty(endpoint: "/gd/finish/\(sid)", token: token)
+            let request = GDFinishRequest(interruptionCount: interruptionCount)
+            let response: GDFinishResponse = try await apiClient.post(endpoint: "/gd/finish/\(sid)", body: request, token: token)
             print("[GD API] /gd/finish/\(sid) returned metrics (\(response.metrics.count) keys)")
             self.metrics = response.metrics
             self.summary = response.summary
@@ -514,6 +592,18 @@ final class GDViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+
+    func recordInterruption() {
+        guard !isFinished else { return }
+        interruptionCount += 1
+    }
+
+    func endForTimer() {
+        guard !isFinished else { return }
+        didReachTimeLimit = true
+        isFinished = true
+        currentTurn = nil
+    }
     
     private func handleAPIError(_ error: APIError) {
         if case .unauthorized = error {
@@ -522,7 +612,7 @@ final class GDViewModel: ObservableObject {
         switch error {
         case .serverError(let code, let msg):
             if code == 503 || msg.contains("429") || msg.lowercased().contains("rate limit") {
-                self.errorMessage = "Groq AI service is currently busy. Please wait a moment and tap 'Retry Turn'."
+                self.errorMessage = "Gemini AI service is currently busy. Please wait a moment and tap 'Retry Turn'."
             } else if code == 504 || msg.lowercased().contains("timeout") {
                 self.errorMessage = "Request timed out. Please tap 'Retry Turn'."
             } else {

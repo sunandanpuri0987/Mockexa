@@ -1,5 +1,5 @@
 """
-Provider abstraction. Controllers never talk to Groq (or any provider) SDK
+Provider abstraction. Controllers never talk to Gemini (or any provider) API
 directly — they call `ModelRouter.generate(...)`, which delegates to a
 concrete `LLMBackend`.
 

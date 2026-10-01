@@ -18,6 +18,17 @@
 		B10000000000000000000013 /* APISchemas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* APISchemas.swift */; };
 		B10000000000000000000014 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* APIClient.swift */; };
 		B10000000000000000000015 /* InterviewViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* InterviewViewModels.swift */; };
+		B10000000000000000000016 /* VoiceFoundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* VoiceFoundation.swift */; };
+		B10000000000000000000017 /* LanguageValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* LanguageValidator.swift */; };
+		B10000000000000000000018 /* ResumeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* ResumeModels.swift */; };
+		B10000000000000000000019 /* ResumeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* ResumeViewModel.swift */; };
+		B10000000000000000000020 /* ResumeViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* ResumeViews.swift */; };
+		B10000000000000000000021 /* PDFExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000021 /* PDFExportService.swift */; };
+		B10000000000000000000022 /* ResumeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* ResumeService.swift */; };
+		B10000000000000000000023 /* DOCXExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000023 /* DOCXExportService.swift */; };
+		B10000000000000000000024 /* CompanyQuestionBank.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* CompanyQuestionBank.swift */; };
+		B10000000000000000000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* Assets.xcassets */; };
+		B10000000000000000000026 /* FriendsGD.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* FriendsGD.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +45,17 @@
 		A10000000000000000000013 /* APISchemas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APISchemas.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		A10000000000000000000015 /* InterviewViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterviewViewModels.swift; sourceTree = "<group>"; };
+		A10000000000000000000016 /* VoiceFoundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceFoundation.swift; sourceTree = "<group>"; };
+		A10000000000000000000017 /* LanguageValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageValidator.swift; sourceTree = "<group>"; };
+		A10000000000000000000018 /* ResumeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeModels.swift; sourceTree = "<group>"; };
+		A10000000000000000000019 /* ResumeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeViewModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000020 /* ResumeViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeViews.swift; sourceTree = "<group>"; };
+		A10000000000000000000021 /* PDFExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFExportService.swift; sourceTree = "<group>"; };
+		A10000000000000000000022 /* ResumeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumeService.swift; sourceTree = "<group>"; };
+		A10000000000000000000023 /* DOCXExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DOCXExportService.swift; sourceTree = "<group>"; };
+		A10000000000000000000024 /* CompanyQuestionBank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyQuestionBank.swift; sourceTree = "<group>"; };
+		A10000000000000000000025 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A10000000000000000000026 /* FriendsGD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsGD.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +92,17 @@
 				A10000000000000000000013 /* APISchemas.swift */,
 				A10000000000000000000014 /* APIClient.swift */,
 				A10000000000000000000015 /* InterviewViewModels.swift */,
+				A10000000000000000000016 /* VoiceFoundation.swift */,
+				A10000000000000000000017 /* LanguageValidator.swift */,
+				A10000000000000000000018 /* ResumeModels.swift */,
+				A10000000000000000000019 /* ResumeViewModel.swift */,
+				A10000000000000000000020 /* ResumeViews.swift */,
+				A10000000000000000000021 /* PDFExportService.swift */,
+				A10000000000000000000022 /* ResumeService.swift */,
+				A10000000000000000000023 /* DOCXExportService.swift */,
+				A10000000000000000000024 /* CompanyQuestionBank.swift */,
+				A10000000000000000000025 /* Assets.xcassets */,
+				A10000000000000000000026 /* FriendsGD.swift */,
 			);
 			path = PrepAI;
 			sourceTree = "<group>";
@@ -140,6 +173,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B10000000000000000000025 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,11 +190,21 @@
 				B10000000000000000000004 /* RootAndOnboarding.swift in Sources */,
 				B10000000000000000000005 /* MainScreens.swift in Sources */,
 				B10000000000000000000006 /* PracticeFlows.swift in Sources */,
+				B10000000000000000000026 /* FriendsGD.swift in Sources */,
 				B10000000000000000000011 /* Config.swift in Sources */,
 				B10000000000000000000012 /* AuthManager.swift in Sources */,
 				B10000000000000000000013 /* APISchemas.swift in Sources */,
 				B10000000000000000000014 /* APIClient.swift in Sources */,
 				B10000000000000000000015 /* InterviewViewModels.swift in Sources */,
+				B10000000000000000000016 /* VoiceFoundation.swift in Sources */,
+				B10000000000000000000017 /* LanguageValidator.swift in Sources */,
+				B10000000000000000000018 /* ResumeModels.swift in Sources */,
+				B10000000000000000000019 /* ResumeViewModel.swift in Sources */,
+				B10000000000000000000020 /* ResumeViews.swift in Sources */,
+				B10000000000000000000021 /* PDFExportService.swift in Sources */,
+				B10000000000000000000022 /* ResumeService.swift in Sources */,
+				B10000000000000000000023 /* DOCXExportService.swift in Sources */,
+				B10000000000000000000024 /* CompanyQuestionBank.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -190,6 +234,7 @@
 		F20000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R897UQM93C;
@@ -207,6 +252,7 @@
 		F20000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R897UQM93C;

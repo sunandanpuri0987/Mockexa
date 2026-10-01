@@ -1,30 +1,89 @@
 import SwiftUI
+import PhotosUI
+import UIKit
+
+private struct UserProfilePhoto: View {
+    let data: Data?
+    let initials: String
+    var size: CGFloat = 64
+
+    var body: some View {
+        Group {
+            if let data, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ZStack {
+                    Circle().fill(PrepTheme.gradient)
+                    Text(initials)
+                        .font(.system(size: size * 0.28, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(PrepTheme.surface, lineWidth: 3))
+        .shadow(color: Color.black.opacity(0.10), radius: 7, y: 3)
+        .accessibilityLabel(data == nil ? "Profile initials \(initials)" : "Profile photo")
+    }
+}
+
+private func normalizedProfilePhotoData(_ data: Data) -> Data? {
+    guard let image = UIImage(data: data) else { return nil }
+    let side = min(image.size.width, image.size.height)
+    guard side > 0 else { return nil }
+    let crop = CGRect(
+        x: (image.size.width - side) / 2,
+        y: (image.size.height - side) / 2,
+        width: side,
+        height: side
+    )
+    guard let cgImage = image.cgImage?.cropping(to: crop) else { return nil }
+    let square = UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+    let target = CGSize(width: 512, height: 512)
+    let rendered = UIGraphicsImageRenderer(size: target).image { _ in
+        square.draw(in: CGRect(origin: .zero, size: target))
+    }
+    return rendered.jpegData(compressionQuality: 0.82)
+}
 
 struct MainTabView: View {
     @EnvironmentObject var app: AppModel
     var body: some View {
         TabView(selection: $app.tab) {
             NavigationStack { HomeView() }
-                .tabItem { Label("Home", systemImage: AppTab.home.icon) }
+                .tabItem { Label(AppTab.home.rawValue, systemImage: AppTab.home.icon(isSelected: app.tab == .home)) }
                 .tag(AppTab.home)
-            
+
             NavigationStack(path: $app.practicePath) {
                 PracticeHubView()
                     .navigationDestination(for: PracticeKind.self) { PracticeSetupView(kind: $0) }
+                    .navigationDestination(for: QuestionBankRoute.self) { route in
+                        switch route {
+                        case .home:
+                            CompanyQuestionBankView()
+                        case .allCompanies:
+                            CompanyListView()
+                        case .companyDetail(let name):
+                            CompanyQuestionListView(companyName: name)
+                        }
+                    }
             }
-            .tabItem { Label("Practice", systemImage: AppTab.practice.icon) }
+            .tabItem { Label(AppTab.practice.rawValue, systemImage: AppTab.practice.icon(isSelected: app.tab == .practice)) }
             .tag(AppTab.practice)
-            
+
             NavigationStack { DashboardView() }
-                .tabItem { Label("Dashboard", systemImage: AppTab.dashboard.icon) }
+                .tabItem { Label(AppTab.dashboard.rawValue, systemImage: AppTab.dashboard.icon(isSelected: app.tab == .dashboard)) }
                 .tag(AppTab.dashboard)
-            
+
             NavigationStack { HistoryView() }
-                .tabItem { Label("History", systemImage: AppTab.history.icon) }
+                .tabItem { Label(AppTab.history.rawValue, systemImage: AppTab.history.icon(isSelected: app.tab == .history)) }
                 .tag(AppTab.history)
-            
+
             NavigationStack { ProfileView() }
-                .tabItem { Label("Profile", systemImage: AppTab.profile.icon) }
+                .tabItem { Label(AppTab.profile.rawValue, systemImage: AppTab.profile.icon(isSelected: app.tab == .profile)) }
                 .tag(AppTab.profile)
         }
         .tint(PrepTheme.primary)
@@ -48,29 +107,82 @@ struct ScreenContainer<Content: View>: View {
     }
 }
 
+private struct SessionSyncStatus: View {
+    @EnvironmentObject private var app: AppModel
+    @EnvironmentObject private var auth: AuthManager
+
+    var body: some View {
+        if app.isLoadingSessions && app.userSessions.isEmpty {
+            HStack(spacing: 10) {
+                ProgressView().tint(PrepTheme.primary)
+                Text("Loading your practice progress…")
+                    .font(.caption.bold())
+                    .foregroundStyle(PrepTheme.textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+        } else if let error = app.sessionFetchError {
+            HStack(spacing: 10) {
+                Image(systemName: "wifi.exclamationmark").foregroundStyle(PrepTheme.warning)
+                Text("Progress could not be refreshed.")
+                    .font(.caption.bold())
+                    .foregroundStyle(PrepTheme.darkNavy)
+                Spacer()
+                Button("Retry") {
+                    Task { await app.refreshUserSessions(token: auth.accessToken) }
+                }
+                .font(.caption.bold())
+                .foregroundStyle(PrepTheme.primary)
+                .accessibilityHint(error)
+            }
+            .padding(12)
+            .background(PrepTheme.warning.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
 struct HomeView: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var auth: AuthManager
-    
+    @State private var showResumeBuilder = false
+
     var body: some View {
         ScreenContainer {
             VStack(alignment: .leading, spacing: 26) {
-                // Greeting Header
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Hey, \(auth.currentFirstName) 👋")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.primary)
-                    Text("Ready to level up today?")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(PrepTheme.darkNavy)
+                // Greeting Header with Profile Photo
+                HStack(alignment: .center, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Hey, \(auth.currentFirstName) 👋")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundStyle(PrepTheme.primary)
+                        Text("Ready to level up today?")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .foregroundStyle(PrepTheme.darkNavy)
+                            .lineLimit(2)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Button {
+                        Haptics.selection()
+                        app.tab = .profile
+                    } label: {
+                        UserProfilePhoto(data: auth.currentUserPhotoData, initials: auth.profileInitials, size: 52)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Profile photo, tap to view profile")
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 12)
                 .staggeredEntrance(delay: 0.04)
-                
+
+                SessionSyncStatus()
+
                 // Today's Focus Hero Card
                 ZStack {
                     HeroAmbientGlowView()
-                    
+
                     InteractiveTouchCard(maxTilt: 4.5, action: { open(.technical) }) { isPressed in
                         GlassCard {
                             VStack(alignment: .leading, spacing: 14) {
@@ -80,7 +192,7 @@ struct HomeView: View {
                                 Text("Technical Interview")
                                     .font(.system(size: 20, weight: .bold, design: .rounded))
                                     .foregroundStyle(PrepTheme.darkNavy)
-                                Text("15 min  •  Technical Interview")
+                                Text("15-minute guided practice")
                                     .font(.subheadline)
                                     .foregroundStyle(PrepTheme.textSecondary)
                                 PrimaryButtonLabel(title: "Start Practice", icon: "arrow.right", isPressed: isPressed)
@@ -90,7 +202,37 @@ struct HomeView: View {
                     }
                 }
                 .staggeredEntrance(delay: 0.10)
-                
+
+                // Resume tools
+                VStack(alignment: .leading, spacing: 14) {
+                    SectionHeader(title: "Resume Tools")
+                    InteractiveTouchCard(maxTilt: 4.0, action: { showResumeBuilder = true }) { isPressed in
+                        GlassCard {
+                            HStack(spacing: 16) {
+                                Image(systemName: "folder.fill.badge.gearshape")
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(PrepTheme.primary)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Resume Studio")
+                                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                                        .foregroundStyle(PrepTheme.darkNavy)
+                                    Text("Build, tailor and check your resume")
+                                        .font(.caption)
+                                        .foregroundStyle(PrepTheme.textSecondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(PrepTheme.primary)
+                            }
+                        }
+                    }
+                }
+                .sheet(isPresented: $showResumeBuilder) {
+                    ResumeStudioView()
+                }
+                .staggeredEntrance(delay: 0.13)
+
                 // Quick Practice Header & Cards
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeader(title: "Quick Practice", action: "See all", onAction: {
@@ -103,40 +245,7 @@ struct HomeView: View {
                     }
                 }
                 .staggeredEntrance(delay: 0.16)
-                
-                // Progress Section
-                VStack(alignment: .leading, spacing: 14) {
-                    SectionHeader(title: "Your Progress")
-                    InteractiveTouchCard(maxTilt: 4.0, action: {
-                        app.tab = .dashboard
-                    }) { isPressed in
-                        GlassCard {
-                            HStack(spacing: 16) {
-                                ScoreRing(score: app.averageReadinessScore, size: 94)
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("Placement Readiness")
-                                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                                        .foregroundStyle(PrepTheme.darkNavy)
-                                    if app.userSessions.isEmpty {
-                                        Text("Complete your first practice session")
-                                            .font(.subheadline)
-                                            .foregroundStyle(PrepTheme.textSecondary)
-                                    } else {
-                                        Label("\(app.userSessions.count) sessions completed", systemImage: "checkmark.seal.fill")
-                                            .foregroundStyle(PrepTheme.success)
-                                            .font(.subheadline.bold())
-                                    }
-                                    Text("Score out of 100")
-                                        .font(.caption)
-                                        .foregroundStyle(PrepTheme.textSecondary)
-                                }
-                                Spacer()
-                            }
-                        }
-                    }
-                }
-                .staggeredEntrance(delay: 0.36)
-                
+
                 // Continue Practicing Section
                 VStack(alignment: .leading, spacing: 14) {
                     SectionHeader(title: "Continue Practicing")
@@ -175,7 +284,7 @@ struct HomeView: View {
             }
         }
     }
-    
+
     func open(_ kind: PracticeKind) {
         app.tab = .practice
         app.practicePath.append(kind)
@@ -192,7 +301,7 @@ struct PracticeCardContent: View {
         case .hr: Color(red: 225/255, green: 29/255, blue: 72/255)
         }
     }
-    
+
     var body: some View {
         GlassCard {
             HStack(spacing: 16) {
@@ -226,7 +335,7 @@ struct PracticeCardContent: View {
 struct PracticeCard: View {
     let kind: PracticeKind
     let action: () -> Void
-    
+
     var body: some View {
         InteractiveTouchCard(maxTilt: 5.0, action: action) { isPressed in
             PracticeCardContent(kind: kind, isPressed: isPressed)
@@ -248,7 +357,7 @@ struct PracticeHubView: View {
                 }
                 .padding(.top, 12)
                 .staggeredEntrance(delay: 0.04)
-                
+
                 ForEach(Array(PracticeKind.allCases.enumerated()), id: \.element) { index, kind in
                     NavigationLink(value: kind) {
                         InteractiveTouchCardBody(maxTilt: 5.0) { isPressed in
@@ -258,6 +367,43 @@ struct PracticeHubView: View {
                     .buttonStyle(TouchCardButtonStyle())
                     .staggeredEntrance(delay: 0.10 + Double(index) * 0.06)
                 }
+
+                // Company Question Bank Entry Point
+                NavigationLink(value: QuestionBankRoute.home) {
+                    InteractiveTouchCardBody(maxTilt: 5.0) { isPressed in
+                        GlassCard {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .fill(PrepTheme.primary.opacity(0.12))
+                                        .frame(width: 54, height: 54)
+                                    Image(systemName: "building.2.crop.circle.fill")
+                                        .font(.system(size: 22, weight: .semibold))
+                                        .foregroundStyle(PrepTheme.primary)
+                                        .scaleEffect(isPressed ? 1.06 : 1.0)
+                                }
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Company Question Bank")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                                        .foregroundStyle(PrepTheme.darkNavy)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.82)
+                                    Text("Practice company-specific interview questions.")
+                                        .font(.system(size: 14, weight: .regular))
+                                        .foregroundStyle(PrepTheme.textSecondary)
+                                        .lineLimit(2)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .offset(x: isPressed ? 5 : 0)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(TouchCardButtonStyle())
+                .staggeredEntrance(delay: 0.30)
             }
         }
         .navigationBarHidden(true)
@@ -268,7 +414,7 @@ struct PracticeHubView: View {
 struct DashboardView: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var auth: AuthManager
-    
+
     var body: some View {
         ScreenContainer {
             VStack(alignment: .leading, spacing: 24) {
@@ -277,7 +423,9 @@ struct DashboardView: View {
                     .foregroundStyle(PrepTheme.darkNavy)
                     .padding(.top, 12)
                     .staggeredEntrance(delay: 0.04)
-                
+
+                SessionSyncStatus()
+
                 GlassCard {
                     VStack(spacing: 16) {
                         Text("PLACEMENT READINESS")
@@ -291,13 +439,46 @@ struct DashboardView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .staggeredEntrance(delay: 0.10)
-                
+
+                NavigationLink {
+                    LeaderboardView()
+                } label: {
+                    InteractiveTouchCardBody(maxTilt: 4) { isPressed in
+                        GlassCard {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                        .fill(PrepTheme.warning.opacity(0.14))
+                                        .frame(width: 54, height: 54)
+                                    Image(systemName: "trophy.fill")
+                                        .font(.system(size: 23, weight: .bold))
+                                        .foregroundStyle(PrepTheme.warning)
+                                }
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Leaderboard")
+                                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                                        .foregroundStyle(PrepTheme.darkNavy)
+                                    Text("Earn XP, climb ranks, unlock achievements.")
+                                        .font(.caption)
+                                        .foregroundStyle(PrepTheme.textSecondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(PrepTheme.textSecondary)
+                                    .offset(x: isPressed ? 4 : 0)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(TouchCardButtonStyle())
+                .staggeredEntrance(delay: 0.15)
+
                 VStack(alignment: .leading, spacing: 12) {
                     SectionHeader(title: "Performance Trend")
                     TrendChart()
                 }
                 .staggeredEntrance(delay: 0.18)
-                
+
                 VStack(alignment: .leading, spacing: 12) {
                     SectionHeader(title: "Breakdown")
                     GlassCard {
@@ -305,7 +486,7 @@ struct DashboardView: View {
                             let gdHasSessions = app.userSessions.contains { $0.kind == .gd }
                             let techHasSessions = app.userSessions.contains { $0.kind == .technical }
                             let hrHasSessions = app.userSessions.contains { $0.kind == .hr }
-                            
+
                             MetricBar(title: "Group Discussion", value: app.gdAverageScore, color: PrepTheme.primary, hasSessions: gdHasSessions)
                             MetricBar(title: "Technical Interview", value: app.techAverageScore, color: Color(red: 37/255, green: 99/255, blue: 235/255), hasSessions: techHasSessions)
                             MetricBar(title: "HR Interview", value: app.hrAverageScore, color: Color(red: 225/255, green: 29/255, blue: 72/255), hasSessions: hrHasSessions)
@@ -313,13 +494,13 @@ struct DashboardView: View {
                     }
                 }
                 .staggeredEntrance(delay: 0.26)
-                
+
                 VStack(alignment: .leading, spacing: 12) {
                     SectionHeader(title: "Summary")
                     HStack(spacing: 12) {
                         StatTile(value: "\(app.userSessions.count)", label: "Sessions")
                         StatTile(value: "\(app.averageReadinessScore)", label: "Avg Score")
-                        StatTile(value: "Active", label: "Account")
+                        StatTile(value: app.bestReadinessScore.map(String.init) ?? "—", label: "Best Score")
                     }
                 }
                 .staggeredEntrance(delay: 0.32)
@@ -334,11 +515,204 @@ struct DashboardView: View {
     }
 }
 
+struct LeaderboardView: View {
+    @EnvironmentObject private var auth: AuthManager
+    @State private var board: LeaderboardResponse?
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        ScreenContainer {
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("LEADERBOARD", systemImage: "trophy.fill")
+                        .font(.caption.bold())
+                        .foregroundStyle(PrepTheme.warning)
+                    Text("Top Performers")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(PrepTheme.darkNavy)
+                    Text("Practice consistently and earn XP to move up.")
+                        .font(.subheadline)
+                        .foregroundStyle(PrepTheme.textSecondary)
+                }
+                .padding(.top, 10)
+
+                if let board {
+                    currentRankCard(board)
+
+                    if board.entries.isEmpty {
+                        leaderboardEmptyState
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            SectionHeader(title: "All-time Ranking")
+                            ForEach(board.entries) { entry in
+                                LeaderboardRow(entry: entry)
+                            }
+                        }
+                    }
+
+                    Text(board.rankingBasis)
+                        .font(.caption)
+                        .foregroundStyle(PrepTheme.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(PrepTheme.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+                } else if isLoading {
+                    VStack(spacing: 14) {
+                        ProgressView().tint(PrepTheme.primary)
+                        Text("Loading rankings…")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(PrepTheme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 240)
+                } else if let errorMessage {
+                    GlassCard {
+                        VStack(spacing: 14) {
+                            Image(systemName: "wifi.exclamationmark")
+                                .font(.system(size: 32))
+                                .foregroundStyle(PrepTheme.warning)
+                            Text(errorMessage)
+                                .font(.subheadline)
+                                .foregroundStyle(PrepTheme.textSecondary)
+                                .multilineTextAlignment(.center)
+                            Button("Try Again") { Task { await load() } }
+                                .buttonStyle(.borderedProminent)
+                                .tint(PrepTheme.primary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Leaderboard")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await load() }
+        .refreshable { await load() }
+    }
+
+    private func currentRankCard(_ board: LeaderboardResponse) -> some View {
+        GlassCard {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(PrepTheme.primary.opacity(0.13)).frame(width: 64, height: 64)
+                    Text(board.currentUserXP == 0 && board.totalPlayers <= 1 ? "—" : "#\(board.currentUserRank)")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(PrepTheme.primary)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Your Rank")
+                        .font(.caption.bold())
+                        .foregroundStyle(PrepTheme.textSecondary)
+                    Text("\(board.currentUserXP) XP")
+                        .font(.system(size: 23, weight: .bold, design: .rounded))
+                        .foregroundStyle(PrepTheme.darkNavy)
+                    Text(board.currentUserXP == 0 && board.totalPlayers <= 1
+                         ? "Complete practice to earn a rank"
+                         : "among \(board.totalPlayers) player\(board.totalPlayers == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundStyle(PrepTheme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(PrepTheme.secondary)
+            }
+        }
+    }
+
+    private var leaderboardEmptyState: some View {
+        GlassCard {
+            VStack(spacing: 10) {
+                Image(systemName: "figure.run.circle")
+                    .font(.system(size: 38))
+                    .foregroundStyle(PrepTheme.primary)
+                Text("Be the first on the board")
+                    .font(.headline)
+                    .foregroundStyle(PrepTheme.darkNavy)
+                Text("Complete a practice session to earn your first XP.")
+                    .font(.subheadline)
+                    .foregroundStyle(PrepTheme.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    @MainActor
+    private func load() async {
+        guard !isLoading else { return }
+        guard let token = auth.accessToken, !token.isEmpty else {
+            errorMessage = "Please sign in to view the leaderboard."
+            return
+        }
+        isLoading = true
+        errorMessage = nil
+        do {
+            board = try await APIClient.shared.fetchLeaderboard(token: token)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+}
+
+private struct LeaderboardRow: View {
+    let entry: LeaderboardEntry
+
+    private var rankColor: Color {
+        switch entry.rank {
+        case 1: return PrepTheme.warning
+        case 2: return Color.gray
+        case 3: return Color(red: 0.72, green: 0.40, blue: 0.20)
+        default: return PrepTheme.primary
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(rankColor.opacity(0.14)).frame(width: 42, height: 42)
+                if entry.rank <= 3 {
+                    Image(systemName: "medal.fill").foregroundStyle(rankColor)
+                } else {
+                    Text("\(entry.rank)").font(.subheadline.bold()).foregroundStyle(rankColor)
+                }
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(entry.displayName)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(PrepTheme.darkNavy)
+                    if entry.isCurrentUser {
+                        Text("YOU")
+                            .font(.system(size: 9, weight: .heavy))
+                            .padding(.horizontal, 6).padding(.vertical, 3)
+                            .background(PrepTheme.primary, in: Capsule())
+                            .foregroundStyle(.white)
+                    }
+                }
+                Text("Level \(entry.level)  •  \(entry.achievementCount) achievements")
+                    .font(.caption)
+                    .foregroundStyle(PrepTheme.textSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(entry.xp) XP").font(.subheadline.bold()).foregroundStyle(PrepTheme.primary)
+                Label("\(entry.coins)", systemImage: "circle.hexagongrid.fill")
+                    .font(.caption).foregroundStyle(PrepTheme.warning)
+            }
+        }
+        .padding(14)
+        .background(entry.isCurrentUser ? PrepTheme.primary.opacity(0.09) : PrepTheme.surface, in: RoundedRectangle(cornerRadius: 17))
+        .overlay(RoundedRectangle(cornerRadius: 17).stroke(entry.isCurrentUser ? PrepTheme.primary.opacity(0.45) : PrepTheme.border))
+    }
+}
+
 struct TrendChart: View {
     @EnvironmentObject var app: AppModel
     @State private var trimEnd: CGFloat = 0.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    
+
     var points: [Double] {
         guard !app.userSessions.isEmpty else { return [] }
         let reversed = Array(app.userSessions.reversed())
@@ -348,7 +722,7 @@ struct TrendChart: View {
         }
         return Array(scores.suffix(4))
     }
-    
+
     var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 12) {
@@ -387,7 +761,7 @@ struct TrendChart: View {
                         }
                     }
                     .frame(height: 130)
-                    
+
                     HStack {
                         ForEach(0..<points.count, id: \.self) { idx in
                             Text("S\(idx + 1)")
@@ -419,7 +793,7 @@ struct MetricBar: View {
     var hasSessions: Bool = true
     @State private var animatedValue: Double = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    
+
     var body: some View {
         VStack(spacing: 7) {
             HStack {
@@ -471,7 +845,7 @@ struct HistoryView: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var auth: AuthManager
     @State private var filter = "All"
-    
+
     var body: some View {
         ScreenContainer {
             VStack(alignment: .leading, spacing: 20) {
@@ -480,7 +854,9 @@ struct HistoryView: View {
                     .foregroundStyle(PrepTheme.darkNavy)
                     .padding(.top, 12)
                     .staggeredEntrance(delay: 0.04)
-                
+
+                SessionSyncStatus()
+
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(["All", "GD", "Technical", "HR"], id: \.self) { item in
@@ -500,7 +876,7 @@ struct HistoryView: View {
                     }
                 }
                 .staggeredEntrance(delay: 0.10)
-                
+
                 let filtered = app.userSessions.filter { session in
                     guard let kind = session.kind else { return false }
                     switch filter {
@@ -510,8 +886,8 @@ struct HistoryView: View {
                     default: return true
                     }
                 }
-                
-                if filtered.isEmpty {
+
+                if filtered.isEmpty && !app.isLoadingSessions && app.sessionFetchError == nil {
                     GlassCard {
                         VStack(spacing: 16) {
                             ZStack {
@@ -523,19 +899,19 @@ struct HistoryView: View {
                                     .foregroundStyle(PrepTheme.primary)
                             }
                             .padding(.top, 8)
-                            
+
                             VStack(spacing: 6) {
                                 Text("No Sessions Yet")
                                     .font(.system(size: 18, weight: .bold, design: .rounded))
                                     .foregroundStyle(PrepTheme.darkNavy)
-                                
+
                                 Text(filter == "All" ? "Complete a practice session and your results will appear here." : "No \(filter) sessions recorded yet. Complete a session to see your progress.")
                                     .font(.system(size: 14, weight: .regular))
                                     .foregroundStyle(PrepTheme.textSecondary)
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 8)
                             }
-                            
+
                             Button {
                                 Haptics.selection()
                                 app.tab = .practice
@@ -554,7 +930,7 @@ struct HistoryView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .staggeredEntrance(delay: 0.16)
-                } else {
+                } else if !filtered.isEmpty {
                     ForEach(Array(filtered.enumerated()), id: \.element.id) { index, session in
                         NavigationLink {
                             SessionDetailView(session: session)
@@ -603,7 +979,7 @@ struct SessionCard: View {
                         .foregroundStyle(PrepTheme.textSecondary)
                 }
                 Spacer()
-                Text("\(session.score)")
+                Text("\(session.score)/100")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundStyle(PrepTheme.primary)
             }
@@ -617,7 +993,7 @@ struct SessionDetailView: View {
     @State private var sessionDetail: SessionDetailItem? = nil
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
-    
+
     var body: some View {
         ScreenContainer {
             VStack(spacing: 24) {
@@ -627,26 +1003,26 @@ struct SessionDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 10)
                     .staggeredEntrance(delay: 0.04)
-                
+
                 ScoreRing(score: sessionDetail?.score ?? session.score, size: 160)
                     .staggeredEntrance(delay: 0.10)
-                
+
                 if let err = errorMessage {
                     Text("Note: \(err)")
                         .font(.caption)
                         .foregroundStyle(PrepTheme.textSecondary)
                 }
-                
+
                 GlassCard {
                     VStack(alignment: .leading, spacing: 14) {
                         DetailRow(label: "Topic", value: sessionDetail?.topic ?? session.topic)
                         DetailRow(label: "Date", value: sessionDetail?.date ?? session.date)
-                        DetailRow(label: "Duration", value: sessionDetail?.duration ?? session.duration)
+                        DetailRow(label: "Planned Duration", value: sessionDetail?.duration ?? session.duration)
                         DetailRow(label: "Session ID", value: String(session.id.prefix(8)))
                     }
                 }
                 .staggeredEntrance(delay: 0.16)
-                
+
                 if let k = session.kind {
                     NavigationLink {
                         ReportView(kind: k, detail: sessionDetail)
@@ -661,14 +1037,14 @@ struct SessionDetailView: View {
                     }
                     .staggeredEntrance(delay: 0.22)
                 }
-                
+
                 if let transcriptItems = sessionDetail?.transcript, !transcriptItems.isEmpty {
                     NavigationLink {
                         TranscriptView(
                             entries: transcriptItems.map { TranscriptEntry(speaker: $0.speaker, text: $0.text, timestamp: "Recorded") }
                         )
                     } label: {
-                        SecondaryButton(title: "View Session Transcript") {}
+                        SecondaryButtonLabel(title: "View Session Transcript", icon: "chevron.right")
                     }
                     .staggeredEntrance(delay: 0.28)
                 }
@@ -706,22 +1082,24 @@ struct DetailRow: View {
 }
 
 enum ProfileSheetDestination: String, Identifiable {
-    case myProfile, targetRole, targetCompanies, practicePreferences, accessibility, accountSettings
+    case myProfile, targetRole, targetCompanies, accessibility, accountSettings
     var id: String { rawValue }
 }
 
 struct ProfileView: View {
     @EnvironmentObject var auth: AuthManager
     @EnvironmentObject var app: AppModel
-    
+
     @State private var activeSheet: ProfileSheetDestination? = nil
     @State private var showSignOutConfirmation: Bool = false
-    
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+
     @AppStorage("PREPAI_TARGET_ROLE") private var targetRole: String = ""
     @AppStorage("PREPAI_TARGET_COMPANIES") private var targetCompanies: String = ""
-    @AppStorage("PREPAI_PRACTICE_PREF") private var practicePref: String = ""
 
     var body: some View {
+        let photoData = auth.currentUserPhotoData
+        let initials = auth.profileInitials
         ScreenContainer {
             VStack(spacing: 20) {
                 Text("Profile")
@@ -730,20 +1108,29 @@ struct ProfileView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 12)
                     .staggeredEntrance(delay: 0.04)
-                
+
                 // Profile Header
                 HStack(spacing: 16) {
-                    AIAvatar(initials: auth.profileInitials, color: PrepTheme.primary)
-                        .scaleEffect(1.2)
-                    
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        ZStack(alignment: .bottomTrailing) {
+                            UserProfilePhoto(data: photoData, initials: initials, size: 68)
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 25, height: 25)
+                                .background(PrepTheme.primary, in: Circle())
+                        }
+                    }
+                    .accessibilityLabel("Add or change profile photo")
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text(auth.profileDisplayName)
                             .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundStyle(PrepTheme.darkNavy)
-                        Text(auth.currentUserEmail.isEmpty ? "Candidate" : auth.currentUserEmail)
+                        Text(auth.profileContact)
                             .font(.subheadline)
                             .foregroundStyle(PrepTheme.textSecondary)
-                        
+
                         if let age = auth.currentUserAge {
                             HStack(spacing: 4) {
                                 Image(systemName: "number")
@@ -764,7 +1151,7 @@ struct ProfileView: View {
                 .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 20))
                 .overlay(RoundedRectangle(cornerRadius: 20).stroke(PrepTheme.border, lineWidth: 1))
                 .staggeredEntrance(delay: 0.10)
-                
+
                 // Preparation Snapshot
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -784,7 +1171,7 @@ struct ProfileView: View {
                     }
                 }
                 .staggeredEntrance(delay: 0.16)
-                
+
                 // Profile & Goals Section
                 VStack(alignment: .leading, spacing: 8) {
                     SectionHeader(title: "Profile & Goals")
@@ -794,43 +1181,55 @@ struct ProfileView: View {
                                 activeSheet = .myProfile
                             }
                             Divider().overlay(PrepTheme.border)
-                            
+
                             ProfileRowButton(icon: "scope", title: "Target Role", subtitle: targetRole.isEmpty ? "Not set • Tap to select" : targetRole) {
                                 activeSheet = .targetRole
                             }
                             Divider().overlay(PrepTheme.border)
-                            
+
                             ProfileRowButton(icon: "building.2.fill", title: "Target Companies", subtitle: targetCompanies.isEmpty ? "Not set • Tap to select" : targetCompanies) {
                                 activeSheet = .targetCompanies
-                            }
-                            Divider().overlay(PrepTheme.border)
-                            
-                            ProfileRowButton(icon: "slider.horizontal.3", title: "Practice Preferences", subtitle: practicePref.isEmpty ? "Not set • Tap to configure" : practicePref) {
-                                activeSheet = .practicePreferences
                             }
                         }
                     }
                 }
                 .staggeredEntrance(delay: 0.22)
-                
+
+                NavigationLink {
+                    RewardsCenterView()
+                } label: {
+                    GlassCard {
+                        HStack(spacing: 14) {
+                            Image(systemName: "trophy.fill")
+                                .font(.title2).foregroundStyle(PrepTheme.primary).frame(width: 38)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Rewards & Perks").font(.system(size: 16, weight: .bold, design: .rounded)).foregroundStyle(PrepTheme.darkNavy)
+                                Text("Spend GD coins on boosts usable across practice modes.").font(.caption).foregroundStyle(PrepTheme.textSecondary)
+                            }
+                            Spacer(); Image(systemName: "chevron.right").foregroundStyle(PrepTheme.primary)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
                 // Account & Settings Section
                 VStack(alignment: .leading, spacing: 8) {
                     SectionHeader(title: "Account")
                     GlassCard {
                         VStack(spacing: 0) {
-                            ProfileRowButton(icon: "accessibility", title: "Accessibility", subtitle: "Motion & Display Settings") {
+                            ProfileRowButton(icon: "accessibility", title: "Accessibility", subtitle: "Theme, Motion & Display Settings") {
                                 activeSheet = .accessibility
                             }
                             Divider().overlay(PrepTheme.border)
-                            
-                            ProfileRowButton(icon: "gearshape.fill", title: "Account Settings", subtitle: auth.currentUserEmail.isEmpty ? "Account Information" : auth.currentUserEmail) {
+
+                            ProfileRowButton(icon: "gearshape.fill", title: "Account Settings", subtitle: auth.profileContact) {
                                 activeSheet = .accountSettings
                             }
                         }
                     }
                 }
                 .staggeredEntrance(delay: 0.26)
-                
+
                 // Sign Out Button
                 Button {
                     showSignOutConfirmation = true
@@ -852,6 +1251,22 @@ struct ProfileView: View {
             }
         }
         .navigationBarHidden(true)
+        .onChange(of: targetRole) { _, value in
+            auth.saveTargetPreference(key: "PREPAI_TARGET_ROLE", value: value)
+        }
+        .onChange(of: targetCompanies) { _, value in
+            auth.saveTargetPreference(key: "PREPAI_TARGET_COMPANIES", value: value)
+        }
+        .onChange(of: selectedPhoto) { _, item in
+            guard let item else { return }
+            Task {
+                if let raw = try? await item.loadTransferable(type: Data.self),
+                   let compressed = normalizedProfilePhotoData(raw) {
+                    auth.setProfilePhotoData(compressed)
+                }
+                selectedPhoto = nil
+            }
+        }
         .confirmationDialog("Sign out of Mockexa?", isPresented: $showSignOutConfirmation, titleVisibility: .visible) {
             Button("Sign Out", role: .destructive) {
                 auth.signOut()
@@ -871,8 +1286,6 @@ struct ProfileView: View {
                 TargetRoleSheet(targetRole: $targetRole)
             case .targetCompanies:
                 TargetCompaniesSheet(targetCompanies: $targetCompanies)
-            case .practicePreferences:
-                PracticePreferencesSheet(practicePref: $practicePref)
             case .accessibility:
                 AccessibilitySettingsSheet()
             case .accountSettings:
@@ -887,7 +1300,7 @@ struct ProfileRowButton: View {
     let title: String
     let subtitle: String
     let action: () -> Void
-    
+
     var body: some View {
         Button {
             Haptics.selection()
@@ -897,7 +1310,7 @@ struct ProfileRowButton: View {
                 Image(systemName: icon)
                     .foregroundStyle(PrepTheme.primary)
                     .frame(width: 24)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -907,9 +1320,9 @@ struct ProfileRowButton: View {
                         .foregroundStyle(PrepTheme.textSecondary)
                         .lineLimit(1)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(PrepTheme.textSecondary)
@@ -926,27 +1339,51 @@ struct ProfileRowButton: View {
 struct MyProfileSheet: View {
     @EnvironmentObject var auth: AuthManager
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var fullNameText: String = ""
+    @State private var emailText: String = ""
     @State private var ageText: String = ""
     @State private var saveSuccess: Bool = false
-    
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var validationMessage: String? = nil
+
     var body: some View {
+        let photoData = auth.currentUserPhotoData
+        let initials = auth.profileInitials
         NavigationStack {
             ZStack {
                 AppBackground()
                 ScrollView {
                     VStack(spacing: 20) {
-                        AIAvatar(initials: auth.profileInitials, color: PrepTheme.primary)
-                            .scaleEffect(1.4)
-                            .padding(.top, 12)
-                        
+                        VStack(spacing: 10) {
+                            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                                ZStack(alignment: .bottomTrailing) {
+                                    UserProfilePhoto(data: photoData, initials: initials, size: 82)
+                                    Image(systemName: "camera.fill")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 28, height: 28)
+                                        .background(PrepTheme.primary, in: Circle())
+                                }
+                            }
+                            Text(auth.currentUserPhotoData == nil ? "Add profile photo" : "Change profile photo")
+                                .font(.caption.bold())
+                                .foregroundStyle(PrepTheme.primary)
+                            if auth.currentUserPhotoData != nil {
+                                Button("Remove photo", role: .destructive) {
+                                    auth.setProfilePhotoData(nil)
+                                }
+                                .font(.caption)
+                            }
+                        }
+                        .padding(.top, 12)
+
                         GlassCard {
                             VStack(alignment: .leading, spacing: 16) {
                                 Text("PERSONAL INFORMATION")
                                     .font(.caption.bold())
                                     .foregroundStyle(PrepTheme.primary)
-                                
+
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Full Name")
                                         .font(.caption)
@@ -957,7 +1394,21 @@ struct MyProfileSheet: View {
                                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
                                         .foregroundStyle(PrepTheme.darkNavy)
                                 }
-                                
+
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Email Address")
+                                        .font(.caption)
+                                        .foregroundStyle(PrepTheme.textSecondary)
+                                    TextField("Enter email address", text: $emailText)
+                                        .keyboardType(.emailAddress)
+                                        .textInputAutocapitalization(.never)
+                                        .autocorrectionDisabled()
+                                        .padding(12)
+                                        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+                                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
+                                        .foregroundStyle(PrepTheme.darkNavy)
+                                }
+
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Age")
                                         .font(.caption)
@@ -969,24 +1420,38 @@ struct MyProfileSheet: View {
                                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(PrepTheme.border, lineWidth: 1))
                                         .foregroundStyle(PrepTheme.darkNavy)
                                 }
-                                
-                                DetailRow(label: "Email", value: auth.currentUserEmail.isEmpty ? "Not set" : auth.currentUserEmail)
-                                
+
                                 if saveSuccess {
                                     Text("Profile saved successfully!")
                                         .font(.caption.bold())
                                         .foregroundStyle(PrepTheme.success)
                                 }
+                                if let validationMessage {
+                                    Text(validationMessage)
+                                        .font(.caption.bold())
+                                        .foregroundStyle(PrepTheme.destructive)
+                                }
                             }
                         }
-                        
+
                         PrimaryButton(title: "Save Profile", icon: "checkmark") {
                             let name = fullNameText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let email = emailText.trimmingCharacters(in: .whitespacesAndNewlines)
                             let ageVal = Int(ageText.trimmingCharacters(in: .whitespacesAndNewlines))
-                            if !name.isEmpty {
-                                auth.currentUserFullName = name
+                            guard !name.isEmpty else {
+                                validationMessage = "Enter your full name."
+                                return
                             }
-                            auth.currentUserAge = ageVal
+                            if !email.isEmpty && !email.contains("@") {
+                                validationMessage = "Please enter a valid email address."
+                                return
+                            }
+                            guard ageText.isEmpty || (ageVal != nil && (16...100).contains(ageVal!)) else {
+                                validationMessage = "Enter an age between 16 and 100."
+                                return
+                            }
+                            validationMessage = nil
+                            auth.updateProfile(fullName: name, age: ageVal, email: email.isEmpty ? nil : email)
                             saveSuccess = true
                             Haptics.success()
                         }
@@ -1004,8 +1469,21 @@ struct MyProfileSheet: View {
             }
             .onAppear {
                 fullNameText = auth.currentUserFullName
+                emailText = auth.currentUserEmail
                 if let age = auth.currentUserAge {
                     ageText = "\(age)"
+                }
+            }
+            .onChange(of: selectedPhoto) { _, item in
+                guard let item else { return }
+                Task {
+                    if let raw = try? await item.loadTransferable(type: Data.self),
+                       let compressed = normalizedProfilePhotoData(raw) {
+                        auth.setProfilePhotoData(compressed)
+                    } else {
+                        validationMessage = "That image could not be loaded. Try another photo."
+                    }
+                    selectedPhoto = nil
                 }
             }
         }
@@ -1015,9 +1493,9 @@ struct MyProfileSheet: View {
 struct TargetRoleSheet: View {
     @Binding var targetRole: String
     @Environment(\.dismiss) private var dismiss
-    
+
     let roles = ["Software Engineer", "Data Analyst", "Product Manager", "Business Analyst", "System Architect", "Full Stack Developer"]
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -1028,7 +1506,7 @@ struct TargetRoleSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(PrepTheme.textSecondary)
                             .padding(.top, 12)
-                        
+
                         GlassCard {
                             VStack(spacing: 0) {
                                 ForEach(Array(roles.enumerated()), id: \.offset) { idx, role in
@@ -1050,7 +1528,7 @@ struct TargetRoleSheet: View {
                                         .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
-                                    
+
                                     if idx < roles.count - 1 {
                                         Divider().overlay(PrepTheme.border)
                                     }
@@ -1077,10 +1555,10 @@ struct TargetRoleSheet: View {
 struct TargetCompaniesSheet: View {
     @Binding var targetCompanies: String
     @Environment(\.dismiss) private var dismiss
-    
-    let allCompanies = ["Google", "Microsoft", "Amazon", "Meta", "Apple", "Uber", "Product Startups"]
+
+    let allCompanies = CompanyInfo.all.map(\.name)
     @State private var selectedSet = Set<String>()
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -1091,7 +1569,7 @@ struct TargetCompaniesSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(PrepTheme.textSecondary)
                             .padding(.top, 12)
-                        
+
                         GlassCard {
                             VStack(spacing: 0) {
                                 ForEach(Array(allCompanies.enumerated()), id: \.offset) { idx, comp in
@@ -1104,7 +1582,8 @@ struct TargetCompaniesSheet: View {
                                         }
                                         updateBinding()
                                     } label: {
-                                        HStack {
+                                        HStack(spacing: 12) {
+                                            CompanyLogoView(companyName: comp, containerWidth: 42, containerHeight: 42)
                                             Text(comp)
                                                 .font(.system(size: 16, weight: .medium))
                                                 .foregroundStyle(PrepTheme.darkNavy)
@@ -1121,7 +1600,7 @@ struct TargetCompaniesSheet: View {
                                         .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
-                                    
+
                                     if idx < allCompanies.count - 1 {
                                         Divider().overlay(PrepTheme.border)
                                     }
@@ -1147,7 +1626,7 @@ struct TargetCompaniesSheet: View {
             }
         }
     }
-    
+
     private func updateBinding() {
         if selectedSet.isEmpty {
             targetCompanies = ""
@@ -1157,89 +1636,37 @@ struct TargetCompaniesSheet: View {
     }
 }
 
-struct PracticePreferencesSheet: View {
-    @Binding var practicePref: String
-    @Environment(\.dismiss) private var dismiss
-    
-    let preferences = [
-        "Adaptive • 10 min",
-        "Focused Technical • 15 min",
-        "Behavioral HR • 10 min",
-        "GD Leadership • 15 min"
-    ]
-    
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                AppBackground()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Configure your default session duration and focus mode.")
-                            .font(.subheadline)
-                            .foregroundStyle(PrepTheme.textSecondary)
-                            .padding(.top, 12)
-                        
-                        GlassCard {
-                            VStack(spacing: 0) {
-                                ForEach(Array(preferences.enumerated()), id: \.offset) { idx, pref in
-                                    Button {
-                                        Haptics.selection()
-                                        practicePref = pref
-                                    } label: {
-                                        HStack {
-                                            Text(pref)
-                                                .font(.system(size: 16, weight: .medium))
-                                                .foregroundStyle(PrepTheme.darkNavy)
-                                            Spacer()
-                                            if practicePref == pref {
-                                                Image(systemName: "checkmark.circle.fill")
-                                                    .foregroundStyle(PrepTheme.primary)
-                                            }
-                                        }
-                                        .padding(.vertical, 14)
-                                        .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(.plain)
-                                    
-                                    if idx < preferences.count - 1 {
-                                        Divider().overlay(PrepTheme.border)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .padding(20)
-                }
-            }
-            .navigationTitle("Practice Preferences")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                        .font(.body.bold())
-                        .foregroundStyle(PrepTheme.primary)
-                }
-            }
-        }
-    }
-}
-
 struct AccessibilitySettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("PREPAI_HAPTICS_ENABLED") private var hapticsEnabled: Bool = true
-    
+    @AppStorage("PREPAI_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
+
     var body: some View {
         NavigationStack {
             ZStack {
                 AppBackground()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Customize motion effects and tactile feedback preferences.")
+                        Text("Choose the app appearance and accessibility feedback preferences.")
                             .font(.subheadline)
                             .foregroundStyle(PrepTheme.textSecondary)
                             .padding(.top, 12)
-                        
+
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("APPEARANCE")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(PrepTheme.primary)
+
+                                ThemeSelectorControl(selectedRaw: $appearanceRaw)
+
+                                Text("Switch between Light and Dark theme.")
+                                    .font(.caption)
+                                    .foregroundStyle(PrepTheme.textSecondary)
+                            }
+                        }
+
                         GlassCard {
                             VStack(spacing: 16) {
                                 HStack {
@@ -1255,9 +1682,9 @@ struct AccessibilitySettingsSheet: View {
                                     Image(systemName: reduceMotion ? "checkmark.seal.fill" : "app.badge.checkmark")
                                         .foregroundStyle(reduceMotion ? PrepTheme.primary : PrepTheme.textSecondary)
                                 }
-                                
+
                                 Divider().overlay(PrepTheme.border)
-                                
+
                                 Toggle(isOn: $hapticsEnabled) {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Haptic Feedback")
@@ -1285,6 +1712,7 @@ struct AccessibilitySettingsSheet: View {
                 }
             }
         }
+        .preferredColorScheme(AppAppearance(rawValue: appearanceRaw)?.colorScheme)
     }
 }
 
@@ -1292,7 +1720,7 @@ struct AccountSettingsSheet: View {
     @EnvironmentObject var auth: AuthManager
     @EnvironmentObject var app: AppModel
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -1304,22 +1732,14 @@ struct AccountSettingsSheet: View {
                                 Text("ACCOUNT INFORMATION")
                                     .font(.caption.bold())
                                     .foregroundStyle(PrepTheme.primary)
-                                
-                                DetailRow(label: "Account Email", value: auth.currentUserEmail.isEmpty ? "Not set" : auth.currentUserEmail)
+
+                                if !auth.currentUserEmail.isEmpty {
+                                    DetailRow(label: "Email", value: auth.currentUserEmail)
+                                }
+                                if !auth.currentUserPhone.isEmpty {
+                                    DetailRow(label: "Phone", value: auth.currentUserPhone)
+                                }
                                 DetailRow(label: "Account Status", value: auth.isAuthenticated ? "Active Account" : "Signed Out")
-                                DetailRow(label: "Security", value: "Encrypted Session")
-                            }
-                        }
-                        
-                        GlassCard {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("PRIVACY & DATA")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(PrepTheme.primary)
-                                
-                                Text("Your session history and onboarding metadata are managed securely in your active profile account.")
-                                    .font(.subheadline)
-                                    .foregroundStyle(PrepTheme.textSecondary)
                             }
                         }
                     }

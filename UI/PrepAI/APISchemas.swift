@@ -104,12 +104,12 @@ struct AnyCodable: Codable, Equatable, Hashable {
 struct HealthResponse: Codable {
     let status: String
     let environment: String?
-    let groqConfigured: Bool?
+    let geminiConfigured: Bool?
     
     enum CodingKeys: String, CodingKey {
         case status
         case environment
-        case groqConfigured = "groq_configured"
+        case geminiConfigured = "gemini_configured"
     }
 }
 
@@ -123,6 +123,8 @@ struct TechnicalStartRequest: Codable {
     let desiredDifficulty: Int
     let mode: String
     let maxQuestions: Int
+    var resumeContext: String? = nil
+    var jobDescription: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case name
@@ -133,6 +135,8 @@ struct TechnicalStartRequest: Codable {
         case desiredDifficulty = "desired_difficulty"
         case mode
         case maxQuestions = "max_questions"
+        case resumeContext = "resume_context"
+        case jobDescription = "job_description"
     }
 }
 
@@ -185,6 +189,7 @@ struct AnswerAnalysisOut: Codable {
     let missingConcepts: [String]
     let misconceptions: [String]
     let overallScore: Double
+    var feedback: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case classification
@@ -195,6 +200,7 @@ struct AnswerAnalysisOut: Codable {
         case missingConcepts = "missing_concepts"
         case misconceptions
         case overallScore = "overall_score"
+        case feedback
     }
 }
 
@@ -230,12 +236,18 @@ struct HRStartRequest: Codable {
     let targetRole: String
     let experience: String
     let maxQuestions: Int
+    let interviewStyle: String
+    var resumeContext: String? = nil
+    var jobDescription: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case name
         case targetRole = "target_role"
         case experience
         case maxQuestions = "max_questions"
+        case interviewStyle = "interview_style"
+        case resumeContext = "resume_context"
+        case jobDescription = "job_description"
     }
 }
 
@@ -317,12 +329,18 @@ struct HRFinishResponse: Codable {
 struct GDStartRequest: Codable {
     let topic: String
     let numRounds: Int
+    let durationMinutes: Int?
     let mode: String
+    var resumeContext: String? = nil
+    var jobDescription: String? = nil
     
     enum CodingKeys: String, CodingKey {
         case topic
         case numRounds = "num_rounds"
+        case durationMinutes = "duration_minutes"
         case mode
+        case resumeContext = "resume_context"
+        case jobDescription = "job_description"
     }
 }
 
@@ -354,10 +372,12 @@ struct GDTurnResponse: Codable, Identifiable, Hashable {
 struct GDRespondRequest: Codable {
     let sessionId: String
     let userContribution: String?
+    var conclude: Bool = false
     
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case userContribution = "user_contribution"
+        case conclude
     }
 }
 
@@ -382,6 +402,157 @@ struct GDFinishResponse: Codable {
         case sessionId = "session_id"
         case metrics
         case summary
+    }
+}
+
+struct GDFinishRequest: Codable {
+    let interruptionCount: Int
+    enum CodingKeys: String, CodingKey { case interruptionCount = "interruption_count" }
+}
+
+// MARK: - Friends & Online Group Discussion
+struct FriendsGDCreateRequest: Codable {
+    let topic: String
+    let durationMinutes: Int
+    let mode: String
+    let maxParticipants: Int
+    enum CodingKeys: String, CodingKey {
+        case topic, mode
+        case durationMinutes = "duration_minutes"
+        case maxParticipants = "max_participants"
+    }
+}
+
+struct FriendsGDJoinRequest: Codable { let roomCode: String; enum CodingKeys: String, CodingKey { case roomCode = "room_code" } }
+struct FriendsGDReadyRequest: Codable { let ready: Bool }
+struct FriendsGDContributionRequest: Codable { let text: String }
+struct FriendsGDMatchmakeRequest: Codable {
+    let mode: String
+    let durationMinutes: Int
+    enum CodingKeys: String, CodingKey { case mode; case durationMinutes = "duration_minutes" }
+}
+
+struct FriendsGDParticipant: Codable, Identifiable, Hashable {
+    var id: String { userId }
+    let userId: String
+    let name: String
+    let isHost: Bool
+    let ready: Bool
+    let points: Int
+    let xpEarned: Int
+    let coinsEarned: Int
+    let contributionCount: Int
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"; case name; case isHost = "is_host"; case ready; case points
+        case xpEarned = "xp_earned"; case coinsEarned = "coins_earned"; case contributionCount = "contribution_count"
+    }
+}
+
+struct FriendsGDContribution: Codable, Identifiable, Hashable {
+    let id: String
+    let speakerId: String
+    let speaker: String
+    let text: String
+    let score: Int
+    let xp: Int
+    let coins: Int
+    let signals: [String]
+    let createdAt: Double
+    enum CodingKeys: String, CodingKey {
+        case id; case speakerId = "speaker_id"; case speaker; case text; case score; case xp; case coins; case signals
+        case createdAt = "created_at"
+    }
+}
+
+struct FriendsGDRoomResponse: Codable {
+    let roomId: String
+    let roomCode: String
+    let topic: String
+    let mode: String
+    let durationMinutes: Int
+    let status: String
+    let minimumParticipants: Int
+    let maxParticipants: Int
+    let viewerUserId: String
+    let hostUserId: String
+    let canStart: Bool
+    let remainingSeconds: Int
+    let participants: [FriendsGDParticipant]
+    let transcript: [FriendsGDContribution]
+    enum CodingKeys: String, CodingKey {
+        case roomId = "room_id"; case roomCode = "room_code"; case topic; case mode
+        case durationMinutes = "duration_minutes"; case status
+        case minimumParticipants = "minimum_participants"; case maxParticipants = "max_participants"
+        case viewerUserId = "viewer_user_id"; case hostUserId = "host_user_id"
+        case canStart = "can_start"; case remainingSeconds = "remaining_seconds"; case participants; case transcript
+    }
+}
+
+struct FriendsGDMatchmakingResponse: Codable {
+    let state: String
+    let position: Int?
+    let playersFound: Int?
+    let room: FriendsGDRoomResponse?
+    enum CodingKeys: String, CodingKey { case state, position; case playersFound = "players_found"; case room }
+}
+
+struct FriendsGDContributionResponse: Codable {
+    let contribution: FriendsGDContribution
+    let room: FriendsGDRoomResponse
+    let wallet: RewardWalletResponse
+}
+
+struct FriendsGDFinishResponse: Codable { let room: FriendsGDRoomResponse; let wallet: RewardWalletResponse }
+
+struct RewardCatalogItem: Codable, Identifiable, Hashable {
+    let id: String; let title: String; let description: String; let cost: Int; let icon: String
+}
+
+struct RewardWalletResponse: Codable {
+    let xp: Int
+    let coins: Int
+    let level: Int
+    let inventory: [String: Int]
+    let achievements: [String]
+    let xpToNextLevel: Int
+    let catalog: [RewardCatalogItem]
+    enum CodingKeys: String, CodingKey {
+        case xp, coins, level, inventory, achievements, catalog
+        case xpToNextLevel = "xp_to_next_level"
+    }
+}
+
+struct RewardRedeemRequest: Codable { let rewardId: String; enum CodingKeys: String, CodingKey { case rewardId = "reward_id" } }
+
+struct LeaderboardEntry: Codable, Identifiable, Hashable {
+    var id: Int { rank }
+    let rank: Int
+    let displayName: String
+    let xp: Int
+    let coins: Int
+    let level: Int
+    let achievementCount: Int
+    let isCurrentUser: Bool
+    enum CodingKeys: String, CodingKey {
+        case rank, xp, coins, level
+        case displayName = "display_name"
+        case achievementCount = "achievement_count"
+        case isCurrentUser = "is_current_user"
+    }
+}
+
+struct LeaderboardResponse: Codable {
+    let entries: [LeaderboardEntry]
+    let currentUserRank: Int
+    let currentUserXP: Int
+    let totalPlayers: Int
+    let rankingBasis: String
+    enum CodingKeys: String, CodingKey {
+        case entries
+        case currentUserRank = "current_user_rank"
+        case currentUserXP = "current_user_xp"
+        case totalPlayers = "total_players"
+        case rankingBasis = "ranking_basis"
     }
 }
 
@@ -455,5 +626,3 @@ struct SessionDetailItem: Codable, Identifiable, Hashable {
         case transcript
     }
 }
-
-

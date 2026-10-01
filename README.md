@@ -4,7 +4,7 @@
 
 Mockexa is a native iOS application and FastAPI backend service engineered to help candidates prepare for placement interviews. It provides real-time, interactive practice sessions across **Technical Coding/System Design**, **HR Behavioral Interviews**, and **Group Discussion (GD) Panel Simulations**, complete with multi-dimensional scoring and actionable feedback.
 
-The application combines a high-performance native SwiftUI interface—featuring touchscreen-native 3D gestures and custom micro-interactions—with a resilient backend architecture powered by FastAPI, Supabase Authentication, and Groq LLM intelligence.
+The application combines a high-performance native SwiftUI interface—featuring touchscreen-native 3D gestures and custom micro-interactions—with a resilient backend architecture powered by FastAPI, Supabase Authentication, and Gemini LLM intelligence.
 
 ---
 
@@ -109,8 +109,8 @@ Code/Text Response     STAR Method Answer       Panel Contribution
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
                ▼                              ▼
-       Supabase Database               Groq LLM Engine
-   (Session & User Storage)       (llama-3.3-70b-versatile)
+       Supabase Database               Gemini LLM Engine
+   (Session & User Storage)       (gemini-3.8-flash)
 ```
 
 ### Layer Responsibilities
@@ -119,7 +119,7 @@ Code/Text Response     STAR Method Answer       Panel Contribution
 3. **InterviewViewModels**: Manages real-time interview state, question indices, user answer submissions, and backend REST communication.
 4. **APIClient**: Provides asynchronous HTTP methods (`GET`, `POST`) with timeout handling, error mapping (`APIError`), and JSON payload serialization.
 5. **FastAPI Backend**: Asynchronous Web API exposing endpoints for session initiation, turn processing, answer evaluation, and discussion management.
-6. **AI & Repository Layer**: Integrates with Groq LLM (`llama-3.3-70b-versatile`) for response evaluation and logs session history to Supabase.
+6. **AI & Repository Layer**: Integrates with Gemini LLM (`gemini-3.8-flash`) for response evaluation and logs session history to Supabase.
 
 ---
 
@@ -157,11 +157,11 @@ Code/Text Response     STAR Method Answer       Panel Contribution
   - `gd.py`: Endpoints `/gd/start`, `/gd/respond`, `/gd/finish/{session_id}`.
 - **Controllers**:
   - `technical_controller.py`: Deterministic fallback question bank and rule-based evaluation.
-  - `technical_groq_backend.py`: Groq LLM-backed evaluation pipeline.
-  - `hr_controller.py` & `hr_groq_backend.py`: HR interview evaluation pipeline.
+  - `technical_gemini_backend.py`: Gemini LLM-backed evaluation pipeline.
+  - `hr_controller.py` & `hr_gemini_backend.py`: HR interview evaluation pipeline.
   - `gd_controller.py`: Multi-agent GD discussion manager and performance evaluator.
 - **Providers**:
-  - `groq_backend.py`: Wraps Groq Python SDK for inference (`llama-3.3-70b-versatile`).
+  - `gemini_backend.py`: Wraps Gemini Python SDK for inference (`gemini-3.8-flash`).
   - `model_router.py`: Central routing layer for model selection and fallback handling.
 
 ---
@@ -175,7 +175,7 @@ Code/Text Response     STAR Method Answer       Panel Contribution
 | **Keychain & Session Persistence** | ✅ Implemented & Verified | Token encryption & auto-restoration |
 | **Account-Scoped Onboarding Sync** | ✅ Implemented & Verified | Synced to Supabase `user_metadata` |
 | **Home & Dashboard UI** | ✅ Implemented & Verified | Swift UI with touchscreen 3D gestures |
-| **Technical Interview Engine** | ✅ Implemented & Verified | Curated + Groq evaluation pipeline |
+| **Technical Interview Engine** | ✅ Implemented & Verified | Curated + Gemini evaluation pipeline |
 | **HR Behavioral Engine** | ✅ Implemented & Verified | STAR evaluation pipeline |
 | **Group Discussion (GD) Engine** | ✅ Implemented & Verified | Multi-agent panel simulation |
 | **History & Transcript View** | ✅ Implemented & Verified | Filterable session catalog |
@@ -229,11 +229,11 @@ Mockexa/
 │   │   ├── controllers/
 │   │   │   ├── gd_controller.py
 │   │   │   ├── hr_controller.py
-│   │   │   ├── hr_groq_backend.py
+│   │   │   ├── hr_gemini_backend.py
 │   │   │   ├── technical_controller.py
-│   │   │   └── technical_groq_backend.py
+│   │   │   └── technical_gemini_backend.py
 │   │   ├── providers/
-│   │   │   ├── groq_backend.py
+│   │   │   ├── gemini_backend.py
 │   │   │   ├── llm_backend.py
 │   │   │   └── model_router.py
 │   │   ├── routers/
@@ -250,7 +250,7 @@ Mockexa/
 │   │   ├── test_api_technical_flow.py
 │   │   ├── test_auth.py
 │   │   ├── test_gd.py
-│   │   ├── test_groq_backend.py
+│   │   ├── test_gemini_backend.py
 │   │   ├── test_hr_flow.py
 │   │   └── test_technical_controller.py
 │   ├── .env.example
@@ -312,7 +312,7 @@ xcodebuild -project UI/PrepAI.xcodeproj \
 The application uses standard environment configuration files. Copy `Backend/.env.example` to `Backend/.env` and update the placeholders:
 
 ```env
-GROQ_API_KEY=YOUR_GROQ_API_KEY
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 SUPABASE_URL=YOUR_SUPABASE_URL
 SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 SUPABASE_JWT_SECRET=YOUR_SUPABASE_JWT_SECRET
@@ -343,7 +343,7 @@ pytest tests/ -v
 ## 📌 Known Limitations
 
 1. **Physical Device Network Routing**: When running the iOS app on a physical iPhone, set `PrepConfig.baseURL` to your Mac's LAN IP address (e.g. `http://192.168.x.x:8000`) so the iPhone can reach the local FastAPI server.
-2. **Groq API Key**: Real-time LLM inference requires a valid `GROQ_API_KEY` configured in `Backend/.env`. If unconfigured, the backend uses deterministic evaluation engines.
+2. **Gemini API Key**: Real-time LLM inference requires a valid `GEMINI_API_KEY` configured in `Backend/.env`. If unconfigured, the backend uses deterministic evaluation engines.
 
 ---
 

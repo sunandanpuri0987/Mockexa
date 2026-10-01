@@ -10,7 +10,7 @@ written to a Colab-local file at runtime.
 
 The controller deliberately owns state, IRT-style theta updates, coverage,
 and stopping rules. An optional LLM backend may provide structured content
-(via CuratedTechnicalBackend today, GroqBackend once wired in), but it
+(via CuratedTechnicalBackend today, GeminiBackend once wired in), but it
 cannot replace these controls — see submit_answer(), which validates any
 learned-backend output before it's allowed to mutate state at all.
 """
@@ -54,6 +54,8 @@ class CandidateProfile:
     practice_areas: tuple[str, ...] = ()
     desired_difficulty: int = 3
     interview_minutes: int = 20
+    resume_context: str | None = None
+    job_description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -80,6 +82,7 @@ class AnswerAnalysis:
     missing_concepts: tuple[str, ...]
     misconceptions: tuple[str, ...]
     overall_score: float
+    feedback: str = ""
 
 
 @dataclass(frozen=True)
@@ -182,26 +185,62 @@ class CuratedTechnicalBackend:
 
     def evaluate(self, question: Question, answer: str) -> AnswerAnalysis:
         tokens = QuestionValidator._tokens(answer)
-        if not tokens:
-            return AnswerAnalysis("INSUFFICIENT_EVIDENCE", 0.0, 0.0, 0.0, 0.0, question.expected_concepts, (), 0.0)
+        if not tokens or len(answer.strip()) < 5:
+            return AnswerAnalysis(
+                classification="INSUFFICIENT_EVIDENCE",
+                correctness=0.0,
+                completeness=0.0,
+                relevance=0.0,
+                reasoning=0.0,
+                missing_concepts=question.expected_concepts,
+                misconceptions=(),
+                overall_score=0.0,
+                feedback="No substantive answer provided to evaluate.",
+            )
 
-        matched = [concept for concept in question.expected_concepts if any(term in tokens for term in concept.split())]
-        missing = tuple(concept for concept in question.expected_concepts if concept not in matched)
+        answer_lower = answer.lower()
+        matched = []
+        for concept in question.expected_concepts:
+            concept_clean = concept.lower()
+            if concept_clean in answer_lower:
+                matched.append(concept)
+            else:
+                words = concept_clean.split()
+                if len(words) > 1 and any(w in answer_lower for w in words if len(w) > 3):
+                    matched.append(concept)
+                elif any(t in tokens for t in words):
+                    matched.append(concept)
+
+        missing = tuple(c for c in question.expected_concepts if c not in matched)
         correctness = len(matched) / max(1, len(question.expected_concepts))
-        completeness = len(answer.split()) / 40.0
-        completeness = max(0.0, min(1.0, completeness))
-        relevance = 1.0 if any(term in tokens for term in question.domain.lower().split()) else 0.6
-        reasoning = 0.8 if any(word in tokens for word in ("because", "since", "therefore", "thus", "trade-off", "tradeoff")) else 0.4
+        
+        # Word count normalization: substantive technical answer is ~30-60 words
+        word_count = len(answer.split())
+        completeness = min(1.0, max(0.1, word_count / 35.0))
+        
+        # Relevance: check domain words, question keywords, or concept words
+        q_tokens = QuestionValidator._tokens(question.question)
+        relevant_matches = len(tokens & q_tokens)
+        relevance = 1.0 if relevant_matches >= 2 or any(term in tokens for term in question.domain.lower().split()) else 0.5
+        
+        # Reasoning: check for explanations, trade-offs, complexity markers
+        has_reasoning = any(word in tokens for word in ("because", "since", "therefore", "thus", "tradeoff", "trade-off", "complexity", "o(1)", "o(n)", "o(log", "space", "time"))
+        reasoning = 0.85 if has_reasoning else 0.45
 
         overall = max(0.0, min(1.0, 0.45 * correctness + 0.25 * completeness + 0.15 * relevance + 0.15 * reasoning))
-        if overall >= 0.85 and correctness >= 0.8:
+        
+        if overall >= 0.80 and correctness >= 0.75:
             classification = "CORRECT"
-        elif overall >= 0.70 and correctness >= 0.6:
+            fb = f"Well-articulated response covering key expected concepts ({', '.join(matched)})."
+        elif overall >= 0.60 and correctness >= 0.5:
             classification = "MOSTLY_CORRECT"
-        elif overall >= 0.45:
+            fb = f"Good technical basis covering {', '.join(matched) if matched else 'core principles'}, but could address {', '.join(missing[:2])}."
+        elif overall >= 0.35:
             classification = "PARTIALLY_CORRECT"
+            fb = f"Partially addressed the question. Expected deeper coverage of: {', '.join(missing[:3])}."
         else:
             classification = "INCORRECT"
+            fb = f"Response did not adequately demonstrate the required concepts for {question.subtopic} ({', '.join(missing[:3])})."
 
         return AnswerAnalysis(
             classification=classification,
@@ -212,6 +251,7 @@ class CuratedTechnicalBackend:
             missing_concepts=missing,
             misconceptions=(),
             overall_score=round(overall, 2),
+            feedback=fb,
         )
 
     def follow_up(self, question: Question, decision: FollowUpDecision) -> Question:
@@ -320,6 +360,7 @@ class InterviewController:
                 missing_concepts=tuple(evaluation_data.get("missing_concepts", [])),
                 misconceptions=tuple(evaluation_data.get("misconceptions", [])),
                 overall_score=float(evaluation_data.get("overall_score", 0.0)),
+                feedback=str(evaluation_data.get("feedback", "")),
             )
             hints_used = int(evaluation_data.get("hints_used", 0))
             is_last = (idx == len(valid_rows) - 1)
@@ -459,6 +500,7 @@ class InterviewController:
                 "completeness": analysis.completeness,
                 "relevance": analysis.relevance,
                 "reasoning": analysis.reasoning,
+                "feedback": analysis.feedback,
                 "missing_concepts": list(analysis.missing_concepts),
                 "misconceptions": list(analysis.misconceptions),
             }
@@ -488,10 +530,16 @@ class InterviewController:
             band = "Needs Improvement"
         else:
             band = "Foundational Gaps"
+        summary = (
+            f"Overall Band: {band} ({score_100}/100) across {len(question_log)} technical questions. "
+            + (f"Strong areas: {', '.join(strong_areas)}. " if strong_areas else "")
+            + (f"Areas for improvement: {', '.join(focus_areas)}." if focus_areas else "")
+        ).strip()
         return {
             "overall_score": score_100,
             "questions_answered": len(question_log),
             "performance_band": band,
+            "summary": summary,
             "domain_scores": domain_scores,
             "mastery": {topic: round(score, 2) for topic, score in state.mastery_scores.items()},
             "misconceptions": dict(state.misconception_counts),

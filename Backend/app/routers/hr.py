@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth import get_current_user_id, get_raw_jwt_token
 from app.config import Settings, get_settings
-from app.controllers.hr_controller import HRController
-from app.controllers.hr_groq_backend import GroqHRBackend
+from app.controllers.hr_controller import CuratedHRBackend, HRController
+from app.controllers.hr_gemini_backend import GeminiHRBackend
 from app.providers.model_router import ModelRouter
 from app.repository import SupabaseRepository
 from app.schemas.hr import (
@@ -25,14 +25,13 @@ router = APIRouter(prefix="/hr", tags=["hr"])
 
 
 def _backend_for(settings: Settings):
-    if not settings.groq_api_key:
-        raise HTTPException(
-            status_code=503,
-            detail="Groq API key not configured. HR Evaluation requires Groq.",
-        )
-    from app.providers.groq_backend import GroqBackend
-    router_ = ModelRouter(settings, GroqBackend(settings))
-    return GroqHRBackend(router_)
+    if not settings.gemini_api_key:
+        return CuratedHRBackend()
+    from app.providers.gemini_backend import GeminiBackend
+    # Allow full retries and 15s timeout so Gemini fallback model (gemini-3.5-flash-lite) seamlessly succeeds
+    resilient_config = settings.model_copy(update={"gemini_timeout_seconds": max(15.0, settings.gemini_timeout_seconds), "gemini_max_retries": max(3, settings.gemini_max_retries)})
+    router_ = ModelRouter(resilient_config, GeminiBackend(resilient_config))
+    return GeminiHRBackend(router_, fallback=CuratedHRBackend())
 
 
 def _question_out(q) -> HRQuestionOut:
@@ -54,7 +53,15 @@ async def start(
     controller = HRController(backend=backend)
 
     try:
-        first_question = controller.start(max_questions=request.max_questions)
+        first_question = controller.start(
+            max_questions=request.max_questions,
+            interview_style=request.interview_style,
+            candidate_name=request.name,
+            target_role=request.target_role,
+            experience=request.experience,
+            resume_context=request.resume_context or "",
+            job_description=request.job_description or "",
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
@@ -67,8 +74,8 @@ async def start(
             "user_id": user_id,
             "kind": "hr",
             "role": request.target_role,
-            "domains": ["behavioral"],
-            "topic": None,
+            "domains": [request.interview_style],
+            "topic": request.name,
             "duration_min": 30,
             "question_count": request.max_questions,
         }
@@ -102,11 +109,16 @@ async def answer(
             raise HTTPException(status_code=404, detail="unknown or expired session_id") from exc
 
         prior_answers = await repo.answers(request.session_id, raw_token)
+        target_role = str(db_session.get("role") or "")
+        candidate_name = str(db_session.get("topic") or "")
         try:
             controller = HRController.from_history(
                 max_questions=db_session.get("question_count", 5),
                 history=prior_answers,
                 backend=backend,
+                interview_style=(db_session.get("domains") or ["General HR"])[0],
+                candidate_name=candidate_name,
+                target_role=target_role,
             )
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Failed to reconstruct state: {exc}") from exc
@@ -128,6 +140,8 @@ async def answer(
         answered_question = controller.history[-1][0]
         evaluation_json = {
             "question_id": answered_question.id,
+            "question_text": answered_question.question,
+            "question_category": answered_question.category,
             "clarity": evaluation.clarity,
             "specificity": evaluation.specificity,
             "ownership": evaluation.ownership,
@@ -137,13 +151,27 @@ async def answer(
             "problem_solving": evaluation.problem_solving,
             "feedback": evaluation.feedback,
             "overall_score": evaluation.overall_score,
+            "needs_follow_up": evaluation.needs_follow_up,
+            "follow_up_question": evaluation.follow_up_question,
+            "follow_up_category": evaluation.follow_up_category,
+            "probe_focus": evaluation.probe_focus,
+            "pressure_level": evaluation.pressure_level,
+            "observed_signal": evaluation.observed_signal,
         }
         # Fix 1: answers table requires answer_type NOT NULL.
         # correctness: map overall_score (0-1) to numeric(3,2).
         # clarity: map clarity (0-1) to smallint(0-100) for DB storage only; API unchanged.
+        # The deployed answers table references the shared seeded questions
+        # table. Dynamic HR follow-ups therefore use stable storage slots;
+        # their real id/text/category remain in evaluation_json above.
+        hr_storage_question_ids = [
+            "hr-001", "hr-002", "ds-array-list", "ds-hash", "ds-tree",
+            "alg-binary", "alg-dp", "alg-sort", "os-thread", "db-acid",
+        ]
+        storage_question_id = hr_storage_question_ids[len(controller.history) - 1]
         await repo.add_answer({
             "session_id": request.session_id,
-            "question_id": answered_question.id,
+            "question_id": storage_question_id,
             "content": request.answer,
             "answer_type": "text",
             "correctness": round(max(0.0, min(1.0, evaluation.overall_score)), 2),
@@ -197,6 +225,7 @@ async def finish(
             max_questions=db_session.get("question_count", 5),
             history=prior_answers,
             backend=backend,
+            interview_style=(db_session.get("domains") or ["General HR"])[0],
         )
     else:
         controller = hr_sessions.load(session_id, user_id)
@@ -246,5 +275,6 @@ async def finish(
         from app.utils.session_store import completed_sessions
         completed_sessions.add_completed_session(user_id, session_summary)
 
+    from app.controllers.gd_friends import grant_session_reward
+    grant_session_reward(user_id, session_id, report.get("overall_score", 0.0) * 100, "hr")
     return HRFinishResponse(session_id=session_id, report=report)
-

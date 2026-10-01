@@ -84,8 +84,11 @@ def test_gd_sessions_and_detail_flow(client: TestClient, auth_headers: dict[str,
     
     router = ModelRouter(get_settings(), DummyBackend())
     monkeypatch.setattr("app.routers.gd._backend_router", lambda settings: router)
-
-
+    async def identity_verifier(
+        topic, speaker_name, stance, unverified_text, history_context, settings
+    ):
+        return unverified_text
+    monkeypatch.setattr("app.routers.gd.verify_gd_turn", identity_verifier)
 
     # 1. Start GD session for User A
     start_resp = client.post(
@@ -131,6 +134,9 @@ def test_gd_sessions_and_detail_flow(client: TestClient, auth_headers: dict[str,
     assert detail["kind"] == "gd"
     assert "report" in detail
     assert "transcript" in detail
+    assert any(item["speaker"] == "You" and "Flexible hours" in item["text"] for item in detail["transcript"])
+    assert any(item["speaker"] != "You" and item["text"].startswith("I'm ") for item in detail["transcript"])
+    assert all(not item["text"].lstrip().startswith("{") for item in detail["transcript"])
     
     report = detail["report"]
     assert "metrics" in report

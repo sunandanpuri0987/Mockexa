@@ -11,7 +11,7 @@ router = APIRouter(tags=["health"])
 class HealthResponse(BaseModel):
     status: str
     environment: str
-    groq_configured: bool
+    gemini_configured: bool
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -19,6 +19,5 @@ def health(settings: Settings = Depends(get_settings)):
     return HealthResponse(
         status="ok",
         environment=settings.environment,
-        groq_configured=bool(settings.groq_api_key),
+        gemini_configured=bool(settings.gemini_api_key),
     )
-

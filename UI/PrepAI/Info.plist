@@ -8,6 +8,8 @@
 	<string>Mockexa</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -47,5 +49,18 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mockexa requires microphone access for voice practice in Group Discussion and HR interviews.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Mockexa uses speech recognition to transcribe your spoken responses in Group Discussion and HR interviews.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>PREPAI_BACKEND_BASE_URL</key>
+	<string>$(PREPAI_BACKEND_BASE_URL)</string>
 </dict>
 </plist>

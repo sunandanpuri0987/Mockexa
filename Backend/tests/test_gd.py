@@ -27,16 +27,222 @@ class MockBackend:
             retry_count=0
         )
 
+
+def test_gd_model_failure_uses_immediate_curated_turn():
+    from app.config import get_settings
+    from app.controllers.gd_controller import DiscussionManager, default_profiles
+    from app.providers.llm_backend import LLMRateLimitedError
+
+    class RateLimitedBackend:
+        def generate(self, request):
+            raise LLMRateLimitedError("quota exhausted")
+
+    settings = get_settings().model_copy(update={"use_supabase_persistence": False})
+    router = ModelRouter(settings, {"gd_generation": RateLimitedBackend()})
+    manager = DiscussionManager(
+        topic="Remote work and productivity",
+        profiles=default_profiles(),
+        config={"mode": "balanced", "num_rounds": 2},
+        router=router,
+    )
+
+    turn = manager.step()
+
+    assert turn is not None
+    assert len(turn.response.split()) >= 20
+    assert "fallback" in turn.argument.reasoning.lower()
+
+
+def test_gd_resume_context_is_forwarded_without_breaking_generation():
+    from app.config import get_settings
+    from app.controllers.gd_controller import DiscussionManager, default_profiles
+
+    captured_prompts = []
+
+    class CapturingBackend:
+        def generate(self, request):
+            captured_prompts.append(request.user_prompt)
+            return GenerationResult(
+                text="I support a measured pilot with clear outcomes and accountability.",
+                provider="mock",
+                model="mock",
+                input_tokens=10,
+                output_tokens=10,
+                latency_seconds=0.01,
+                retry_count=0,
+            )
+
+    settings = get_settings().model_copy(update={"use_supabase_persistence": False})
+    router = ModelRouter(settings, {"gd_generation": CapturingBackend()})
+    manager = DiscussionManager(
+        topic="AI in software engineering",
+        profiles=default_profiles(),
+        config={
+            "mode": "balanced",
+            "num_rounds": 1,
+            "resume_context": "Built a SwiftUI interview practice app using FastAPI.",
+        },
+        router=router,
+    )
+
+    turn = manager.step()
+
+    assert turn is not None
+    assert captured_prompts
+    assert "Built a SwiftUI interview practice app using FastAPI." in captured_prompts[0]
+
+
+def test_timed_gd_does_not_finish_at_legacy_round_cap(mock_gd_router, pass_gd_verifier):
+    headers = get_auth_headers("timed-session-user")
+    start = client.post(
+        "/gd/start",
+        json={
+            "topic": "Remote work and productivity",
+            "num_rounds": 1,
+            "duration_minutes": 10,
+            "mode": "balanced",
+        },
+        headers=headers,
+    )
+    assert start.status_code == 200
+    session_id = start.json()["session_id"]
+
+    # More than the legacy one-round/four-agent limit must remain available;
+    # the iOS session timer is now the authority for a timed session.
+    for _ in range(6):
+        response = client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
+        assert response.status_code == 200
+        assert response.json()["finished"] is False
+
+
+def test_gd_judge_records_interruption_feedback(mock_gd_router, pass_gd_verifier):
+    headers = get_auth_headers("interruption-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "AI in healthcare", "num_rounds": 2, "duration_minutes": 10},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+    client.post(
+        "/gd/respond",
+        json={
+            "session_id": session_id,
+            "user_contribution": "I support a limited pilot because hospitals need evidence before scaling AI tools.",
+        },
+        headers=headers,
+    )
+
+    finished = client.post(
+        f"/gd/finish/{session_id}",
+        json={"interruption_count": 2},
+        headers=headers,
+    )
+    assert finished.status_code == 200
+    data = finished.json()
+    assert data["metrics"]["candidate_interruption_count"] == 2
+    feedback = data["summary"]["candidate_feedback"]
+    assert "2 interruptions were recorded" in feedback["overview"]
+    assert feedback["judging_standard"].startswith("Evidence-based coaching judgement")
+
+
+def test_gd_can_request_a_real_closing_synthesis(mock_gd_router):
+    headers = get_auth_headers("conclusion-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "AI replacing repetitive jobs", "duration_minutes": 5},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+
+    response = client.post(
+        "/gd/respond",
+        json={"session_id": session_id, "conclude": True},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    turn = response.json()["turn"]
+    assert turn["action"] == "SYNTHESIZE"
+    assert "to conclude our discussion" in turn["response"].lower()
+
+
+def test_gd_realistic_rubric_rejects_off_topic_and_rewards_conclusion(mock_gd_router):
+    from app.controllers.gd_controller import DiscussionManager, DiscussionEvaluator, default_profiles, Turn, Argument
+    from app.config import get_settings
+    from app.providers.model_router import ModelRouter
+
+    evaluator = DiscussionEvaluator()
+
+    def scored(*answers):
+        manager = DiscussionManager(
+            topic="Should AI replace repetitive jobs?",
+            profiles=default_profiles(),
+            config={"mode": "balanced", "duration_minutes": 10},
+            router=ModelRouter(get_settings(), {"gd_generation": MockBackend()}),
+        )
+        for answer in answers:
+            argument = Argument(answer, "candidate", "", "", 0.8, "NEUTRAL", "AI jobs")
+            manager.history.append(Turn(
+                speaker="You", round=1, action="USER_CONTRIBUTION", target=None,
+                position=0.0, claim=answer, response=answer, confidence=1.0, argument=argument,
+            ))
+        return evaluator.evaluate(manager)
+
+    relevant = scored(
+        "AI may displace routine workers because automation changes repetitive roles. "
+        "For example, a 20% pilot should measure job impact before scaling."
+    )
+    off_topic = scored(
+        "First, my favorite holiday was enjoyable because the hotel had excellent food. "
+        "Therefore, I recommend visiting the beach next summer."
+    )
+    with_conclusion = scored(
+        "AI may displace routine workers because automation changes repetitive roles.",
+        "To conclude, we should automate in phases, measure job displacement, and fund worker retraining.",
+    )
+
+    assert relevant["quality_score"] > off_topic["quality_score"] + 20
+    assert off_topic["candidate_off_topic_contributions"] == 1
+    assert with_conclusion["candidate_conclusion"] >= 70
+    assert with_conclusion["candidate_reasoning"] > 0
+
+
+def test_timed_persisted_gd_keeps_timer_policy_after_reconstruction(
+    mock_gd_router, mock_supabase_persistence, pass_gd_verifier
+):
+    headers = get_auth_headers("timed-persisted-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "AI in healthcare", "num_rounds": 1, "duration_minutes": 10},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+
+    for _ in range(6):
+        response = client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
+        assert response.status_code == 200
+        assert response.json()["finished"] is False
+
 @pytest.fixture
 def mock_gd_router(monkeypatch):
     from app.config import get_settings
-    settings = get_settings().model_copy(update={"use_supabase_persistence": False, "groq_api_key": "mock-groq-key"})
+    settings = get_settings().model_copy(update={"use_supabase_persistence": False, "gemini_api_key": "mock-gemini-key"})
     app.dependency_overrides[get_settings] = lambda: settings
     def mock_backend_router(settings):
         return ModelRouter(settings, {"gd_generation": MockBackend()})
     monkeypatch.setattr("app.routers.gd._backend_router", mock_backend_router)
     yield
     app.dependency_overrides.pop(get_settings, None)
+
+@pytest.fixture
+def pass_gd_verifier(monkeypatch):
+    """Keep structural GD tests deterministic and offline."""
+    async def identity_verifier(
+        topic, speaker_name, stance, unverified_text, history_context, settings
+    ):
+        return unverified_text
+
+    monkeypatch.setattr("app.routers.gd.verify_gd_turn", identity_verifier)
 
 def test_gd_start(mock_gd_router):
     headers = get_auth_headers()
@@ -58,7 +264,16 @@ def test_gd_unauthenticated():
     )
     assert response.status_code == 401
 
-def test_gd_flow(mock_gd_router):
+
+def test_gd_rejects_blank_custom_topic(mock_gd_router):
+    response = client.post(
+        "/gd/start",
+        json={"topic": "   ", "num_rounds": 2, "mode": "balanced"},
+        headers=get_auth_headers(),
+    )
+    assert response.status_code == 422
+
+def test_gd_flow(mock_gd_router, pass_gd_verifier):
     headers = get_auth_headers("user-456")
     
     # 1. Start
@@ -81,6 +296,8 @@ def test_gd_flow(mock_gd_router):
     assert turn is not None
     assert turn["speaker"] is not None
     assert turn["claim"] == "Mocked GD response."
+    assert turn["response"].startswith("I'm Dr. Maya Shah,")
+    assert "To frame our discussion" in turn["response"]
     
     # Run out the remaining turns for round 1 (4 participants total)
     for _ in range(3):
@@ -104,6 +321,102 @@ def test_gd_flow(mock_gd_router):
     
     # 4. Ensure session deleted
     assert gd_sessions.load(session_id, "user-456") is None
+
+
+def test_gd_replies_to_latest_human_point(mock_gd_router, pass_gd_verifier):
+    headers = get_auth_headers("responsive-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "Remote work and productivity", "num_rounds": 2, "mode": "balanced"},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+
+    response = client.post(
+        "/gd/respond",
+        json={
+            "session_id": session_id,
+            "user_contribution": "Remote work saves commute time but new employees need structured mentoring.",
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    turn = response.json()["turn"]
+    assert turn["action"] == "RESPOND_TO_USER"
+    assert turn["target"] == "You"
+    assert turn["response"].startswith("I'm Dr. Maya Shah,")
+    assert "To frame our discussion" in turn["response"]
+
+
+def test_gd_named_participant_gets_the_turn(mock_gd_router, pass_gd_verifier):
+    headers = get_auth_headers("named-participant-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "AI in healthcare", "num_rounds": 3, "mode": "balanced"},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+    client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
+
+    response = client.post(
+        "/gd/respond",
+        json={
+            "session_id": session_id,
+            "user_contribution": "Now I would specifically like to know Dr.Maya's point of view on patient safety.",
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    turn = response.json()["turn"]
+    assert turn["speaker"] == "Dr. Maya Shah"
+    assert turn["action"] == "RESPOND_TO_USER"
+    assert turn["target"] == "You"
+
+
+def test_gd_follow_up_returns_to_previous_ai(mock_gd_router, pass_gd_verifier):
+    headers = get_auth_headers("follow-up-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "AI in healthcare", "num_rounds": 3, "mode": "balanced"},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+    first = client.post("/gd/respond", json={"session_id": session_id}, headers=headers).json()["turn"]
+    second = client.post("/gd/respond", json={"session_id": session_id}, headers=headers).json()["turn"]
+    assert first["speaker"] != second["speaker"]
+
+    response = client.post(
+        "/gd/respond",
+        json={
+            "session_id": session_id,
+            "user_contribution": "Why do you think your proposed safeguard would actually work?",
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    turn = response.json()["turn"]
+    assert turn["speaker"] == second["speaker"]
+    assert turn["action"] == "RESPOND_TO_USER"
+
+
+def test_gd_panel_speaks_in_contextual_not_linewise_order(mock_gd_router, pass_gd_verifier):
+    headers = get_auth_headers("varied-panel-user")
+    start = client.post(
+        "/gd/start",
+        json={"topic": "AI in healthcare", "num_rounds": 2, "mode": "balanced"},
+        headers=headers,
+    )
+    session_id = start.json()["session_id"]
+    speakers = [
+        client.post("/gd/respond", json={"session_id": session_id}, headers=headers).json()["turn"]["speaker"]
+        for _ in range(4)
+    ]
+
+    assert len(set(speakers)) == 4
+    assert speakers != ["Dr. Maya Shah", "Jordan Lee", "Arjun Mehta", "Elena Ruiz"]
 
 def test_gd_wrong_user_cannot_access_session(mock_gd_router):
     # Start session as user 1
@@ -131,7 +444,7 @@ import asyncio
 import uuid
 from app.repository import SupabaseRepository
 from app.providers.llm_backend import GenerationResult
-from app.providers.groq_backend import GroqBackend
+from app.providers.gemini_backend import GeminiBackend
 from app.providers.llm_backend import LLMRateLimitedError
 from app.controllers.gd_controller import DiscussionManager, Argument, Turn
 from app.main import app
@@ -188,6 +501,7 @@ def mock_supabase_persistence(monkeypatch):
     
     settings = Settings(
         use_supabase_persistence=True,
+        gd_verify_opening_turn=True,
         supabase_url="https://mock.supabase.co",
         supabase_anon_key="mock-anon-key",
         supabase_jwt_secret=TEST_SECRET
@@ -203,23 +517,23 @@ def mock_supabase_persistence(monkeypatch):
     app.dependency_overrides.clear()
 
 def test_gd_persistence_flow_success(mock_gd_router, mock_supabase_persistence, monkeypatch):
-    # Test A: Local generation + Groq PASS
+    # Test A: Local generation + Gemini PASS
     mock_repo = mock_supabase_persistence
     
     verifier_call_count = 0
-    def mock_groq_generate(self, request):
+    def mock_gemini_generate(self, request):
         nonlocal verifier_call_count
         verifier_call_count += 1
         return GenerationResult(
             text=json.dumps({"valid": True, "reason": "coherent"}),
-            provider="groq",
+            provider="gemini",
             model="mock",
             input_tokens=10,
             output_tokens=10,
             latency_seconds=0.1,
             retry_count=0
         )
-    monkeypatch.setattr(GroqBackend, "generate", mock_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", mock_gemini_generate)
 
     headers = get_auth_headers("user-a")
     
@@ -231,7 +545,6 @@ def test_gd_persistence_flow_success(mock_gd_router, mock_supabase_persistence, 
     # Verify session created in DB
     assert session_id in mock_repo.sessions
     assert mock_repo.sessions[session_id]["user_id"] == "user-a"
-    
     # 2. Respond
     res_resp = client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
     assert res_resp.status_code == 200
@@ -244,27 +557,51 @@ def test_gd_persistence_flow_success(mock_gd_router, mock_supabase_persistence, 
     
     # Verify envelope content
     env = json.loads(msgs[0]["content"])
-    assert env["response"] == "Mocked GD response."
+    assert env["response"].startswith("I'm Dr. Maya Shah,")
+    assert env["response"].endswith("Mocked GD response.")
     assert verifier_call_count == 1
 
+
+def test_persisted_gd_keeps_resume_and_jd_context(mock_gd_router, mock_supabase_persistence):
+    from app.utils.session_store import gd_sessions
+
+    headers = get_auth_headers("context-user")
+    response = client.post(
+        "/gd/start",
+        json={
+            "topic": "AI and employment",
+            "duration_minutes": 10,
+            "resume_context": "Built a workforce analytics product.",
+            "job_description": "Needs responsible AI and product strategy experience.",
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    manager = gd_sessions.load(response.json()["session_id"], "context-user")
+    assert manager is not None
+    assert manager.config["resume_context"] == "Built a workforce analytics product."
+    assert manager.config["job_description"] == "Needs responsible AI and product strategy experience."
+    assert "TARGET JOB DESCRIPTION" in manager.generator.resume_context
+
 def test_gd_persistence_flow_correction(mock_gd_router, mock_supabase_persistence, monkeypatch):
-    # Test B: Local generation + Groq FAIL -> Groq verifier correction applied directly
+    # Test B: Local generation + Gemini FAIL -> Gemini verifier correction applied directly
     mock_repo = mock_supabase_persistence
     
     verifier_call_count = 0
-    def mock_groq_generate(self, request):
+    def mock_gemini_generate(self, request):
         nonlocal verifier_call_count
         verifier_call_count += 1
         return GenerationResult(
             text=json.dumps({"valid": False, "reason": "unstructured", "corrected_response": "Here is the corrected response: Corrected text."}),
-            provider="groq",
+            provider="gemini",
             model="mock",
             input_tokens=10,
             output_tokens=10,
             latency_seconds=0.1,
             retry_count=0
         )
-    monkeypatch.setattr(GroqBackend, "generate", mock_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", mock_gemini_generate)
 
     headers = get_auth_headers("user-a")
     res_start = client.post("/gd/start", json={"topic": "AI in medicine", "num_rounds": 2}, headers=headers)
@@ -272,13 +609,15 @@ def test_gd_persistence_flow_correction(mock_gd_router, mock_supabase_persistenc
     
     res_resp = client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
     assert res_resp.status_code == 200
-    assert res_resp.json()["turn"]["response"] == "Corrected text."
+    assert res_resp.json()["turn"]["response"].startswith("I'm Dr. Maya Shah,")
+    assert res_resp.json()["turn"]["response"].endswith("Corrected text.")
     
     # Verify only response is updated. claim and argument.claim are preserved
     msgs = mock_repo.messages_store[session_id]
     assert len(msgs) == 1
     env = json.loads(msgs[0]["content"])
-    assert env["response"] == "Corrected text."
+    assert env["response"].startswith("I'm Dr. Maya Shah,")
+    assert env["response"].endswith("Corrected text.")
     assert env["claim"] == "Mocked GD response."
     assert env["argument"]["claim"] == "Mocked GD response."
     assert verifier_call_count == 1
@@ -287,17 +626,17 @@ def test_gd_persistence_flow_double_fail(mock_gd_router, mock_supabase_persisten
     # Test C: No correction provided -> no turn persisted, HTTP 500
     mock_repo = mock_supabase_persistence
     
-    def mock_groq_generate(self, request):
+    def mock_gemini_generate(self, request):
         return GenerationResult(
             text=json.dumps({"valid": False, "reason": "unstructured", "corrected_response": ""}),
-            provider="groq",
+            provider="gemini",
             model="mock",
             input_tokens=10,
             output_tokens=10,
             latency_seconds=0.1,
             retry_count=0
         )
-    monkeypatch.setattr(GroqBackend, "generate", mock_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", mock_gemini_generate)
 
     headers = get_auth_headers("user-a")
     res_start = client.post("/gd/start", json={"topic": "AI in medicine", "num_rounds": 2}, headers=headers)
@@ -309,13 +648,13 @@ def test_gd_persistence_flow_double_fail(mock_gd_router, mock_supabase_persisten
     
     assert len(mock_repo.messages_store[session_id]) == 0
 
-def test_gd_persistence_flow_groq_429(mock_gd_router, mock_supabase_persistence, monkeypatch):
-    # Test D: Groq 429 -> no unverified turn returned/persisted, HTTP 503
+def test_gd_persistence_flow_gemini_429(mock_gd_router, mock_supabase_persistence, monkeypatch):
+    # Test D: Gemini 429 -> no unverified turn returned/persisted, HTTP 503
     mock_repo = mock_supabase_persistence
     
-    def mock_groq_generate(self, request):
+    def mock_gemini_generate(self, request):
         raise LLMRateLimitedError("Rate limit exceeded", retry_after_seconds=5)
-    monkeypatch.setattr(GroqBackend, "generate", mock_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", mock_gemini_generate)
 
     headers = get_auth_headers("user-a")
     res_start = client.post("/gd/start", json={"topic": "AI in medicine", "num_rounds": 2}, headers=headers)
@@ -323,7 +662,7 @@ def test_gd_persistence_flow_groq_429(mock_gd_router, mock_supabase_persistence,
     
     res_resp = client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
     assert res_resp.status_code == 503
-    assert "Groq rate limit (429) hit" in res_resp.json()["detail"]
+    assert "Gemini rate limit (429) hit" in res_resp.json()["detail"]
     
     assert len(mock_repo.messages_store[session_id]) == 0
 
@@ -366,7 +705,7 @@ def test_gd_reconstruction_preserves_history_and_generates_next_turn(mock_gd_rou
     })
 
     qwen_call_count = 0
-    groq_call_count = 0
+    gemini_call_count = 0
     
     orig_qwen_generate = MockBackend.generate
     def tracked_qwen_generate(self, request):
@@ -375,24 +714,27 @@ def test_gd_reconstruction_preserves_history_and_generates_next_turn(mock_gd_rou
         return orig_qwen_generate(self, request)
     monkeypatch.setattr(MockBackend, "generate", tracked_qwen_generate)
 
-    def mock_groq_generate(self, request):
-        nonlocal groq_call_count
-        groq_call_count += 1
+    def mock_gemini_generate(self, request):
+        nonlocal gemini_call_count
+        gemini_call_count += 1
         return GenerationResult(
             text=json.dumps({"valid": True, "reason": "coherent"}),
-            provider="groq",
+            provider="gemini",
             model="mock",
             input_tokens=10,
             output_tokens=10,
             latency_seconds=0.1,
             retry_count=0
         )
-    monkeypatch.setattr(GroqBackend, "generate", mock_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", mock_gemini_generate)
 
     res_resp = client.post("/gd/respond", json={"session_id": session_id}, headers=headers)
     assert res_resp.status_code == 200
     assert qwen_call_count == 1
-    assert groq_call_count == 1
+    # AI-to-AI transitions do not need a second verification model call; this
+    # keeps reconstructed discussions responsive without weakening checks on
+    # turns that react to user-supplied content.
+    assert gemini_call_count == 0
     
     msgs = mock_repo.messages_store[session_id]
     assert len(msgs) == 2
@@ -445,7 +787,8 @@ def test_gd_finish_feedback_mapping(mock_gd_router, mock_supabase_persistence, m
     assert isinstance(feedback["weaknesses"], list)
     assert isinstance(feedback["missing_concepts"], list)
 
-    assert "Consensus:" in feedback["summary"]
+    assert "human contribution" in feedback["summary"].lower()
+    assert feedback["strengths"] == []
     
     assert mock_repo.sessions[session_id]["status"] == "completed"
 
@@ -467,7 +810,7 @@ def test_gd_local_qwen_timeout(mock_gd_router, mock_supabase_persistence, monkey
 
     orig_wait_for = asyncio.wait_for
     async def mock_wait_for(fut, timeout, *args, **kwargs):
-        if timeout == 90.0:
+        if timeout == 8.0:
             timeout = 0.01
         return await orig_wait_for(fut, timeout, *args, **kwargs)
     monkeypatch.setattr("asyncio.wait_for", mock_wait_for)
@@ -478,21 +821,21 @@ def test_gd_local_qwen_timeout(mock_gd_router, mock_supabase_persistence, monkey
     
     assert len(mock_repo.messages_store[session_id]) == 0
 
-def test_gd_groq_timeout(mock_gd_router, mock_supabase_persistence, monkeypatch):
-    # Groq timeout -> HTTP 504
+def test_gd_gemini_timeout(mock_gd_router, mock_supabase_persistence, monkeypatch):
+    # Gemini timeout -> HTTP 504
     mock_repo = mock_supabase_persistence
     headers = get_auth_headers("user-a")
     res_start = client.post("/gd/start", json={"topic": "AI in medicine", "num_rounds": 2}, headers=headers)
     session_id = res_start.json()["session_id"]
     
-    def slow_groq_generate(self, request):
+    def slow_gemini_generate(self, request):
         time.sleep(0.5)
         return GenerationResult(
             text=json.dumps({"valid": True}), provider="mock", model="mock",
             input_tokens=10, output_tokens=5,
             latency_seconds=0.1, retry_count=0
         )
-    monkeypatch.setattr(GroqBackend, "generate", slow_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", slow_gemini_generate)
 
     orig_wait_for = asyncio.wait_for
     async def mock_wait_for(fut, timeout, *args, **kwargs):
@@ -515,17 +858,17 @@ def test_gd_concurrency_serialization(mock_gd_router, mock_supabase_persistence,
     res_start = client.post("/gd/start", json={"topic": "AI in medicine", "num_rounds": 2}, headers=headers)
     session_id = res_start.json()["session_id"]
 
-    def mock_groq_generate(self, request):
+    def mock_gemini_generate(self, request):
         return GenerationResult(
             text=json.dumps({"valid": True, "reason": "coherent"}),
-            provider="groq",
+            provider="gemini",
             model="mock",
             input_tokens=10,
             output_tokens=10,
             latency_seconds=0.1,
             retry_count=0
         )
-    monkeypatch.setattr(GroqBackend, "generate", mock_groq_generate)
+    monkeypatch.setattr(GeminiBackend, "generate", mock_gemini_generate)
 
     generation_active = False
     concurrent_overlap_detected = False
@@ -803,6 +1146,16 @@ def test_gd_balanced_vs_consensus_mode_behavior():
     action_con, _ = agent.decide(history, analysis, round_no=3, mode="consensus")
     assert action_con == "SYNTHESIZE"
 
+    # Short sessions converge in round 2 instead of ending before consensus begins.
+    action_short, _ = agent.decide(
+        history,
+        analysis,
+        round_no=2,
+        mode="consensus",
+        consensus_start_round=2,
+    )
+    assert action_short == "SYNTHESIZE"
+
 
 def test_gd_consensus_prompt_instructions():
     # B. Consensus SYNTHESIZE prompt contains explicit synthesis instructions; balanced does not
@@ -848,8 +1201,8 @@ def test_gd_consensus_position_convergence():
     
     # 1. Consensus mode manager
     mgr_con = DiscussionManager(topic="AI Ethics", profiles=default_profiles(), config={"num_rounds": 4, "mode": "consensus"}, router=router)
-    agent = mgr_con.agents[0]
-    initial_pos = agent.position
+    initial_positions = {item.profile.name: item.position for item in mgr_con.agents}
+    initial_pos = mgr_con.agents[0].position
     mean_pos = float(sum(a.position for a in mgr_con.agents) / len(mgr_con.agents))
     
     mgr_con.round_no = 3
@@ -860,7 +1213,8 @@ def test_gd_consensus_position_convergence():
     
     turn = mgr_con.step()
     if turn and turn.action == "SYNTHESIZE":
-        assert abs(agent.position - mean_pos) < abs(initial_pos - mean_pos)
+        selected = next(item for item in mgr_con.agents if item.profile.name == turn.speaker)
+        assert abs(selected.position - mean_pos) < abs(initial_positions[turn.speaker] - mean_pos)
 
 
 def test_gd_consensus_score_calculation():
@@ -1062,6 +1416,82 @@ def test_gd_user_contribution_does_not_penalize_ai_engagement(mock_gd_router):
     assert score_after == 100.0, f"Expected 100.0 AI panel engagement, got {score_after}"
 
 
+def test_gd_quality_score_measures_candidate_not_panel(mock_gd_router):
+    from app.controllers.gd_controller import DiscussionManager, DiscussionEvaluator, default_profiles, Turn, Argument
+    from app.config import get_settings
+    from app.providers.model_router import ModelRouter
+    from app.providers.llm_backend import LLMBackend, GenerationRequest, GenerationResult
+
+    class DummyBackend(LLMBackend):
+        def generate(self, request: GenerationRequest) -> GenerationResult:
+            return GenerationResult(text="Resp", provider="mock", model="mock", input_tokens=1, output_tokens=1, latency_seconds=0.1, retry_count=0)
+
+    router = ModelRouter(get_settings(), DummyBackend())
+    evaluator = DiscussionEvaluator()
+
+    def manager_with_answer(answer=None):
+        manager = DiscussionManager(topic="Should AI replace repetitive jobs?", profiles=default_profiles(), config={"mode": "balanced", "num_rounds": 4}, router=router)
+        for _ in range(4):
+            manager.step()
+        if answer is not None:
+            argument = Argument(claim=answer, reasoning="candidate", evidence_needed="", assumptions="", strength=0.8, position="NEUTRAL", issue="AI jobs")
+            manager.history.append(Turn(speaker="You", round=1, action="USER_CONTRIBUTION", target=None, position=0.0, claim=answer, response=answer, confidence=1.0, argument=argument))
+        return manager
+
+    no_answer = evaluator.evaluate(manager_with_answer())
+    weak = evaluator.evaluate(manager_with_answer("Yes."))
+    strong = evaluator.evaluate(manager_with_answer(
+        "I agree with Maya's concern because AI can replace repetitive jobs unevenly. "
+        "For example, a company should measure displacement data first; therefore I propose phased automation, retraining, and a 20% pilot before scaling."
+    ))
+
+    assert no_answer["quality_score"] == 0.0
+    assert weak["quality_score"] < strong["quality_score"]
+    assert strong["candidate_evidence"] > weak["candidate_evidence"]
+    assert strong["candidate_collaboration"] > weak["candidate_collaboration"]
+    assert strong["panel_quality_score"] >= 0.0
+
+    lived_example = evaluator.evaluate(manager_with_answer(
+        "Remote work can improve productivity. In my team, a shared dashboard reduced status meetings, "
+        "but onboarding suffered, so I would compare output and retention before scaling it."
+    ))
+    assert lived_example["candidate_evidence"] > 0
+
+    strong_manager = manager_with_answer(
+        "I agree with Maya because AI can replace repetitive jobs unevenly. "
+        "For example, displacement data should be measured; therefore I propose retraining and a 20% pilot."
+    )
+    strong_metrics = evaluator.evaluate(strong_manager)
+    feedback = evaluator.summary(strong_manager, strong_metrics)["candidate_feedback"]
+    assert feedback["evaluation_focus"] == "human_candidate_only"
+    assert feedback["contribution_count"] == 1
+    assert feedback["best_contribution"].startswith("I agree with Maya")
+    assert feedback["strengths"]
+    assert len(feedback["improvement_areas"]) == 3
+
+
+def test_gd_candidate_feedback_does_not_credit_ai_when_user_is_silent(mock_gd_router):
+    from app.controllers.gd_controller import DiscussionManager, DiscussionEvaluator, default_profiles
+    from app.config import get_settings
+    from app.providers.model_router import ModelRouter
+
+    manager = DiscussionManager(
+        topic="Remote work and productivity",
+        profiles=default_profiles(),
+        config={"mode": "balanced", "num_rounds": 2},
+        router=ModelRouter(get_settings(), {"gd_generation": MockBackend()}),
+    )
+    manager.step()
+    evaluator = DiscussionEvaluator()
+    metrics = evaluator.evaluate(manager)
+    feedback = evaluator.summary(manager, metrics)["candidate_feedback"]
+
+    assert metrics["quality_score"] == 0.0
+    assert feedback["performance_band"] == "Not evaluated"
+    assert feedback["contribution_count"] == 0
+    assert feedback["strengths"] == []
+
+
 def test_gd_in_memory_finish_score_mapping(mock_gd_router):
     headers = get_auth_headers()
     start_res = client.post("/gd/start", json={"topic": "AI Ethics", "num_rounds": 1}, headers=headers)
@@ -1073,10 +1503,12 @@ def test_gd_in_memory_finish_score_mapping(mock_gd_router):
     from app.utils.session_store import completed_sessions
     saved = next((s for s in completed_sessions.get_user_sessions("test-user-123") if s["id"] == sid), None)
     assert saved is not None
-    assert saved["score"] > 0
+    # A panel-only run must not award the candidate performance points.
+    assert saved["score"] == 0
+    assert saved["report"]["metrics"]["panel_quality_score"] > 0
 
 
-def test_gd_target_turn_resolution_with_interspersed_user_contributions(mock_gd_router, mock_supabase_persistence, monkeypatch):
+def test_gd_target_turn_resolution_with_interspersed_user_contributions(mock_gd_router, mock_supabase_persistence, pass_gd_verifier, monkeypatch):
     mock_repo = mock_supabase_persistence
     headers = get_auth_headers("user-interspersed")
     start_res = client.post("/gd/start", json={"topic": "AI in healthcare", "num_rounds": 3}, headers=headers)
@@ -1096,6 +1528,15 @@ def test_gd_target_turn_resolution_with_interspersed_user_contributions(mock_gd_
 
 
 def test_gd_in_memory_rollback_on_verifier_timeout(mock_gd_router, monkeypatch):
+    from app.main import app
+    from app.config import get_settings, Settings
+    original_settings = get_settings()
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        **{
+            **original_settings.model_dump(),
+            "gd_verify_opening_turn": True,
+        }
+    )
     headers = get_auth_headers("rollback-user")
     start_res = client.post("/gd/start", json={"topic": "AI Ethics", "num_rounds": 2}, headers=headers)
     sid = start_res.json()["session_id"]
@@ -1109,7 +1550,7 @@ def test_gd_in_memory_rollback_on_verifier_timeout(mock_gd_router, monkeypatch):
     
     from fastapi import HTTPException
     async def mock_verify_fail(*args, **kwargs):
-        raise HTTPException(status_code=504, detail="Groq verification timed out.")
+        raise HTTPException(status_code=504, detail="Gemini verification timed out.")
     monkeypatch.setattr("app.routers.gd.verify_gd_turn", mock_verify_fail)
 
     res_fail = client.post("/gd/respond", json={"session_id": sid}, headers=headers)
@@ -1133,9 +1574,10 @@ def test_gd_in_memory_rollback_on_verifier_timeout(mock_gd_router, monkeypatch):
     assert turn_data["speaker"] == manager.agents[0].profile.name
     assert len(manager.history) == 1
     assert manager.turn_index == 1
+    app.dependency_overrides.pop(get_settings, None)
 
 
-def test_gd_multiturn_sequence_and_null_envelope_safety(mock_gd_router, mock_supabase_persistence):
+def test_gd_multiturn_sequence_and_null_envelope_safety(mock_gd_router, mock_supabase_persistence, pass_gd_verifier):
     mock_repo = mock_supabase_persistence
     headers = get_auth_headers("user-multiturn")
     start_res = client.post("/gd/start", json={"topic": "AI in education", "num_rounds": 2}, headers=headers)
@@ -1147,10 +1589,10 @@ def test_gd_multiturn_sequence_and_null_envelope_safety(mock_gd_router, mock_sup
     assert r1.status_code == 200
     assert r1.json()["turn"]["speaker"] == "Dr. Maya Shah"
 
-    # User contribution + Turn 1: AI_2 (Jordan Lee)
+    # User contribution + a contextually selected participant (not fixed line-wise order)
     r_user = client.post("/gd/respond", json={"session_id": sid, "user_contribution": "User input text"}, headers=headers)
     assert r_user.status_code == 200
-    assert r_user.json()["turn"]["speaker"] == "Jordan Lee"
+    assert r_user.json()["turn"]["speaker"] != "Dr. Maya Shah"
 
     # Inject a DB message with null fields in content JSON envelope to test from_history resilience
     null_envelope = {
@@ -1177,7 +1619,7 @@ def test_gd_multiturn_sequence_and_null_envelope_safety(mock_gd_router, mock_sup
     r3 = client.post("/gd/respond", json={"session_id": sid}, headers=headers)
     assert r3.status_code == 200
 
-def test_gd_counterargue_round2_transition_safety(mock_gd_router, mock_supabase_persistence, monkeypatch):
+def test_gd_counterargue_round2_transition_safety(mock_gd_router, mock_supabase_persistence, pass_gd_verifier, monkeypatch):
     phrases = [
         "Statistical uncertainty in medical trials requires randomized sampling protocols.",
         "Equity and dignity for marginal communities demand direct participatory governance.",
@@ -1212,35 +1654,30 @@ def test_gd_counterargue_round2_transition_safety(mock_gd_router, mock_supabase_
     assert r1.status_code == 200
     assert r1.json()["turn"]["speaker"] == "Dr. Maya Shah"
 
-    # User 1 + AI 2: Jordan Lee
+    speakers = [r1.json()["turn"]["speaker"]]
+
+    # User 1 + contextually selected AI
     u1 = client.post("/gd/respond", json={"session_id": sid, "user_contribution": "User contribution 1"}, headers=headers)
     assert u1.status_code == 200
-    assert u1.json()["turn"]["speaker"] == "Jordan Lee"
+    speakers.append(u1.json()["turn"]["speaker"])
 
-    # User 2 + AI 3: Arjun Mehta
+    # User 2 + a different contextually selected AI
     u2 = client.post("/gd/respond", json={"session_id": sid, "user_contribution": "User contribution 2"}, headers=headers)
     assert u2.status_code == 200
-    assert u2.json()["turn"]["speaker"] == "Arjun Mehta"
+    speakers.append(u2.json()["turn"]["speaker"])
 
-    # User 3 + AI 4: Elena Ruiz (round 1 complete, round_no becomes 2)
+    # User 3 + the remaining perspective (round 1 complete)
     u3 = client.post("/gd/respond", json={"session_id": sid, "user_contribution": "User contribution 3"}, headers=headers)
     assert u3.status_code == 200
-    assert u3.json()["turn"]["speaker"] == "Elena Ruiz"
+    speakers.append(u3.json()["turn"]["speaker"])
+    assert len(set(speakers)) == 4
+    assert speakers != ["Dr. Maya Shah", "Jordan Lee", "Arjun Mehta", "Elena Ruiz"]
 
-    # AI 5: Round 2 transition where COUNTERARGUE action triggers for Dr. Maya Shah
+    # AI 5: round 2 transition still safely produces an AI-to-AI counterpoint.
     r5 = client.post("/gd/respond", json={"session_id": sid}, headers=headers)
     assert r5.status_code == 200
     turn5 = r5.json()["turn"]
     assert turn5 is not None
-    assert turn5["speaker"] == "Dr. Maya Shah"
     assert turn5["action"] == "COUNTERARGUE"
-    assert turn5["target"] == "Arjun Mehta"
-
-
-
-
-
-
-
-
-
+    assert turn5["target"] in set(speakers)
+    assert turn5["target"] != turn5["speaker"]

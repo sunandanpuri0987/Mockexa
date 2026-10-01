@@ -13,6 +13,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.providers.model_router import ModelRouter
+from app.providers.llm_backend import LLMBackendError
 
 SEED = 42
 
@@ -220,12 +221,21 @@ class ParticipantAgent:
         self.position_history = [self.position]
         self.confidence = profile.confidence
 
-    def decide(self, history, analysis, round_no, mode):
+    def decide(self, history, analysis, round_no, mode, consensus_start_round=3):
         recent = [t for t in history[-6:] if t.speaker != self.profile.name]
+        # A real panel reacts to the candidate instead of continuing a scripted
+        # sequence. Give a fresh human contribution first priority.
+        if recent and (
+            recent[-1].speaker == "You"
+            or recent[-1].action == "USER_CONTRIBUTION"
+        ):
+            return "RESPOND_TO_USER", recent[-1]
         opposed = [t for t in recent if t.position * self.position < -0.04]
-        if mode == "consensus" and recent and round_no >= 3:
+        if mode == "consensus" and recent and round_no >= consensus_start_round:
             return "SYNTHESIZE", recent[-1]
-        if opposed and round_no > 1:
+        # Let panelists engage one another naturally even in round one. Human
+        # turns still take priority through RESPOND_TO_USER above.
+        if opposed and (round_no > 1 or (recent and recent[-1].speaker != "You")):
             return "COUNTERARGUE", max(opposed, key=lambda t: t.confidence)
         if recent and abs(self.position) < 0.18:
             return "CLARIFY", recent[-1]
@@ -349,10 +359,11 @@ def _format_conversation_context(history: Optional[List[Turn]], user_name: Optio
     return user_contrib_str, recent_context_str
 
 class NeuralArgumentGenerator:
-    def __init__(self, analysis: TopicAnalysis, mode: str, router: ModelRouter):
+    def __init__(self, analysis: TopicAnalysis, mode: str, router: ModelRouter, resume_context: str = ""):
         self.analysis = analysis
         self.mode = mode
         self.router = router
+        self.resume_context = resume_context
 
     def build(self, agent: ParticipantAgent, issue: str, action: str, target: Optional[Turn] = None, history: Optional[List[Turn]] = None, user_name: Optional[str] = None) -> Argument:
         p = agent.profile
@@ -371,11 +382,30 @@ class NeuralArgumentGenerator:
 
         # Base structured argument (used as fallback or reasoning context)
         if direction == "FOR":
-            claim = f"A carefully designed approach should proceed because it can improve {issue}."
+            claim = (
+                f"From a {p.expertise} perspective, a carefully designed approach can improve {issue}. "
+                f"I would support it only with measurable outcomes, a limited pilot, and clear accountability if results fall short."
+            )
         elif direction == "AGAINST":
-            claim = f"The proposal should not advance without credible safeguards for {issue}."
+            claim = (
+                f"The proposal should not advance without credible safeguards for {issue}. "
+                f"We need comparative evidence, clear accountability, and a reversible pilot before exposing affected stakeholders to avoidable risk."
+            )
         else:
-            claim = f"The decision should be conditional on evidence about {issue}."
+            claim = (
+                f"The decision should be conditional on evidence about {issue}. "
+                f"A practical middle path is to test a limited rollout, publish measurable outcomes, and expand only if benefits are shared fairly."
+            )
+
+        # The low-latency fallback must still sound like a response to the
+        # candidate; otherwise a provider timeout makes the room feel scripted.
+        if action == "RESPOND_TO_USER" and target:
+            user_text = (target.response or target.claim or "").strip()
+            if user_text and not is_meaningless_user_input(user_text):
+                words = user_text.split()
+                excerpt = " ".join(words[:16]) + ("…" if len(words) > 16 else "")
+                user_label = user_name.strip() if user_name and user_name.strip() else "You"
+                claim = f"{user_label}, your point that “{excerpt}” gives us something concrete to examine. {claim}"
             
         evidence = next(
             (e for e in a.evidence_requirements if any(w in e for w in issue.split())),
@@ -400,7 +430,15 @@ class NeuralArgumentGenerator:
                 f"Do not repeat their name unnaturally in every sentence—only use it when referencing their points.\n"
             )
         
-        if self.mode == "consensus" and action == "SYNTHESIZE":
+        if action == "RESPOND_TO_USER":
+            task_prompt = (
+                "TASK: Respond directly to the latest human contribution. Begin by accurately acknowledging one concrete idea "
+                "from their exact words, then agree, challenge, or build on it with one useful reason. Do not ignore their point, "
+                "paraphrase it generically, or invent a claim they did not make. Keep the exchange conversational. Ask one focused "
+                "counter-question only when their reasoning leaves an important assumption, trade-off, or evidence gap unresolved; "
+                "do not end every response with a question."
+            )
+        elif self.mode == "consensus" and action == "SYNTHESIZE":
             task_prompt = (
                 "TASK: Synthesize the discussion toward consensus. Identify areas of agreement, reconcile compatible viewpoints, "
                 "acknowledge remaining disagreements, propose a balanced common position while respecting your persona's expertise, "
@@ -441,6 +479,7 @@ class NeuralArgumentGenerator:
             f"PERSONALITY: {', '.join(p.traits)}; {p.communication_style}\n"
             f"STANCE: {agent.position:+.2f}\n"
             f"{user_name_instruction}"
+            f"{'USER BACKGROUND/EXPERIENCE: ' + self.resume_context[:300] + chr(10) if self.resume_context else ''}"
             f"{user_contrib_str}"
             f"{recent_context_str}"
             f"{target_str}\n"
@@ -448,24 +487,30 @@ class NeuralArgumentGenerator:
             f"{length_guidelines}"
         )
         
-        result = self.router.generate(
-            task="gd_generation",
-            system_prompt=system_prompt,
-            user_prompt=user_prompt
-        )
-        generated = _clean_response_text(result.text, p.name)
-        
-        if generated:
-            argument.claim = generated
-            argument.reasoning = f"Generated by model; structured issue: {issue}."
+        try:
+            result = self.router.generate(
+                task="gd_generation",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt
+            )
+            generated = _clean_response_text(result.text, p.name)
+            if generated:
+                argument.claim = generated
+                argument.reasoning = f"Generated by model; structured issue: {issue}."
+        except LLMBackendError:
+            # The deterministic argument above is intentionally retained when
+            # the interactive model is rate-limited or misses its latency SLA.
+            # A GD turn should remain usable instead of blocking the room.
+            argument.reasoning = f"Low-latency curated fallback; structured issue: {issue}."
             
         return argument
 
 class NeuralCounterArgumentGenerator:
-    def __init__(self, analysis: TopicAnalysis, router: ModelRouter, mode: str = "balanced"):
+    def __init__(self, analysis: TopicAnalysis, router: ModelRouter, mode: str = "balanced", resume_context: str = ""):
         self.analysis = analysis
         self.router = router
         self.mode = mode
+        self.resume_context = resume_context
 
     def build(self, agent: ParticipantAgent, target_turn: Turn, history: Optional[List[Turn]] = None, user_name: Optional[str] = None) -> Argument:
         p = agent.profile
@@ -555,6 +600,7 @@ class NeuralCounterArgumentGenerator:
             f"PERSONALITY: {', '.join(p.traits)}; {p.communication_style}\n"
             f"STANCE: {agent.position:+.2f}\n"
             f"{user_name_instruction}"
+            f"{'USER BACKGROUND/EXPERIENCE: ' + self.resume_context[:300] + chr(10) if self.resume_context else ''}"
             f"{user_contrib_str}"
             f"{recent_context_str}"
             f"{target_str}\n"
@@ -562,16 +608,18 @@ class NeuralCounterArgumentGenerator:
             f"{length_guidelines}"
         )
         
-        result = self.router.generate(
-            task="gd_generation",
-            system_prompt=system_prompt,
-            user_prompt=user_prompt
-        )
-        generated = _clean_response_text(result.text, p.name)
-        
-        if generated:
-            argument.claim = generated
-            argument.reasoning = f"Fine-tuned targeted response to {target_turn.speaker}."
+        try:
+            result = self.router.generate(
+                task="gd_generation",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt
+            )
+            generated = _clean_response_text(result.text, p.name)
+            if generated:
+                argument.claim = generated
+                argument.reasoning = f"Fine-tuned targeted response to {target_turn.speaker}."
+        except LLMBackendError:
+            argument.reasoning = f"Low-latency curated counterpoint to {target_turn.speaker}."
             
         return argument
 
@@ -582,8 +630,15 @@ class DiscussionManager:
         self.config = config
         self.mode = config.get("mode", "balanced")
         self.agents = [ParticipantAgent(p, config.get("similarity_threshold", 0.8)) for p in profiles]
-        self.generator = NeuralArgumentGenerator(self.analysis, self.mode, router)
-        self.counter = NeuralCounterArgumentGenerator(self.analysis, router, mode=self.mode)
+        resume_context = str(config.get("resume_context") or "").strip()
+        job_description = str(config.get("job_description") or "").strip()
+        candidate_context = resume_context
+        if job_description:
+            candidate_context = "\n\n".join(
+                part for part in (resume_context, f"TARGET JOB DESCRIPTION:\n{job_description}") if part
+            )
+        self.generator = NeuralArgumentGenerator(self.analysis, self.mode, router, resume_context=candidate_context)
+        self.counter = NeuralCounterArgumentGenerator(self.analysis, router, mode=self.mode, resume_context=candidate_context)
         self.history: List[Turn] = []
         self.unresolved = []
         self.new_claims = []
@@ -608,20 +663,196 @@ class DiscussionManager:
             effective_pool = ["discussion"]
         return effective_pool[turn_index % len(effective_pool)]
 
+    @staticmethod
+    def _normalized_words(text: str) -> set[str]:
+        return set(re.findall(r"[a-z]+", (text or "").lower()))
+
+    def _explicitly_requested_agent(self, text: str) -> Optional[ParticipantAgent]:
+        """Resolve natural references such as 'Dr Maya', 'Maya', or 'Jordan Lee'."""
+        lowered = (text or "").lower()
+        matches: list[tuple[int, ParticipantAgent]] = []
+        for agent in self.agents:
+            parts = agent.profile.name.lower().replace(".", "").split()
+            meaningful = [part for part in parts if part not in {"dr", "prof", "mr", "ms", "mrs"}]
+            aliases = {" ".join(meaningful), *meaningful}
+            if meaningful:
+                aliases.add(f"dr {meaningful[0]}")
+                aliases.add(f"dr. {meaningful[0]}")
+                aliases.add(f"dr.{meaningful[0]}")
+            for alias in aliases:
+                match = re.search(rf"(?<![a-z]){re.escape(alias)}(?![a-z])", lowered)
+                if match:
+                    matches.append((match.start(), agent))
+        return min(matches, key=lambda item: item[0])[1] if matches else None
+
+    def _previous_ai_turn(self, before_last: bool = False) -> Optional[Turn]:
+        rows = self.history[:-1] if before_last else self.history
+        return next((turn for turn in reversed(rows) if turn.speaker != "You"), None)
+
+    @staticmethod
+    def _looks_like_follow_up(user_text: str, previous_ai: Optional[Turn]) -> bool:
+        if previous_ai is None:
+            return False
+        clean = (user_text or "").strip().lower()
+        # A reply to a panelist's focused question belongs back to that same
+        # panelist, even when the candidate answers without repeating a name.
+        if (previous_ai.response or "").rstrip().endswith("?"):
+            return True
+        direct_reference = bool(re.search(
+            r"\b(you|your|you've|youre|you're|you said|you mentioned|your point|your argument)\b",
+            clean,
+        ))
+        question_or_challenge = (
+            "?" in clean
+            or bool(re.search(r"\b(why|how|what|can|could|would|do|did)\b", clean))
+            or any(phrase in clean for phrase in ("counter question", "i disagree", "challenge that", "explain that"))
+        )
+        return direct_reference and question_or_challenge
+
+    def _relevance_score(self, agent: ParticipantAgent, text: str) -> float:
+        profile_text = " ".join([
+            agent.profile.role,
+            agent.profile.expertise,
+            *agent.profile.traits,
+            *agent.profile.values,
+            *agent.profile.strengths,
+        ])
+        words = self._normalized_words(text)
+        profile_words = self._normalized_words(profile_text)
+        score = float(len(words & profile_words))
+        specialty_terms = {
+            "Dr. Maya Shah": {"data", "evidence", "risk", "statistics", "bias", "safety", "medical", "health", "accuracy"},
+            "Jordan Lee": {"ethics", "ethical", "equity", "fairness", "dignity", "privacy", "people", "social", "human"},
+            "Arjun Mehta": {"ai", "technology", "innovation", "startup", "scale", "productivity", "deployment", "solution"},
+            "Elena Ruiz": {"cost", "economy", "economic", "policy", "regulation", "market", "government", "feasibility", "incentive"},
+        }
+        return score + 1.5 * len(words & specialty_terms.get(agent.profile.name, set()))
+
+    def _select_speaker(self) -> ParticipantAgent:
+        """Choose a contextually relevant speaker without a rigid round-robin."""
+        latest = self.history[-1] if self.history else None
+        ai_turns = [turn for turn in self.history if turn.speaker != "You"]
+
+        if latest and (latest.speaker == "You" or latest.action == "USER_CONTRIBUTION"):
+            user_text = latest.response or latest.claim
+            explicitly_requested = self._explicitly_requested_agent(user_text)
+            if explicitly_requested:
+                return explicitly_requested
+
+            previous_ai = self._previous_ai_turn(before_last=True)
+            if self._looks_like_follow_up(user_text, previous_ai):
+                matched = next(
+                    (agent for agent in self.agents if agent.profile.name == previous_ai.speaker),
+                    None,
+                )
+                if matched:
+                    return matched
+
+        if not ai_turns:
+            # Preserve a stable room opening unless the candidate explicitly
+            # invited a particular panelist above.
+            if latest and latest.speaker == "You":
+                relevant = max(self.agents, key=lambda item: self._relevance_score(item, latest.response or latest.claim))
+                if self._relevance_score(relevant, latest.response or latest.claim) > 0:
+                    return relevant
+            return self.agents[0]
+
+        counts = Counter(turn.speaker for turn in ai_turns)
+        recent_speakers = [turn.speaker for turn in ai_turns[-2:]]
+        varied_priority = {0: 0, 2: 1, 3: 2, 1: 3}  # Maya → Arjun → Elena → Jordan on exact ties.
+        last_ai = ai_turns[-1]
+        latest_user_text = (latest.response or latest.claim) if latest and latest.speaker == "You" else ""
+
+        def score(item: tuple[int, ParticipantAgent]) -> tuple[float, int]:
+            index, candidate = item
+            value = -0.9 * counts[candidate.profile.name]
+            if latest_user_text:
+                value += 2.0 * self._relevance_score(candidate, latest_user_text)
+            else:
+                # In pass/AI turns, prefer a genuinely different perspective so
+                # panelists react to one another rather than deliver monologues.
+                value += 2.0 * abs(candidate.position - last_ai.position)
+            if candidate.profile.name == last_ai.speaker:
+                value -= 4.0
+            elif candidate.profile.name in recent_speakers:
+                value -= 1.2
+            return value, -varied_priority.get(index, index)
+
+        return max(enumerate(self.agents), key=score)[1]
+
+    def _participant_opening_prefix(self, agent: ParticipantAgent, previous_turns: List[Turn]) -> str:
+        role = agent.profile.role.strip().lower()
+        article = "an" if role[:1] in "aeiou" else "a"
+        introduction = f"I'm {agent.profile.name}, {article} {role}."
+
+        # Only the first AI speaker frames the topic. If the candidate chose to
+        # start, the first AI reply still supplies this natural opening context.
+        has_ai_turn = any(turn.speaker != "You" for turn in previous_turns)
+        if not has_ai_turn:
+            benefit = self.analysis.benefits[0] if self.analysis.benefits else "potential benefits"
+            risk = self.analysis.risks[0] if self.analysis.risks else "possible risks"
+            framing = (
+                f"To frame our discussion, we're examining “{self.analysis.main_topic}”, "
+                f"especially the trade-off between {benefit} and {risk}."
+            )
+            return f"{introduction} {framing}"
+
+        return introduction
+
     def _render(self, agent: ParticipantAgent, action: str, argument: Argument, target: Optional[Turn]) -> str:
-        # Since we use LLM, the claim *is* the response.
-        return _clean_response_text(argument.claim, agent.profile.name)
+        response = _clean_response_text(argument.claim, agent.profile.name)
+        if agent.arguments:
+            return response
+
+        return f"{self._participant_opening_prefix(agent, self.history)} {response}"
+
+    def preserve_participant_opening(self, turn: Turn, response: str) -> str:
+        """Keep mandatory first-turn introductions after external verification."""
+        if turn.action == "SYNTHESIZE" and not re.search(
+            r"\b(to conclude|in conclusion|to summarise|to summarize|overall)\b",
+            response or "",
+            re.I,
+        ):
+            response = f"To conclude our discussion, {(response or '').strip()}"
+        try:
+            current_index = self.history.index(turn)
+            previous_turns = self.history[:current_index]
+        except ValueError:
+            previous_turns = self.history
+        if any(item.speaker == turn.speaker for item in previous_turns):
+            return response
+        agent = next((item for item in self.agents if item.profile.name == turn.speaker), None)
+        if agent is None:
+            return response
+        expected_start = f"I'm {agent.profile.name},"
+        if response.lstrip().startswith(expected_start):
+            return response
+        return f"{self._participant_opening_prefix(agent, previous_turns)} {response.strip()}"
 
     def step(self) -> Optional[Turn]:
         """Executes a single turn and returns it. Returns None if the discussion is finished."""
         rounds = self.config.get("num_rounds", 4)
-        if self.round_no > rounds:
+        # Mobile timed sessions are ended by the visible session timer, not by
+        # an arbitrary count of AI responses. Keep the legacy round cap for API
+        # callers that did not opt into duration-controlled practice.
+        if not self.config.get("timer_controlled", False) and self.round_no > rounds:
             return None
             
-        agent = self.agents[self.turn_index % len(self.agents)]
+        force_conclusion = bool(self.config.pop("force_conclusion", False))
+        agent = self._select_speaker()
         user_name = self.config.get("user_name")
         
-        action, target = agent.decide(self.history, self.analysis, self.round_no, self.mode)
+        consensus_start_round = max(2, math.ceil(rounds * 0.6))
+        action, target = agent.decide(
+            self.history,
+            self.analysis,
+            self.round_no,
+            self.mode,
+            consensus_start_round=consensus_start_round,
+        )
+        if force_conclusion:
+            action = "SYNTHESIZE"
+            target = self.history[-1] if self.history else None
         issue = self._issue(agent, (self.round_no - 1) * len(self.agents) + self.turn_index)
         
         if action == "COUNTERARGUE" and target and target.argument:
@@ -631,13 +862,21 @@ class DiscussionManager:
             
         if not agent.memory.is_novel(arg.claim):
             issue = self._issue(agent, self.turn_index + self.round_no + 1)
-            arg = self.generator.build(agent, issue, "INTRODUCE_ARGUMENT", history=self.history, user_name=user_name)
-            action = "INTRODUCE_ARGUMENT"
-            target = None
+            if action == "RESPOND_TO_USER":
+                arg = self.generator.build(
+                    agent, issue, action, target, history=self.history, user_name=user_name
+                )
+            else:
+                arg = self.generator.build(agent, issue, "INTRODUCE_ARGUMENT", history=self.history, user_name=user_name)
+                action = "INTRODUCE_ARGUMENT"
+                target = None
             
         arg.speaker = agent.profile.name
         arg.round = self.round_no
         response = self._render(agent, action, arg, target)
+        if force_conclusion and not re.match(r"\s*(to conclude|in conclusion|to summarise|to summarize|overall)", response, re.I):
+            conclusion = response[0].lower() + response[1:] if response else "we should carry the strongest evidence and trade-offs into a practical recommendation."
+            response = f"To conclude our discussion, {conclusion}"
         
         target_turn_index = None
         if target:
@@ -673,7 +912,7 @@ class DiscussionManager:
         # Apply modest consensus shift toward group mean position during synthesis in consensus mode
         if self.mode == "consensus" and action == "SYNTHESIZE":
             mean_pos = float(np.mean([a.position for a in self.agents]))
-            agent.position = float(np.clip(agent.position + 0.15 * (mean_pos - agent.position), -1.0, 1.0))
+            agent.position = float(np.clip(agent.position + 0.25 * (mean_pos - agent.position), -1.0, 1.0))
             if agent.position_history:
                 agent.position_history[-1] = round(agent.position, 2)
 
@@ -884,6 +1123,242 @@ class DiscussionManager:
 
 
 class DiscussionEvaluator:
+    _STRUCTURE_MARKERS = {
+        "first", "second", "finally", "because", "therefore", "however",
+        "although", "while", "conclusion", "recommend", "propose",
+    }
+    _COLLABORATION_MARKERS = {
+        "agree", "disagree", "building", "point", "mentioned", "adding",
+        "perspective", "concern", "common", "consensus", "compromise",
+    }
+    _EVIDENCE_MARKERS = {
+        "example", "data", "study", "research", "survey", "evidence",
+        "percent", "case", "according", "result", "metric",
+    }
+    _TOPIC_STOPWORDS = {
+        "about", "after", "again", "against", "being", "could", "from",
+        "have", "into", "should", "their", "there", "these", "this",
+        "those", "through", "what", "when", "where", "which", "with",
+        "would", "discussion", "topic",
+    }
+    _SYNONYM_GROUPS = (
+        {"ai", "artificial", "intelligence", "automation", "automate", "automated", "technology"},
+        {"job", "jobs", "work", "worker", "workers", "employment", "employee", "employees", "role", "roles"},
+        {"replace", "replacement", "displace", "displacement", "remove", "eliminate", "substitute"},
+        {"repetitive", "routine", "manual", "recurring", "monotonous"},
+        {"remote", "hybrid", "home", "distributed", "virtual"},
+        {"productivity", "productive", "performance", "output", "efficiency", "efficient"},
+        {"privacy", "private", "data", "information", "confidential", "consent"},
+        {"education", "learning", "student", "students", "classroom", "school", "college"},
+    )
+
+    @classmethod
+    def _expanded_topic_tokens(cls, text: str) -> set[str]:
+        tokens = {
+            token for token in re.findall(r"[a-z]+", (text or "").lower())
+            if len(token) >= 3 and token not in cls._TOPIC_STOPWORDS
+        }
+        expanded = set(tokens)
+        for group in cls._SYNONYM_GROUPS:
+            if tokens & group:
+                expanded.update(group)
+        return expanded
+
+    @staticmethod
+    def _candidate_metrics(rows, manager: DiscussionManager):
+        user_rows = [
+            row for row in rows
+            if row["speaker"] == "You" or row["action"] == "USER_CONTRIBUTION"
+        ]
+        if not user_rows:
+            interruption_count = max(0, int(manager.config.get("interruption_count", 0) or 0))
+            return {
+                "candidate_topic_relevance": 0.0,
+                "candidate_reasoning": 0.0,
+                "candidate_structure": 0.0,
+                "candidate_evidence": 0.0,
+                "candidate_collaboration": 0.0,
+                "candidate_clarity": 0.0,
+                "candidate_novelty": 0.0,
+                "candidate_participation": 0.0,
+                "candidate_conclusion": 0.0,
+                "candidate_contributions": 0,
+                "candidate_meaningful_contributions": 0,
+                "candidate_off_topic_contributions": 0,
+                "candidate_interruption_count": interruption_count,
+                "quality_score": 0.0,
+            }
+
+        topic_text = " ".join([
+            manager.analysis.topic,
+            manager.analysis.main_topic,
+            *manager.analysis.key_concepts,
+            *manager.analysis.positive_dimensions,
+            *manager.analysis.negative_dimensions,
+        ]).lower()
+        topic_tokens = DiscussionEvaluator._expanded_topic_tokens(topic_text)
+
+        relevance_scores = []
+        reasoning_scores = []
+        structure_scores = []
+        evidence_scores = []
+        collaboration_scores = []
+        clarity_scores = []
+        texts = []
+        meaningful_count = 0
+        off_topic_count = 0
+        participant_aliases = {
+            part.lower()
+            for agent in manager.agents
+            for part in agent.profile.name.replace(".", "").split()
+            if part.lower() not in {"dr", "mr", "mrs", "ms", "prof"}
+        }
+
+        for row in user_rows:
+            text = (row["response"] or row["claim"] or "").strip().lower()
+            texts.append(text)
+            tokens = re.findall(r"[a-z]+", text)
+            token_set = set(tokens)
+            meaningful = DiscussionEvaluator._expanded_topic_tokens(text)
+            is_meaningful = not is_meaningless_user_input(text) and len(tokens) >= 3
+            meaningful_count += int(is_meaningful)
+
+            topic_hits = len(meaningful & topic_tokens)
+            relevance = min(1.0, topic_hits / max(2.0, min(4.0, len(topic_tokens) * 0.18))) if is_meaningful else 0.0
+            relevance_scores.append(relevance)
+            off_topic_count += int(is_meaningful and relevance < 0.2)
+
+            causal = any(marker in text for marker in ("because", "since ", "therefore", "which means", "due to", "as a result"))
+            implication = any(marker in text for marker in ("so ", "impact", "leads to", "result", "recommend", "propose", "solution"))
+            reasoning = (
+                (0.30 if len(tokens) >= 10 else min(0.25, len(tokens) / 40.0))
+                + (0.40 if causal else 0.0)
+                + (0.30 if implication else 0.0)
+            ) if is_meaningful else 0.0
+            reasoning_scores.append(min(1.0, reasoning))
+
+            structure_hits = len(token_set & DiscussionEvaluator._STRUCTURE_MARKERS)
+            clause_count = len([part for part in re.split(r"[.!?;]+", text) if part.strip()])
+            structure = (
+                (0.25 if len(tokens) >= 8 else 0.0)
+                + min(0.45, structure_hits * 0.225)
+                + (0.15 if clause_count >= 2 else 0.0)
+                + (0.15 if implication else 0.0)
+            ) if is_meaningful else 0.0
+            structure_scores.append(min(1.0, structure))
+
+            evidence_hits = len(token_set & DiscussionEvaluator._EVIDENCE_MARKERS)
+            has_number = bool(re.search(r"\b\d+(?:\.\d+)?%?\b", text))
+            has_lived_example = bool(
+                re.search(r"\b(?:in|at|during) (?:my|our) (?:team|project|work|role|company)\b", text)
+                and re.search(r"\b(?:built|used|reduced|improved|increased|tested|launched|measured|automated)\b", text)
+            )
+            has_example = has_lived_example or any(marker in text for marker in ("for example", "for instance", "such as", "a case in", "consider "))
+            has_source = any(marker in text for marker in ("according to", "study", "research", "survey", "report"))
+            evidence = (
+                (0.45 if has_number else 0.0)
+                + (0.35 if has_example else 0.0)
+                + (0.35 if has_source else 0.0)
+                + (0.15 if evidence_hits and not (has_example or has_source) else 0.0)
+            ) if is_meaningful else 0.0
+            evidence_scores.append(min(1.0, evidence))
+
+            references_speaker = bool(token_set & participant_aliases)
+            interaction_phrase = any(marker in text for marker in (
+                "agree with", "disagree with", "building on", "your point", "you mentioned",
+                "i want to challenge", "common ground", "as you said", "adding to",
+            ))
+            collaboration = (
+                (0.55 if references_speaker else 0.0)
+                + (0.55 if interaction_phrase else 0.0)
+                + (0.20 if "?" in text else 0.0)
+            ) if is_meaningful else 0.0
+            collaboration_scores.append(min(1.0, collaboration))
+
+            word_count = len(tokens)
+            unique_ratio = len(token_set) / max(1, word_count)
+            if not is_meaningful:
+                clarity = 0.0
+            elif word_count < 6:
+                clarity = word_count / 18.0
+            elif word_count <= 65:
+                clarity = min(1.0, 0.55 + word_count / 130.0)
+            else:
+                clarity = max(0.35, 1.0 - (word_count - 65) / 180.0)
+            clarity_scores.append(max(0.0, min(1.0, clarity * min(1.0, unique_ratio / 0.55))))
+
+        if len(texts) == 1:
+            unique_meaningful = len(DiscussionEvaluator._expanded_topic_tokens(texts[0]))
+            novelty = min(1.0, unique_meaningful / 12.0) * relevance_scores[0]
+        else:
+            try:
+                matrix = TfidfVectorizer(stop_words="english").fit_transform(texts)
+                similarities = cosine_similarity(matrix)
+                upper = similarities[np.triu_indices_from(similarities, 1)]
+                novelty = float(1 - np.mean(upper))
+            except ValueError:
+                novelty = 0.0
+
+        duration = int(manager.config.get("duration_minutes", 0) or 0)
+        target_contributions = 2 if duration and duration <= 5 else (4 if duration >= 15 else 3)
+        if not duration:
+            target_contributions = max(2, min(4, int(manager.config.get("num_rounds", 4))))
+        participation = min(1.0, len(user_rows) / target_contributions)
+        final_text = texts[-1] if texts else ""
+        conclusion_signal = any(marker in final_text for marker in (
+            "to conclude", "in conclusion", "to summarize", "to summarise", "overall",
+            "finally", "common ground", "we should", "i recommend", "the way forward",
+        ))
+        conclusion = 0.0
+        if conclusion_signal:
+            raw_conclusion = 0.45 + 0.35 * relevance_scores[-1] + (0.20 if reasoning_scores[-1] >= 0.6 else 0.0)
+            conclusion = min(1.0, raw_conclusion * (0.4 + 0.6 * relevance_scores[-1]))
+
+        def strongest_with_consistency(scores):
+            return 0.70 * max(scores) + 0.30 * float(np.mean(scores))
+
+        values = {
+            "candidate_topic_relevance": float(np.mean(relevance_scores)),
+            "candidate_reasoning": strongest_with_consistency(reasoning_scores),
+            "candidate_structure": strongest_with_consistency(structure_scores),
+            "candidate_evidence": strongest_with_consistency(evidence_scores),
+            "candidate_collaboration": strongest_with_consistency(collaboration_scores),
+            "candidate_clarity": float(np.mean(clarity_scores)),
+            "candidate_novelty": novelty,
+            "candidate_participation": participation,
+            "candidate_conclusion": conclusion,
+        }
+        quality = 100 * (
+            0.20 * values["candidate_topic_relevance"]
+            + 0.15 * values["candidate_reasoning"]
+            + 0.11 * values["candidate_structure"]
+            + 0.13 * values["candidate_evidence"]
+            + 0.13 * values["candidate_collaboration"]
+            + 0.10 * values["candidate_clarity"]
+            + 0.05 * values["candidate_novelty"]
+            + 0.06 * values["candidate_participation"]
+            + 0.07 * values["candidate_conclusion"]
+        )
+        # A polished but unrelated speech is not a good GD contribution, and
+        # repeated/gibberish turns should never be rescued by word count.
+        quality *= 0.55 + 0.45 * values["candidate_topic_relevance"]
+        quality *= 0.75 + 0.25 * values["candidate_participation"]
+        quality *= meaningful_count / len(user_rows)
+        if len(user_rows) > 1:
+            quality -= (1.0 - values["candidate_novelty"]) * 10.0
+        interruption_count = max(0, int(manager.config.get("interruption_count", 0) or 0))
+        turn_discipline = max(0.0, 100.0 - interruption_count * 18.0)
+        adjusted_quality = min(100.0, max(0.0, quality - min(18.0, interruption_count * 6.0)))
+        return {
+            **{key: round(100 * value, 1) for key, value in values.items()},
+            "candidate_contributions": len(user_rows),
+            "candidate_meaningful_contributions": meaningful_count,
+            "candidate_off_topic_contributions": off_topic_count,
+            "candidate_interruption_count": interruption_count,
+            "candidate_turn_taking": round(turn_discipline, 1),
+            "quality_score": round(adjusted_quality, 1),
+        }
+
     def evaluate(self, manager: DiscussionManager):
         rows = manager.records()
         claims = [r["claim"] for r in rows]
@@ -920,7 +1395,8 @@ class DiscussionEvaluator:
         
         coherence = np.mean([1.0 if r["action"] != "COUNTERARGUE" or r["target"] else 0.0 for r in rows]) if rows else 0
         
-        quality = 100 * np.mean([diversity, relevance, counter_rel, personality, coherence])
+        panel_quality = 100 * np.mean([diversity, relevance, counter_rel, personality, coherence])
+        candidate = self._candidate_metrics(rows, manager)
         
         return {
             "diversity": round(100 * diversity, 1),
@@ -932,10 +1408,131 @@ class DiscussionEvaluator:
             "position_stability": round(100 * stability, 1),
             "mean_position_change": round(float(np.mean(changes)), 3),
             "coherence": round(100 * coherence, 1),
-            "quality_score": round(quality, 1),
+            "panel_quality_score": round(panel_quality, 1),
+            **candidate,
         }
 
-    def summary(self, manager: DiscussionManager):
+    def _candidate_feedback(self, manager: DiscussionManager, metrics: dict[str, float]) -> dict[str, Any]:
+        user_turns = [
+            turn for turn in manager.history
+            if turn.speaker == "You" or turn.action == "USER_CONTRIBUTION"
+        ]
+        dimension_labels = {
+            "candidate_topic_relevance": "You kept your points connected to the topic.",
+            "candidate_reasoning": "You explained why your position follows from your supporting points.",
+            "candidate_structure": "Your arguments had a clear logical structure.",
+            "candidate_evidence": "You supported claims with evidence, examples, or measurable detail.",
+            "candidate_collaboration": "You listened and built on or challenged other speakers constructively.",
+            "candidate_clarity": "Your contributions were concise and easy to follow.",
+            "candidate_novelty": "You introduced distinct points instead of repeating the room.",
+            "candidate_participation": "You participated consistently across the discussion.",
+            "candidate_conclusion": "You closed with a relevant synthesis or practical way forward.",
+            "candidate_turn_taking": "You allowed speakers to complete their points before responding.",
+        }
+        tip_by_dimension = {
+            "candidate_topic_relevance": "State your position in the first sentence, then connect every supporting point back to the topic.",
+            "candidate_reasoning": "After each claim, explain why it is true and what consequence follows from it.",
+            "candidate_structure": "Use a simple Claim → Reason → Example → Impact structure for each contribution.",
+            "candidate_evidence": "Add one concrete example, number, comparison, or real-world case to support each major claim.",
+            "candidate_collaboration": "Reference a speaker's point by name, then agree, challenge, or extend it with a reason.",
+            "candidate_clarity": "Keep each turn to one main idea and finish with a clear implication or recommendation.",
+            "candidate_novelty": "Before speaking, identify what the panel has not covered and add that missing angle.",
+            "candidate_participation": "Aim for 3–4 well-spaced contributions: opening view, response, new angle, and synthesis.",
+            "candidate_conclusion": "Close by summarising the strongest common ground, remaining trade-off, and one practical recommendation.",
+            "candidate_turn_taking": "Let the speaker finish, note the exact claim you want to challenge, then respond in one focused turn.",
+        }
+        scored = sorted(
+            ((key, float(metrics.get(key, 0.0))) for key in dimension_labels),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        strengths = [dimension_labels[key] for key, value in scored if value >= 60][:3] if user_turns else []
+        if not strengths and user_turns:
+            strengths = [f"You made {len(user_turns)} recorded contribution{'s' if len(user_turns) != 1 else ''}; the feedback below focuses on the evidence in those turns."]
+        if user_turns:
+            improvements = [
+                f"{key.replace('candidate_', '').replace('_', ' ').title()}: {tip_by_dimension[key]}"
+                for key, _ in sorted(scored, key=lambda item: item[1])[:3]
+            ]
+        else:
+            improvements = ["Participation: Make at least one clear, topic-linked contribution so your GD skills can be evaluated."]
+
+        interruption_count = int(metrics.get("candidate_interruption_count", 0))
+        score = float(metrics.get("quality_score", 0.0))
+        if not user_turns:
+            band = "Not evaluated"
+            overview = "No human contribution was recorded, so the panel discussion was not used as your performance score."
+        elif score >= 80:
+            band = "Strong GD performance"
+            overview = "The evidence in your turns shows consistently relevant, structured, and collaborative discussion behaviour."
+        elif score >= 65:
+            band = "Effective contributor"
+            overview = "Your recorded turns show meaningful participation; the weaker observed skills are the best route to a more persuasive presence."
+        elif score >= 45:
+            band = "Developing contributor"
+            overview = "Your ideas were visible, but the recorded evidence needs stronger structure, support, and interaction with the room."
+        else:
+            band = "Needs more active contribution"
+            overview = "The evaluator found limited observable evidence in your turns. Speak more often and make each point concrete."
+
+        if interruption_count:
+            overview += f" {interruption_count} interruption{' was' if interruption_count == 1 else 's were'} recorded; wait for a speaker to complete their point before responding."
+
+        def turn_strength(turn: Turn) -> float:
+            text = (turn.response or turn.claim or "").lower()
+            tokens = re.findall(r"[a-z]+", text)
+            topic_text = " ".join([manager.analysis.topic, manager.analysis.main_topic, *manager.analysis.key_concepts])
+            topic_hits = len(self._expanded_topic_tokens(text) & self._expanded_topic_tokens(topic_text))
+            signal_hits = sum(
+                marker in set(tokens)
+                for marker in self._STRUCTURE_MARKERS | self._COLLABORATION_MARKERS | self._EVIDENCE_MARKERS
+            )
+            meaningful = 0 if is_meaningless_user_input(text) else 1
+            return meaningful * (min(len(tokens), 80) + 10 * signal_hits + 15 * topic_hits)
+
+        best_turn = max(user_turns, key=turn_strength) if user_turns else None
+        total_words = sum(len(re.findall(r"[A-Za-z]+", turn.response or turn.claim or "")) for turn in user_turns)
+        observations = []
+        if user_turns:
+            observations.append(f"Observed {len(user_turns)} contribution{'s' if len(user_turns) != 1 else ''} and {total_words} spoken words from you.")
+            off_topic = int(metrics.get("candidate_off_topic_contributions", 0))
+            if off_topic:
+                observations.append(f"{off_topic} contribution{' was' if off_topic == 1 else 's were'} weakly connected to the selected topic.")
+            meaningful = int(metrics.get("candidate_meaningful_contributions", len(user_turns)))
+            if meaningful < len(user_turns):
+                observations.append(f"{len(user_turns) - meaningful} contribution{' did' if len(user_turns) - meaningful == 1 else 's did'} not contain enough meaningful language to assess.")
+            if metrics.get("candidate_evidence", 0) < 45:
+                observations.append("Your turns contained limited concrete evidence or examples; this reduced the strength of your claims.")
+            if metrics.get("candidate_collaboration", 0) < 45:
+                observations.append("Your turns rarely connected directly to another speaker's point, so room interaction was limited.")
+            if metrics.get("candidate_structure", 0) >= 60:
+                observations.append("Your use of structure markers made at least part of your reasoning easier to follow.")
+            if metrics.get("candidate_novelty", 100) < 35 and len(user_turns) > 1:
+                observations.append("Several contributions repeated similar language or ideas instead of advancing the discussion.")
+        if interruption_count:
+            observations.append(f"{interruption_count} interruption{' was' if interruption_count == 1 else 's were'} logged when you took the floor.")
+        return {
+            "evaluation_focus": "human_candidate_only",
+            "judging_standard": "Evidence-based coaching judgement: only your recorded turns, interaction behaviour, and turn-taking were scored; AI panel quality is separate.",
+            "performance_band": band,
+            "overview": overview,
+            "score_rationale": (
+                f"Overall {int(round(score))}/100, based on topic relevance, reasoning, structure, evidence, "
+                "collaboration, clarity, originality, participation, and observed turn-taking."
+                if user_turns else
+                "No score was inferred from AI speakers; a human contribution is required for evaluation."
+            ),
+            "contribution_count": len(user_turns),
+            "total_words_spoken": total_words,
+            "average_words_per_contribution": round(total_words / len(user_turns)) if user_turns else 0,
+            "strengths": strengths,
+            "improvement_areas": improvements,
+            "judge_observations": observations,
+            "best_contribution": (best_turn.response or best_turn.claim) if best_turn else "",
+            "next_session_goal": improvements[0] if improvements else "Maintain the same quality while helping the group reach a clear synthesis.",
+        }
+
+    def summary(self, manager: DiscussionManager, metrics: dict[str, float] | None = None):
         finals = {a.profile.name: round(a.position, 2) for a in manager.agents}
         agreement = [
             a.issue
@@ -959,6 +1556,7 @@ class DiscussionEvaluator:
         else:
             final_consensus = f"Low consensus ({score:.1f}/100): Substantial divergence remains across participant risk and innovation stances."
 
+        candidate_metrics = metrics or self.evaluate(manager)
         return {
             "topic_summary": manager.analysis.central_question,
             "participant_positions": finals,
@@ -969,5 +1567,5 @@ class DiscussionEvaluator:
             "unresolved_questions": manager.analysis.controversial_points,
             "final_consensus": final_consensus,
             "consensus_score": score,
+            "candidate_feedback": self._candidate_feedback(manager, candidate_metrics),
         }
-

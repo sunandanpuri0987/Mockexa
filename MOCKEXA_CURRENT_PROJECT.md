@@ -20,7 +20,7 @@
   - **iOS Client**: Native iOS 17.0+ application written in Swift 5 using SwiftUI, Combine, and URLSession.
   - **Backend API**: Asynchronous Python 3.12 REST API built with FastAPI, Pydantic, and Uvicorn.
 - **Architecture**: Client-Server architecture over HTTP REST (JSON envelopes) with Supabase JWT authentication, per-session locking for concurrency safety, local state caches, and database/in-memory persistence.
-- **AI Integration**: Groq Cloud API (`llama-3.3-70b-versatile`) with model routing, input token budgeting, candidate-statement verifier steps, and mock fallback providers for unit testing.
+- **AI Integration**: Gemini Cloud API (`gemini-3.8-flash`) with model routing, input token budgeting, candidate-statement verifier steps, and mock fallback providers for unit testing.
 
 ### Legacy Identifier Clarification
 
@@ -38,9 +38,14 @@ The codebase originated as `PrepAI`. The user-facing product name is **Mockexa**
 | **Onboarding** | `WORKING` | `RootAndOnboarding.swift` (4-step flow), `UserDefaults` local cache + Supabase `user_metadata` sync. |
 | **Home / Dashboard** | `WORKING` | `MainScreens.swift` (Scrollable cards, recent sessions shortcuts, practice type entry points). |
 | **Technical Interview** | `WORKING` | `PracticeFlows.swift`, `technical_controller.py` (7 UI-selectable domains, adaptive difficulty, no-repeat randomization). |
-| **Coding Interview** | `PARTIAL` | `technical_groq_backend.py` supports static LLM code reasoning; hidden from iOS setup picker grid. |
-| **HR Interview** | `WORKING` | `PracticeFlows.swift`, `hr_controller.py`, `hr_groq_backend.py` (7-dimension behavioral STAR method evaluation). |
+| **Coding Interview** | `PARTIAL` | `technical_gemini_backend.py` supports static LLM code reasoning; hidden from iOS setup picker grid. |
+| **HR Interview** | `WORKING` | `PracticeFlows.swift`, `hr_controller.py`, `hr_gemini_backend.py` (7-dimension behavioral STAR method evaluation). |
 | **Group Discussion (GD)** | `WORKING` | `PracticeFlows.swift` (`PanelView`), `gd_controller.py` (4 AI participant personas, auto first turn, grounding verifier, consensus engine). |
+| **Company Question Bank** | `WORKING` | `CompanyQuestionBank.swift`, `app/routers/company.py`, `app/controllers/company_controller.py` (Drills, company catalog, instant reviews). |
+| **Friends GD & Multiplayer** | `WORKING` | `FriendsGD.swift`, `app/controllers/gd_friends.py` (Lobbies, matchmaking queue, reward wallet, XP/coin boosts). |
+| **AI Resume Builder & ATS** | `WORKING` | `ResumeViews.swift`, `ResumeViewModel.swift`, `PDFExportService.swift`, `DOCXExportService.swift` (ATS scoring, PDF/Word export). |
+| **Voice Engine & Neural TTS** | `WORKING` | `VoiceFoundation.swift`, `app/routers/tts.py` (Apple Speech-to-Text, local TTS, ElevenLabs/OpenAI neural streaming with LRU cache). |
+| **Content Moderation** | `WORKING` | `LanguageValidator.swift` (Real-time English validation, Devanagari and Hinglish filtering). |
 | **Reports & Evaluation** | `WORKING` | `PracticeFlows.swift` (`ReportView`), `ScoreRing`, metric summaries, strengths/weaknesses breakdown. |
 | **Transcript View** | `WORKING` | `PracticeFlows.swift` (`TranscriptView`), complete chronological turn feed for GD, Tech, and HR. |
 | **History** | `WORKING` | `MainScreens.swift` (`HistoryView`), `/sessions` & `/sessions/{id}` endpoints with strict cross-user JWT isolation. |
@@ -106,7 +111,7 @@ graph TD
     GDRouter --> SessionLocks[app/utils/session_store.py]
     GDRouter --> GDController[app/controllers/gd_controller.py]
     GDController --> ModelRouter[app/providers/model_router.py]
-    ModelRouter --> GroqBackend[app/providers/groq_backend.py]
+    ModelRouter --> GeminiBackend[app/providers/gemini_backend.py]
     
     GDRouter --> SupaRepo[app/repository.py]
     TechRouter --> SupaRepo
@@ -123,7 +128,7 @@ graph TD
 - **`app/controllers/gd_controller.py`**: Implementation of `DiscussionManager`, `ParticipantAgent`, `TopicAnalyzer`, `DiscussionEvaluator`, and `NeuralArgumentGenerator`.
 - **`app/controllers/technical_controller.py`**: `InterviewController`, `CandidateProfile`, `InterviewState`, difficulty adaptation engine, question pool validator, and static code evaluation logic.
 - **`app/controllers/hr_controller.py`**: `HRController` and behavioral 7-dimension STAR evaluation logic.
-- **`app/providers/groq_backend.py`**: Groq Cloud API LLM provider client wrapper handling transient retries and rate limit errors.
+- **`app/providers/gemini_backend.py`**: Gemini Cloud API LLM provider client wrapper handling transient retries and rate limit errors.
 - **`app/providers/model_router.py`**: Task-based token budgeting and model routing dispatcher.
 - **`app/repository.py`**: Supabase PostgreSQL repository managing `user_sessions`, `session_messages`, `session_feedback`, and `technical_questions`.
 - **`app/utils/session_store.py`**: Thread-safe in-memory session stores (`gd_sessions`, `tech_sessions`, `hr_sessions`, `completed_sessions`) and per-session async lock manager (`session_locks`).
@@ -178,7 +183,7 @@ Question selection in `technical_controller.py` (`_select_next_question`) follow
 ## 7. CODING
 
 - **UI Status**: Hidden from the iOS setup picker (`PracticeFlows.swift`).
-- **Backend Status**: Fully supported in `technical_controller.py`, `technical_groq_backend.py`, and `seed_questions_merged.sql`.
+- **Backend Status**: Fully supported in `technical_controller.py`, `technical_gemini_backend.py`, and `seed_questions_merged.sql`.
 - **Execution Mechanism**: **Static LLM-based Code Reasoning**. User code submissions are analyzed for syntax, algorithmic structure, logic errors, time complexity, and edge case handling using LLM prompts. There is **no isolated sandboxed execution runtime** (e.g. Docker or WebAssembly).
 
 ---
@@ -209,7 +214,7 @@ sequenceDiagram
     participant API as FastAPI Router (gd.py)
     participant Lock as SessionLockManager
     participant Mgr as DiscussionManager
-    participant Router as ModelRouter (Groq LLM)
+    participant Router as ModelRouter (Gemini LLM)
     participant Verifier as Grounding Verifier
 
     UI->>API: POST /gd/start (topic, num_rounds, mode)
@@ -295,20 +300,17 @@ Four fixed participant agents are initialized in `default_profiles()` (`gd_contr
 
 ### Verified Backend Test Results
 
-- **Command Executed**: `source .venv/bin/activate && pytest -q`
-- **Date Verified**: September 4, 2026
+- **Command Executed**: `source .venv/bin/activate && pytest`
+- **Date Verified**: September 24, 2026
 - **Result Summary**:
-  - **Total Collected**: `103`
-  - **Passed**: `102`
-  - **Failed**: `1` (`test_gd_sessions_and_detail_flow`)
+  - **Total Collected**: `125`
+  - **Passed**: `125` (100% pass rate)
+  - **Failed**: `0`
   - **Skipped**: `0`
   - **Errors**: `0`
   - **Warnings**: `2` (Starlette testclient deprecation warning, PyJWT test key length warning)
-- **Rate-Limit Observation**:
-  - The single test failure in `test_gd_sessions_and_detail_flow` was caused by an unmocked live Groq call hitting the free-tier daily TPD limit (`429 RateLimitError: Limit 100000 TPD reached`).
-  - The backend correctly caught the rate limit, attempted 2 retries, and gracefully returned `HTTP 503 Service Unavailable` as designed.
-- **Live E2E Verification**:
-  - Live E2E GD, Technical, and HR flows operate cleanly when API quota is available.
+  - **Duration**: `5.34s`
+- **Modules Covered**: Technical flow, HR behavioral assessment, GD multi-agent simulation, Friends GD lobbies & rewards, Gemini provider, Company question bank & drills, Neural TTS and sanitization, Session history, and token budget estimators.
 
 ---
 
@@ -316,9 +318,9 @@ Four fixed participant agents are initialized in `default_profiles()` (`gd_contr
 
 ### Verified Native Xcode Build Result
 
-- **Command Executed**: `xcodebuild -project UI/PrepAI.xcodeproj -scheme PrepAI -sdk iphonesimulator build`
-- **Date Verified**: September 4, 2026
-- **Destination**: iphonesimulator 26.5
+- **Command Executed**: `xcodebuild -project UI/PrepAI.xcodeproj -scheme PrepAI -destination 'generic/platform=iOS Simulator' clean build CODE_SIGNING_ALLOWED=NO`
+- **Date Verified**: September 24, 2026
+- **Destination**: Generic iOS Simulator (iOS 17+)
 - **Result**: **`** BUILD SUCCEEDED **`**
 
 ---

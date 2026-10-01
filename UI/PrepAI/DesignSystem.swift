@@ -1,20 +1,122 @@
 import SwiftUI
 
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case light, dark
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+    var icon: String {
+        switch self { case .light: "sun.max.fill"; case .dark: "moon.stars.fill" }
+    }
+    var colorScheme: ColorScheme? {
+        switch self { case .light: .light; case .dark: .dark }
+    }
+}
+
+struct ThemeSelectorControl: View {
+    @Binding var selectedRaw: String
+    @Namespace private var themeAnimation
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(AppAppearance.allCases) { option in
+                let isSelected = selectedRaw == option.rawValue
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        selectedRaw = option.rawValue
+                    }
+                    Haptics.selection()
+                } label: {
+                    VStack(spacing: 8) {
+                        Image(systemName: option.icon)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(isSelected ? .white : PrepTheme.darkNavy)
+
+                        Text(option.title)
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(isSelected ? .white : PrepTheme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background {
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(PrepTheme.gradient)
+                                .matchedGeometryEffect(id: "ActiveThemeTab", in: themeAnimation)
+                                .shadow(color: PrepTheme.primary.opacity(0.35), radius: 8, y: 3)
+                        } else {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(PrepTheme.surface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(PrepTheme.border, lineWidth: 1)
+                                )
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Select \(option.title) appearance")
+            }
+        }
+    }
+}
+
+struct QuickThemeToggle: View {
+    @AppStorage("PREPAI_APPEARANCE") private var appearanceRaw = AppAppearance.light.rawValue
+
+    private var current: AppAppearance {
+        AppAppearance(rawValue: appearanceRaw) ?? .light
+    }
+
+    var body: some View {
+        Menu {
+            ForEach(AppAppearance.allCases) { option in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        appearanceRaw = option.rawValue
+                    }
+                    Haptics.selection()
+                } label: {
+                    Label(
+                        option.title,
+                        systemImage: appearanceRaw == option.rawValue ? "checkmark" : option.icon
+                    )
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: current.icon)
+                    .font(.system(size: 14, weight: .bold))
+                Text(current.title)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(PrepTheme.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(PrepTheme.surface, in: Capsule())
+            .overlay(Capsule().stroke(PrepTheme.border, lineWidth: 1))
+            .shadow(color: Color.black.opacity(0.04), radius: 6, y: 2)
+        }
+        .accessibilityLabel("Change Theme: currently \(current.title)")
+    }
+}
+
 enum PrepTheme {
-    static let primary = Color(red: 15/255, green: 90/255, blue: 71/255)       // Emerald
-    static let secondary = Color(red: 16/255, green: 185/255, blue: 129/255)   // Mint Accent
-    static let darkNavy = Color(red: 15/255, green: 23/255, blue: 42/255)      // Dark Navy Headings
-    static let background = Color(red: 248/255, green: 250/255, blue: 252/255) // Clean Warm Off-White
-    static let surface = Color.white                                          // Clean White Surface
-    static let elevated = Color.white                                         // White Card
-    static let border = Color(red: 226/255, green: 232/255, blue: 240/255)       // Soft Slate Border
-    static let textPrimary = Color(red: 15/255, green: 23/255, blue: 42/255)   // Dark Navy
-    static let textSecondary = Color(red: 100/255, green: 116/255, blue: 139/255)// Slate Secondary
-    static let success = Color(red: 16/255, green: 185/255, blue: 129/255)     // Mint/Emerald Success
+    // Semantic system colors respond correctly even when the app-level color
+    // scheme is changed at runtime through preferredColorScheme.
+    static let primary = Color(red: 13/255, green: 148/255, blue: 136/255)
+    static let secondary = Color(red: 45/255, green: 212/255, blue: 191/255)
+    static let darkNavy = Color.primary
+    static let background = Color(uiColor: .systemGroupedBackground)
+    static let surface = Color(uiColor: .secondarySystemGroupedBackground)
+    static let elevated = Color(uiColor: .tertiarySystemGroupedBackground)
+    static let border = Color(uiColor: .separator).opacity(0.55)
+    static let textPrimary = Color.primary
+    static let textSecondary = Color.secondary
+    static let success = Color(red: 16/255, green: 185/255, blue: 129/255)
     static let warning = Color(red: 245/255, green: 158/255, blue: 11/255)     // Amber Warning
     static let destructive = Color(red: 239/255, green: 68/255, blue: 68/255)   // Red Destructive
     static let gradient = LinearGradient(
-        colors: [Color(red: 15/255, green: 90/255, blue: 71/255), Color(red: 10/255, green: 75/255, blue: 58/255)],
+        colors: [primary, Color(red: 13/255, green: 110/255, blue: 103/255)],
         startPoint: .leading,
         endPoint: .trailing
     )
@@ -44,12 +146,13 @@ struct AppBackground: View {
 struct GlassCard<Content: View>: View {
     let content: Content
     init(@ViewBuilder content: () -> Content) { self.content = content() }
+    @Environment(\.colorScheme) private var colorScheme
     var body: some View {
         content
             .padding(20)
             .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 20).stroke(PrepTheme.border, lineWidth: 1))
-            .shadow(color: Color.black.opacity(0.03), radius: 10, y: 4)
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.20 : 0.055), radius: 12, y: 5)
     }
 }
 
@@ -114,23 +217,35 @@ struct SecondaryButton: View {
     
     var body: some View {
         Button(action: { action() }) {
-            HStack(spacing: 12) {
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                if let icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 15, weight: .semibold))
-                        .offset(x: isPressed ? 4 : 0)
-                }
-            }
-            .foregroundStyle(PrepTheme.darkNavy)
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 27))
-            .overlay(RoundedRectangle(cornerRadius: 27).stroke(PrepTheme.border, lineWidth: 1))
-            .shadow(color: Color.black.opacity(isPressed ? 0.06 : 0.03), radius: isPressed ? 3 : 6, y: isPressed ? 1 : 2)
+            SecondaryButtonLabel(title: title, icon: icon, isPressed: isPressed)
         }
         .buttonStyle(PrimaryPressableButtonStyle(isPressed: $isPressed))
+    }
+}
+
+/// A non-interactive secondary-button appearance for use as a NavigationLink label.
+/// Keeping the visual label separate avoids nesting a Button inside NavigationLink.
+struct SecondaryButtonLabel: View {
+    let title: String
+    var icon: String? = nil
+    var isPressed: Bool = false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .offset(x: isPressed ? 4 : 0)
+            }
+        }
+        .foregroundStyle(PrepTheme.darkNavy)
+        .frame(maxWidth: .infinity)
+        .frame(height: 54)
+        .background(PrepTheme.surface, in: RoundedRectangle(cornerRadius: 27))
+        .overlay(RoundedRectangle(cornerRadius: 27).stroke(PrepTheme.border, lineWidth: 1))
+        .shadow(color: Color.black.opacity(isPressed ? 0.06 : 0.03), radius: isPressed ? 3 : 6, y: isPressed ? 1 : 2)
     }
 }
 

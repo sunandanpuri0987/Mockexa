@@ -8,23 +8,28 @@ struct RootView: View {
             switch app.route {
             case .splash:
                 SplashView()
+                    .foregroundStyle(.white)
             case .welcome:
                 WelcomeView()
+                    .foregroundStyle(.white)
                     .transition(.asymmetric(
                         insertion: .opacity,
                         removal: .opacity.combined(with: .scale(scale: 0.97))
                     ))
             case .auth:
                 AuthenticationView()
+                    .foregroundStyle(.white)
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .scale(scale: 1.02)),
                         removal: .opacity
                     ))
-            case .onboarding: OnboardingView()
-            case .main: MainTabView()
+            case .onboarding:
+                OnboardingView()
+                    .foregroundStyle(.white)
+            case .main:
+                MainTabView()
             }
         }
-        .foregroundStyle(.white)
         .animation(.easeInOut(duration: 0.45), value: app.route)
     }
 }
@@ -435,7 +440,9 @@ struct WelcomeView: View {
             )
             .ignoresSafeArea()
             
-            VStack(spacing: 0) {
+            GeometryReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
                 // Top Brand Header
                 HStack(spacing: 8) {
                     MockexaLogoIcon()
@@ -571,7 +578,7 @@ struct WelcomeView: View {
                     .opacity(ctaAppear || reduceMotion ? 1 : 0)
                     .offset(y: reduceMotion ? 0 : (ctaAppear ? 0 : 12))
                     
-                    Text("Join thousands of candidates preparing smarter for interviews")
+                    Text("Practice at your own pace and review feedback after every session")
                         .font(.system(size: 13.5, weight: .medium))
                         .foregroundStyle(Color(red: 100/255, green: 116/255, blue: 139/255))
                         .multilineTextAlignment(.center)
@@ -580,7 +587,10 @@ struct WelcomeView: View {
                         .offset(y: reduceMotion ? 0 : (footerAppear ? 0 : 8))
                 }
                 .padding(.horizontal, 24)
-                .padding(.bottom, 24)
+                        .padding(.bottom, 24)
+                    }
+                    .frame(minHeight: proxy.size.height)
+                }
             }
         }
         .foregroundStyle(Color(red: 15/255, green: 23/255, blue: 42/255))
@@ -871,6 +881,15 @@ struct AuthenticationView: View {
     }
     
     private var parsedAge: Int? { Int(age.trimmingCharacters(in: .whitespacesAndNewlines)) }
+    private var normalizedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+    private var isEmailValid: Bool {
+        normalizedEmail.range(
+            of: #"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$"#,
+            options: [.regularExpression, .caseInsensitive]
+        ) != nil
+    }
     private var isAgeValid: Bool {
         guard let a = parsedAge else { return false }
         return a >= 16 && a <= 100
@@ -879,10 +898,13 @@ struct AuthenticationView: View {
     private var isFormValidForSignUp: Bool {
         !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         isAgeValid &&
-        !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        email.contains("@") &&
+        isEmailValid &&
         passwordSatisfiesAllRules &&
         password == confirmPassword
+    }
+
+    private var isFormValidForLogin: Bool {
+        isEmailValid && !password.isEmpty
     }
 
     private func handleAuthSubmit() {
@@ -891,7 +913,7 @@ struct AuthenticationView: View {
             let success: Bool
             if isSignUp {
                 guard isFormValidForSignUp else { return }
-                let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedEmail = normalizedEmail
                 let trimmedName = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
                 success = await auth.signUp(email: trimmedEmail, password: password, fullName: trimmedName, age: parsedAge)
                 if success {
@@ -899,7 +921,8 @@ struct AuthenticationView: View {
                     app.route = .onboarding
                 }
             } else {
-                let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard isFormValidForLogin else { return }
+                let trimmedEmail = normalizedEmail
                 success = await auth.signIn(email: trimmedEmail, password: password)
                 if success {
                     if auth.isOnboardingCompleted(for: auth.currentUserId) {
@@ -1066,6 +1089,13 @@ struct AuthenticationView: View {
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Email address")
+
+                        if !email.isEmpty && !isEmailValid {
+                            Text("Enter a valid email address.")
+                                .font(.caption)
+                                .foregroundStyle(Color(red: 225/255, green: 29/255, blue: 72/255))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                         
                         // Password Field
                         VStack(alignment: .leading, spacing: 6) {
@@ -1295,8 +1325,8 @@ struct AuthenticationView: View {
                         .shadow(color: emeraldColor.opacity(0.3), radius: 12, x: 0, y: 6)
                     }
                     .buttonStyle(GetStartedButtonStyle())
-                    .disabled(isSignUp ? (!isFormValidForSignUp || auth.isLoading) : (email.isEmpty || password.count < 4 || auth.isLoading))
-                    .opacity((isSignUp ? isFormValidForSignUp : (!email.isEmpty && password.count >= 4)) && !auth.isLoading ? 1.0 : 0.6)
+                    .disabled(isSignUp ? (!isFormValidForSignUp || auth.isLoading) : (!isFormValidForLogin || auth.isLoading))
+                    .opacity((isSignUp ? isFormValidForSignUp : isFormValidForLogin) && !auth.isLoading ? 1.0 : 0.6)
                     .padding(.horizontal, 28)
                     .opacity(appearAnimation || reduceMotion ? 1 : 0)
                     .offset(y: appearAnimation || reduceMotion ? 0 : 14)
@@ -1322,29 +1352,8 @@ struct AuthenticationView: View {
                     
                     Spacer(minLength: 20)
                     
-                    // Compact Provider Row: [ Apple ] [ Google ] [ Phone ]
+                    // Only show providers that are configured for this Supabase project.
                     HStack(spacing: 14) {
-                        CompactProviderButton(
-                            label: "Apple",
-                            accessibilityLabel: "Continue with Apple"
-                        ) {
-                            Image(systemName: "apple.logo")
-                                .font(.system(size: 18, weight: .regular))
-                                .foregroundStyle(darkNavy)
-                        } action: {
-                            Task {
-                                let success = await auth.startAppleSignIn()
-                                if success {
-                                    if auth.isOnboardingCompleted(for: auth.currentUserId) {
-                                        app.route = .main
-                                    } else {
-                                        app.onboardingStep = 0
-                                        app.route = .onboarding
-                                    }
-                                }
-                            }
-                        }
-                        
                         CompactProviderButton(
                             label: "Google",
                             accessibilityLabel: "Continue with Google"
@@ -1786,8 +1795,36 @@ struct PhoneAuthView: View {
     private let inputBg = Color(red: 241/255, green: 245/255, blue: 249/255)
     
     private var formattedPhone: String {
-        let digits = phoneNumber.filter { $0.isNumber }
-        return "\(selectedCountry.dialCode)\(digits)"
+        let digits = phoneNumber.filter { $0 >= "0" && $0 <= "9" }
+        let dialDigits = selectedCountry.dialCode.dropFirst()
+        let localDigits = phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("+") && digits.hasPrefix(dialDigits)
+            ? String(digits.dropFirst(dialDigits.count)) : digits
+        return "\(selectedCountry.dialCode)\(localDigits)"
+    }
+
+    private var isPhoneValid: Bool {
+        let nationalCount = formattedPhone.count - selectedCountry.dialCode.count
+        let totalDigits = formattedPhone.count - 1
+        if selectedCountry.isoCode == "IN" { return nationalCount == 10 }
+        return nationalCount >= 7 && (8...15).contains(totalDigits)
+    }
+
+    private var isOTPValid: Bool {
+        otpCode.count == 6 && otpCode.allSatisfy { $0 >= "0" && $0 <= "9" }
+    }
+
+    private var nationalDigitLimit: Int {
+        selectedCountry.isoCode == "IN" ? 10 : max(7, 15 - selectedCountry.dialCode.dropFirst().count)
+    }
+
+    private var phonePlaceholder: String {
+        selectedCountry.isoCode == "IN" ? "98765 43210" : "Mobile number"
+    }
+
+    private var maskedPhone: String {
+        let digits = formattedPhone.filter(\.isNumber)
+        guard digits.count > 4 else { return formattedPhone }
+        return "\(selectedCountry.dialCode) •••••• \(digits.suffix(4))"
     }
     
     private func startCooldown() {
@@ -1811,12 +1848,21 @@ struct PhoneAuthView: View {
                     .ignoresSafeArea()
                 
                 VStack(alignment: .leading, spacing: 22) {
+                    HStack(spacing: 8) {
+                        ForEach(0..<2, id: \.self) { index in
+                            Capsule()
+                                .fill(index <= (step == .enterPhone ? 0 : 1) ? emeraldColor : Color(red: 226/255, green: 232/255, blue: 240/255))
+                                .frame(height: 5)
+                        }
+                    }
+                    .accessibilityLabel(step == .enterPhone ? "Step 1 of 2, phone number" : "Step 2 of 2, verification code")
+
                     VStack(alignment: .leading, spacing: 6) {
                         Text(step == .enterPhone ? "Phone Sign In" : "Enter Code")
                             .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundStyle(darkNavy)
                         
-                        Text(step == .enterPhone ? "Enter your mobile number to receive a verification code." : "We sent a 6-digit verification code to \(formattedPhone).")
+                        Text(step == .enterPhone ? "Enter your mobile number to receive a secure one-time code." : "We sent a 6-digit verification code to \(maskedPhone).")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(subtextSlate)
                     }
@@ -1851,6 +1897,35 @@ struct PhoneAuthView: View {
                     }
                     
                     if step == .enterPhone {
+#if targetEnvironment(simulator)
+                        Button {
+                            if let unitedStates = CountryCode.allCountries.first(where: { $0.isoCode == "US" }) {
+                                selectedCountry = unitedStates
+                            }
+                            phoneNumber = "2025550123"
+                            auth.authError = nil
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "testtube.2")
+                                    .font(.system(size: 18, weight: .bold))
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Use free prototype login")
+                                        .font(.system(size: 14, weight: .bold))
+                                    Text("No SMS sent • +1 202 555 0123")
+                                        .font(.system(size: 12, weight: .medium))
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.right.circle.fill")
+                            }
+                            .foregroundStyle(emeraldColor)
+                            .padding(14)
+                            .background(Color(red: 236/255, green: 253/255, blue: 245/255), in: RoundedRectangle(cornerRadius: 16))
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(red: 167/255, green: 243/255, blue: 208/255)))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Use free prototype phone number")
+#endif
+
                         HStack(spacing: 12) {
                             Button {
                                 Haptics.selection()
@@ -1878,15 +1953,30 @@ struct PhoneAuthView: View {
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundStyle(emeraldColor)
                                 
-                                TextField("Mobile number", text: $phoneNumber)
+                                TextField(phonePlaceholder, text: $phoneNumber)
                                     .keyboardType(.phonePad)
+                                    .textContentType(.telephoneNumber)
                                     .font(.system(size: 16))
                                     .foregroundStyle(darkNavy)
+                                    .onChange(of: phoneNumber) { _, newValue in
+                                        let digits = newValue.filter(\.isNumber)
+                                        let dialDigits = String(selectedCountry.dialCode.dropFirst())
+                                        let localDigits = newValue.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("+") && digits.hasPrefix(dialDigits)
+                                            ? String(digits.dropFirst(dialDigits.count)) : digits
+                                        phoneNumber = String(localDigits.prefix(nationalDigitLimit))
+                                        auth.authError = nil
+                                    }
                             }
                             .padding(.horizontal, 16)
                             .frame(height: 56)
                             .background(inputBg, in: RoundedRectangle(cornerRadius: 16))
                             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(red: 226/255, green: 232/255, blue: 240/255)))
+                        }
+
+                        if !phoneNumber.isEmpty && !isPhoneValid {
+                            Text(selectedCountry.isoCode == "IN" ? "Enter a 10-digit mobile number." : "Enter a valid mobile number for this country code.")
+                                .font(.caption)
+                                .foregroundStyle(Color(red: 225/255, green: 29/255, blue: 72/255))
                         }
                         
                         Button {
@@ -1923,9 +2013,31 @@ struct PhoneAuthView: View {
                             .shadow(color: emeraldColor.opacity(0.3), radius: 12, x: 0, y: 6)
                         }
                         .buttonStyle(GetStartedButtonStyle())
-                        .disabled(phoneNumber.filter { $0.isNumber }.count < 7 || auth.isLoading)
-                        .opacity(phoneNumber.filter { $0.isNumber }.count < 7 || auth.isLoading ? 0.6 : 1.0)
+                        .disabled(!isPhoneValid || auth.isLoading)
+                        .opacity(!isPhoneValid || auth.isLoading ? 0.6 : 1.0)
+
+                        Label("We'll only use this number for secure sign-in. Standard SMS charges may apply.", systemImage: "lock.shield.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(subtextSlate)
+                            .fixedSize(horizontal: false, vertical: true)
                     } else {
+#if targetEnvironment(simulator)
+                        if formattedPhone == AuthManager.prototypePhoneNumber {
+                            Button {
+                                otpCode = AuthManager.prototypePhoneOTP
+                                auth.authError = nil
+                            } label: {
+                                Label("Fill prototype code \(AuthManager.prototypePhoneOTP)", systemImage: "wand.and.stars")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(emeraldColor)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(12)
+                                    .background(Color(red: 236/255, green: 253/255, blue: 245/255), in: RoundedRectangle(cornerRadius: 14))
+                            }
+                            .buttonStyle(.plain)
+                        }
+#endif
+
                         HStack(spacing: 10) {
                             Image(systemName: "key.fill")
                                 .font(.system(size: 16, weight: .medium))
@@ -1933,8 +2045,14 @@ struct PhoneAuthView: View {
                             
                             TextField("6-digit code", text: $otpCode)
                                 .keyboardType(.numberPad)
+                                .textContentType(.oneTimeCode)
                                 .font(.system(size: 18, weight: .bold, design: .monospaced))
                                 .foregroundStyle(darkNavy)
+                                .onChange(of: otpCode) { _, newValue in
+                                    let digits = newValue.filter { $0 >= "0" && $0 <= "9" }
+                                    otpCode = String(digits.prefix(6))
+                                    auth.authError = nil
+                                }
                         }
                         .padding(.horizontal, 16)
                         .frame(height: 56)
@@ -1979,12 +2097,14 @@ struct PhoneAuthView: View {
                             .shadow(color: emeraldColor.opacity(0.3), radius: 12, x: 0, y: 6)
                         }
                         .buttonStyle(GetStartedButtonStyle())
-                        .disabled(otpCode.count < 6 || auth.isLoading)
-                        .opacity(otpCode.count < 6 || auth.isLoading ? 0.6 : 1.0)
+                        .disabled(!isOTPValid || auth.isLoading)
+                        .opacity(!isOTPValid || auth.isLoading ? 0.6 : 1.0)
                         
                         HStack {
                             Button("Edit Phone Number") {
                                 phoneSuccessNotice = nil
+                                auth.authError = nil
+                                otpCode = ""
                                 withAnimation { step = .enterPhone }
                             }
                             .font(.system(size: 13, weight: .semibold))
@@ -2025,6 +2145,11 @@ struct PhoneAuthView: View {
                     .presentationDetents([.large])
                     .presentationCornerRadius(30)
             }
+            .onDisappear {
+                cooldownTimer?.invalidate()
+                auth.authError = nil
+            }
+            .onAppear { auth.authError = nil }
         }
     }
 }
@@ -2032,6 +2157,10 @@ struct PhoneAuthView: View {
 struct OnboardingView: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var auth: AuthManager
+    @AppStorage("PREPAI_TARGET_ROLE") private var savedTargetRole = ""
+    @AppStorage("PREPAI_TARGET_COMPANIES") private var savedTargetCompanies = ""
+    @AppStorage("PREPAI_STUDY_FIELD") private var savedStudyField = ""
+    @AppStorage("PREPAI_CONFIDENCE_LEVEL") private var savedConfidenceLevel = 1
     @State private var selections: [Int: String] = [:]
     @State private var companies = Set<String>()
     @State private var confidence = 1.0
@@ -2046,6 +2175,16 @@ struct OnboardingView: View {
             AppBackground()
             VStack(spacing: 22) {
                 HStack {
+                    if app.onboardingStep > 0 {
+                        Button {
+                            withAnimation(.spring) { app.onboardingStep -= 1 }
+                        } label: {
+                            Label("Back", systemImage: "chevron.left")
+                                .font(.caption.bold())
+                        }
+                        .foregroundStyle(PrepTheme.textSecondary)
+                        .accessibilityLabel("Go back to previous onboarding step")
+                    }
                     Text("Step \(min(app.onboardingStep + 1, 4)) of 4")
                         .font(.caption.bold())
                         .foregroundStyle(PrepTheme.primary)
@@ -2069,6 +2208,20 @@ struct OnboardingView: View {
                     if app.onboardingStep < 3 {
                         withAnimation(.spring) { app.onboardingStep += 1 }
                     } else {
+                        let study = selections[0] ?? savedStudyField
+                        let role = selections[1] ?? savedTargetRole
+                        let companyList = companies.sorted().joined(separator: ", ")
+                        let confidenceLevel = Int(confidence)
+                        savedStudyField = study
+                        savedTargetRole = role
+                        savedTargetCompanies = companyList
+                        savedConfidenceLevel = confidenceLevel
+                        auth.saveOnboardingPreferences(
+                            study: study,
+                            role: role,
+                            companies: companyList,
+                            confidence: confidenceLevel
+                        )
                         auth.setOnboardingCompleted(for: auth.currentUserId, completed: true)
                         app.enterApp()
                     }
@@ -2101,17 +2254,20 @@ struct OnboardingView: View {
             Text("Choose as many as you like.")
                 .font(.subheadline)
                 .foregroundStyle(PrepTheme.textSecondary)
-            LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 12) {
-                ForEach(MockData.companies, id: \.self) { item in
-                    SelectableRow(title: item, selected: companies.contains(item)) {
-                        if companies.contains(item) {
-                            companies.remove(item)
-                        } else {
-                            companies.insert(item)
+            ScrollView {
+                LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 12) {
+                    ForEach(CompanyInfo.all.map(\.name), id: \.self) { item in
+                        SelectableRow(title: item, selected: companies.contains(item)) {
+                            if companies.contains(item) {
+                                companies.remove(item)
+                            } else {
+                                companies.insert(item)
+                            }
                         }
                     }
                 }
             }
+            .frame(maxHeight: 430)
         }
     }
     

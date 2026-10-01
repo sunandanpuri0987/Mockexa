@@ -3,15 +3,15 @@ ModelRouter — the one and only thing controllers call for generation.
 
     model_router.generate(task="gd_generation", ...)
 
-Controllers must never import GroqBackend (or any concrete backend) directly.
-This keeps Groq SDK usage in exactly one place (groq_backend.py) and makes it
+Controllers must never import GeminiBackend (or any concrete backend) directly.
+This keeps Gemini API usage in exactly one place (gemini_backend.py) and makes it
 possible to add LocalQwenBackend (the existing GD LoRA adapter, once its live
 generation quality is confirmed acceptable for production use — see the
 project audit) as a drop-in alternative without touching any controller.
 
 Task -> per-task token budget mapping lives here, not scattered across
 callers, per PROJECT_STATUS.md's "prefer separate settings" + "do not
-scatter Groq SDK calls throughout the project."
+scatter Gemini API calls throughout the project."
 """
 from __future__ import annotations
 

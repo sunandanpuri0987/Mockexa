@@ -42,9 +42,9 @@ def test_health_returns_typed_fields():
     body = resp.json()
     assert body["status"] == "ok"
     assert isinstance(body["environment"], str)
-    assert isinstance(body["groq_configured"], bool)
+    assert isinstance(body["gemini_configured"], bool)
     # Ensure no extra fields leak through
-    assert set(body.keys()) == {"status", "environment", "groq_configured"}
+    assert set(body.keys()) == {"status", "environment", "gemini_configured"}
 
 
 # --- GD/HR 501 responses are JSON ---

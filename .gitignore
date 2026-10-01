@@ -59,3 +59,8 @@ Backend/group_d/model/*.pt
 *.log
 *.tmp
 scratch/
+
+# Generated review/export artifacts
+.ppt-work/
+output/
+Mockexa_Source_Safe_For_Review.zip

@@ -66,7 +66,7 @@ PyTorch (CPU or MPS — choose ONE):
   pip install -r requirements.txt
 
   Expected installed packages include:
-    fastapi, uvicorn[standard], pydantic, groq, PyJWT[crypto],
+    fastapi, uvicorn[standard], pydantic, gemini, PyJWT[crypto],
     pytest, httpx, python-dotenv, numpy, torch, transformers,
     peft, accelerate, scikit-learn
 
@@ -88,18 +88,18 @@ PyTorch (CPU or MPS — choose ONE):
   │ SUPABASE_JWT_SECRET   Your Supabase JWT secret                  │
   │                       (found in Supabase → Settings → API)      │
   │                                                                 │
-  │ GROQ_API_KEY          Your Groq API key (optional)              │
-  │                       Required only if USE_GROQ=True            │
-  │                       Get one at https://console.groq.com       │
+  │ GEMINI_API_KEY        Your Gemini API key (optional)              │
+  │                       Required only if USE_GEMINI=True            │
+  │                       Get one at https://aistudio.google.com/app/apikey │
   └─────────────────────────────────────────────────────────────────┘
 
   RECOMMENDED transfer configuration (start with this):
-    USE_GROQ=False
+    USE_GEMINI=True
     USE_SUPABASE_PERSISTENCE=False
 
   When ready for live Supabase persistence:
     USE_SUPABASE_PERSISTENCE=True
-    USE_GROQ=True   # (optional — enables Groq verification for GD)
+    USE_GEMINI=True   # (optional — enables Gemini verification for GD)
 
 ### 6. Start the Backend
 
@@ -113,7 +113,7 @@ PyTorch (CPU or MPS — choose ONE):
   curl http://127.0.0.1:8000/health
 
   Expected response:
-    {"status":"ok","environment":"development","groq_configured":false}
+    {"status":"ok","environment":"development","gemini_configured":false}
 
 ### 8. Run Tests
 
@@ -167,10 +167,10 @@ PyTorch (CPU or MPS — choose ONE):
              Ownership isolation passed
 
   HR:        Live Supabase persistence partially exercised
-             NOTE: Earlier runs encountered Groq rate limiting
+             NOTE: Earlier runs encountered Gemini rate limiting
              Full complete live HR E2E was not re-run after GD implementation
 
-  GD:        Live Supabase + Groq E2E passed (2026-08-30)
+  GD:        Live Supabase + Gemini E2E passed (2026-08-30)
              Restart durability passed (clean server restart between turns 1→2)
              Cross-user isolation passed (User B got 404 on User A's session)
              8 turns persisted with sequential turn_index [0..7]

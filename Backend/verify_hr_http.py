@@ -10,13 +10,13 @@ def run_verify():
     # Ensure uvicorn is running on 8000
     base_url = "http://127.0.0.1:8000"
     
-    # 2. Check health and groq key
+    # 2. Check health and gemini key
     try:
         health = requests.get(f"{base_url}/health").json()
         print(f"Health: {health}")
-        if not health.get("groq_configured"):
-            print("WARNING: GROQ_API_KEY is not configured in .env.")
-            print("The HR endpoints require a REAL Groq API key.")
+        if not health.get("gemini_configured"):
+            print("WARNING: GEMINI_API_KEY is not configured in .env.")
+            print("The HR endpoints require a REAL Gemini API key.")
             print("You must add one to .env and restart uvicorn to test the live flow.")
             return
     except Exception as e:

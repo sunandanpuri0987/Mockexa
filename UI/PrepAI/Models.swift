@@ -34,7 +34,7 @@ struct PracticeSession: Identifiable, Hashable {
 
 
 enum MockData {
-    static let name = "Ananya"
+    static let name = "Candidate"
     static let sessions = [
         PracticeSession(kind: .technical, date: "Today", duration: "18 min", score: 82, topic: "Operating Systems"),
         PracticeSession(kind: .gd, date: "Yesterday", duration: "10 min", score: 76, topic: "Remote work and productivity"),

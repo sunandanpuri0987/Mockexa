@@ -83,5 +83,5 @@ class CompletedSessionsStore:
 technical_sessions = InMemorySessionStore()
 gd_sessions = InMemorySessionStore()
 hr_sessions = InMemorySessionStore()
+company_sessions = InMemorySessionStore()
 completed_sessions = CompletedSessionsStore()
-
