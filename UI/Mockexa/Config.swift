@@ -9,12 +9,12 @@ struct MockexaConfig {
     
     /// Default backend URL per target environment.
     /// Simulator: Uses loopback 127.0.0.1:8000
-    /// Physical Device: Uses mDNS local hostname (Dhruvs-MacBook-Air-2.local:8000) which dynamically resolves
-    /// to the Mac's IP address on any local network, regardless of DHCP changes.
+    /// Physical Device: Starts with loopback and must be overridden in app settings
+    /// with the backend Mac's reachable LAN IP address or mDNS hostname.
 #if targetEnvironment(simulator)
     static let defaultSimulatorURL = "http://127.0.0.1:8000"
 #else
-    static let defaultSimulatorURL = "http://Dhruvs-MacBook-Air-2.local:8000"
+    static let defaultSimulatorURL = "http://127.0.0.1:8000"
 #endif
     
     /// Default Supabase configuration from Backend environment

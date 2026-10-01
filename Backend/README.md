@@ -15,7 +15,7 @@ cd Backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in GEMINI_API_KEY and SUPABASE credentials
+cp .env.example .env   # fill in Supabase credentials; AI provider keys are optional
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
@@ -34,7 +34,7 @@ curl -X POST http://127.0.0.1:8000/technical/start \
 ## Running Tests
 
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
 The test suite covers GD generation, Technical evaluation, HR scoring, Auth middleware, Model router fallback, and Session persistence.

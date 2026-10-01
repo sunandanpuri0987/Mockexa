@@ -9,6 +9,13 @@ env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env")
 if os.path.exists(env_path):
     load_dotenv(env_path)
 
+# Keep the test suite self-contained on a fresh clone. A developer's real .env
+# still wins when present because setdefault never overwrites configured values.
+os.environ.setdefault(
+    "SUPABASE_JWT_SECRET",
+    "dev-secret-do-not-use-in-production-replace-with-supabase-jwt-secret",
+)
+
 # Set in-memory session mode for pytest unit tests to prevent dummy tokens hitting live Supabase API
 os.environ["USE_SUPABASE_PERSISTENCE"] = "False"
 

@@ -276,6 +276,14 @@ Mockexa/
 - **macOS** 14.0+
 - **Xcode** 15.0+ (iOS 17.0+ SDK)
 - **Python** 3.10+
+- **Git** and internet access for the initial clone and dependency installation
+
+### 0. Clone on a New Mac
+
+```bash
+git clone https://github.com/sunandanpuri0987/Mockexa.git
+cd Mockexa
+```
 
 ### 1. Running the FastAPI Backend
 
@@ -293,6 +301,10 @@ pip install -r requirements.txt
 # Set up environment variables
 cp .env.example .env
 
+# For authenticated app requests, fill in SUPABASE_URL,
+# SUPABASE_ANON_KEY, and SUPABASE_JWT_SECRET in .env.
+# Gemini and paid TTS keys are optional for local development.
+
 # Run FastAPI development server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -303,7 +315,7 @@ Verify backend health at `http://127.0.0.1:8000/health` or open interactive docs
 
 1. Open `UI/Mockexa.xcodeproj` in Xcode.
 2. Select the `Mockexa` scheme and an iOS Simulator (e.g., iPhone 17 Pro Max).
-3. Press `Cmd + R` to build and run.
+3. Start the backend first, then press `Cmd + R` to build and run.
 
 To build via terminal:
 ```bash
@@ -333,7 +345,7 @@ OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 
 Gemini, ElevenLabs, and OpenAI are optional for local development: the backend uses deterministic interview evaluation and the TTS route can fall through to EdgeTTS when paid-provider credentials are unavailable. `USE_SUPABASE_PERSISTENCE=False` keeps session data in memory; set it to `True` only after configuring Supabase.
 
-The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the target-specific default. The Simulator defaults to `http://127.0.0.1:8000`; physical devices use the configured `.local` mDNS hostname.
+The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the default. The Simulator uses `http://127.0.0.1:8000`. For a physical iPhone, set the in-app backend override to the Mac's reachable LAN address (for example, `http://192.168.1.25:8000`) or working `.local` hostname; loopback on an iPhone points to the phone itself.
 
 > **Security Note**: Never commit actual API keys or credentials to repository source control.
 
@@ -344,7 +356,8 @@ The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEX
 The backend test suite verifies authentication, controller logic, token budgets, and endpoint routers:
 
 ```bash
-Backend/.venv/bin/python -m pytest Backend/tests -q
+cd Backend
+.venv/bin/python -m pytest tests -q
 ```
 
 **Test Coverage Highlights**:
