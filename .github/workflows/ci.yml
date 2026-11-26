@@ -43,7 +43,7 @@ jobs:
           xcodebuild test \
             -project UI/Mockexa.xcodeproj \
             -scheme Mockexa \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' \
             -only-testing:MockexaUITests \
             -parallel-testing-enabled NO \
             CODE_SIGNING_ALLOWED=NO
