@@ -377,6 +377,19 @@ cd Backend
 .venv/bin/python -m pytest tests -q
 ```
 
+The native UI smoke suite launches a clean simulator session and verifies the welcome, login, and sign-up navigation paths:
+
+```bash
+xcodebuild test \
+  -project UI/Mockexa.xcodeproj \
+  -scheme Mockexa \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:MockexaUITests \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+GitHub Actions runs both backend and iOS UI suites automatically for every push and pull request targeting `main`.
+
 **Test Coverage Highlights**:
 - Technical interview question progression and evaluation fallback routines.
 - HR interview STAR evaluation and score computations.

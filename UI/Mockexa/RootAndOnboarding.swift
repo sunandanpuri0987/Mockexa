@@ -584,6 +584,7 @@ struct WelcomeView: View {
                         )
                     }
                     .buttonStyle(GetStartedButtonStyle())
+                    .accessibilityIdentifier("welcome.get_started")
                     .opacity(ctaAppear || reduceMotion ? 1 : 0)
                     .offset(y: reduceMotion ? 0 : (ctaAppear ? 0 : 12))
                     
@@ -977,6 +978,7 @@ struct AuthenticationView: View {
                         Text(isSignUp ? "Create Account" : "Welcome to Mockexa")
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundStyle(darkNavy)
+                            .accessibilityIdentifier("auth.title")
                         
                         Text(isSignUp ? "Start your placement preparation today." : "Sign in to continue your interview preparation.")
                             .font(.system(size: 15, weight: .medium))
@@ -1409,6 +1411,7 @@ struct AuthenticationView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(emeraldColor)
                     }
+                    .accessibilityIdentifier("auth.mode_toggle")
                     
                     Spacer(minLength: 20)
                     

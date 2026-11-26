@@ -203,6 +203,14 @@ final class AuthManager: ObservableObject {
     private var accessTokenRefreshTask: Task<String?, Never>?
     
     init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["MOCKEXA_UI_TESTING"] == "1" {
+            if let bundleIdentifier = Bundle.main.bundleIdentifier {
+                UserDefaults.standard.removePersistentDomain(forName: bundleIdentifier)
+            }
+            KeychainHelper.delete(key: keychainKey)
+        }
+        #endif
         restoreSession()
         APIClient.shared.configureTokenRefresher { [weak self] in
             await self?.recoverAccessTokenAfterUnauthorized()

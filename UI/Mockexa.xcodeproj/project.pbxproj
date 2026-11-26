@@ -31,7 +31,18 @@
 		B10000000000000000000026 /* FriendsGD.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* FriendsGD.swift */; };
 		B10000000000000000000027 /* AptitudeRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* AptitudeRound.swift */; };
 		B10000000000000000000028 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000028 /* PrivacyInfo.xcprivacy */; };
+		B30000000000000000000001 /* MockexaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000000000000000000001 /* MockexaUITests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		G30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E10000000000000000000002 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E10000000000000000000001;
+			remoteInfo = Mockexa;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000001 /* MockexaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockexaApp.swift; sourceTree = "<group>"; };
@@ -60,10 +71,19 @@
 		A10000000000000000000026 /* FriendsGD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsGD.swift; sourceTree = "<group>"; };
 		A10000000000000000000027 /* AptitudeRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AptitudeRound.swift; sourceTree = "<group>"; };
 		A10000000000000000000028 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A30000000000000000000001 /* MockexaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockexaUITests.swift; sourceTree = "<group>"; };
+		A30000000000000000000002 /* MockexaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MockexaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D10000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D30000000000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -77,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				C10000000000000000000002 /* Mockexa */,
+				C30000000000000000000001 /* MockexaUITests */,
 				C10000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -117,8 +138,17 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000008 /* Mockexa.app */,
+				A30000000000000000000002 /* MockexaUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C30000000000000000000001 /* MockexaUITests */ = {
+			isa = PBXGroup;
+			children = (
+				A30000000000000000000001 /* MockexaUITests.swift */,
+			);
+			path = MockexaUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -141,6 +171,24 @@
 			productReference = A10000000000000000000008 /* Mockexa.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E30000000000000000000001 /* MockexaUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F30000000000000000000003 /* Build configuration list for PBXNativeTarget "MockexaUITests" */;
+			buildPhases = (
+				D30000000000000000000001 /* Sources */,
+				D30000000000000000000002 /* Frameworks */,
+				D30000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				G30000000000000000000002 /* PBXTargetDependency */,
+			);
+			name = MockexaUITests;
+			productName = MockexaUITests;
+			productReference = A30000000000000000000002 /* MockexaUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -153,6 +201,10 @@
 				TargetAttributes = {
 					E10000000000000000000001 = {
 						CreatedOnToolsVersion = 26.6;
+					};
+					E30000000000000000000001 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = E10000000000000000000001;
 					};
 				};
 			};
@@ -170,6 +222,7 @@
 			projectRoot = "";
 			targets = (
 				E10000000000000000000001 /* Mockexa */,
+					E30000000000000000000001 /* MockexaUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -181,6 +234,13 @@
 			files = (
 				B10000000000000000000025 /* Assets.xcassets in Resources */,
 				B10000000000000000000028 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D30000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -216,7 +276,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D30000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B30000000000000000000001 /* MockexaUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		G30000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E10000000000000000000001 /* Mockexa */;
+			targetProxy = G30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		F20000000000000000000001 /* Debug */ = {
@@ -276,6 +352,38 @@
 			};
 			name = Release;
 		};
+		F30000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897UQM93C;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mockexa.prototypeUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Mockexa;
+			};
+			name = Debug;
+		};
+		F30000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = R897UQM93C;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mockexa.prototypeUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Mockexa;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -293,6 +401,15 @@
 			buildConfigurations = (
 				F20000000000000000000003 /* Debug */,
 				F20000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F30000000000000000000003 /* Build configuration list for PBXNativeTarget "MockexaUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F30000000000000000000001 /* Debug */,
+				F30000000000000000000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
