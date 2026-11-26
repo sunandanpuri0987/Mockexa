@@ -7,15 +7,10 @@ struct MockexaConfig {
     private static let supabaseURLKey = "MOCKEXA_SUPABASE_URL"
     private static let supabaseAnonKeyKey = "MOCKEXA_SUPABASE_ANON_KEY"
     
-    /// Default backend URL per target environment.
-    /// Simulator: Uses loopback 127.0.0.1:8000
-    /// Physical Device: Starts with loopback and must be overridden in app settings
-    /// with the backend Mac's reachable LAN IP address or mDNS hostname.
-#if targetEnvironment(simulator)
-    static let defaultSimulatorURL = "http://127.0.0.1:8000"
-#else
-    static let defaultSimulatorURL = "http://Dhruvs-MacBook-Air.local:8000"
-#endif
+    /// Production HTTPS backend used by both Simulator and physical devices.
+    /// Developers can still override this through UserDefaults, the process
+    /// environment, or Info.plist when running a local backend.
+    static let defaultBackendURL = "https://mockexa-api.onrender.com"
     
     /// Default Supabase configuration from Backend environment
     static let defaultSupabaseURL = "https://jdkpnustshxtvtdkxyvg.supabase.co"
@@ -26,22 +21,12 @@ struct MockexaConfig {
     /// 1. Custom user override in UserDefaults (configurable in App Settings)
     /// 2. Process environment variable (`MOCKEXA_BACKEND_BASE_URL`)
     /// 3. Info.plist configuration (`MOCKEXA_BACKEND_BASE_URL` or `BackendBaseURL`)
-    /// 4. Target environment default (Simulator: 127.0.0.1, Physical Device: mDNS .local hostname)
+    /// 4. Production HTTPS default
     static var baseURL: String {
         get {
             if let custom = UserDefaults.standard.string(forKey: baseURLKey), !custom.isEmpty {
                 let cleaned = custom.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-#if targetEnvironment(simulator)
                 return cleaned
-#else
-                // A loopback override saved while testing in Simulator points
-                // back to the iPhone on real hardware. Ignore that stale value
-                // and use the Mac's Bonjour hostname instead.
-                let isLegacyMacAddress = cleaned.localizedCaseInsensitiveContains("Dhruvs-MacBook-Air-3.local")
-                if !cleaned.contains("127.0.0.1") && !cleaned.contains("localhost") && !isLegacyMacAddress {
-                    return cleaned
-                }
-#endif
             }
             if let envURL = ProcessInfo.processInfo.environment[baseURLKey], !envURL.isEmpty {
                 return envURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -52,7 +37,7 @@ struct MockexaConfig {
             if let infoURL = Bundle.main.object(forInfoDictionaryKey: "BackendBaseURL") as? String, !infoURL.isEmpty, !infoURL.hasPrefix("$") {
                 return infoURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             }
-            return defaultSimulatorURL
+            return defaultBackendURL
         }
         set {
             let cleaned = newValue.trimmingCharacters(in: CharacterSet(charactersIn: "/"))

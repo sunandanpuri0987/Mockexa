@@ -311,7 +311,7 @@ cp .env.example .env
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Verify backend health at `http://127.0.0.1:8000/health` or open interactive docs at `http://127.0.0.1:8000/docs`.
+The production backend is available at `https://mockexa-api.onrender.com`. Verify it at `https://mockexa-api.onrender.com/health` or open interactive docs at `https://mockexa-api.onrender.com/docs`. Local development can still use `http://127.0.0.1:8000` through a configuration override.
 
 ### 2. Running the iOS Application
 
@@ -358,7 +358,7 @@ Gemini, ElevenLabs, and OpenAI are optional for local development: the backend u
 
 When `MOCKEXA_ENV=production`, the backend fails closed if CORS is wildcarded, Supabase persistence is disabled, authentication storage is missing, or rate limiting is disabled. The built-in limiter protects a single process; a multi-replica deployment should enforce a shared Redis/API-gateway limit as well.
 
-The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the default. The Simulator uses `http://127.0.0.1:8000`. For a physical iPhone, set the in-app backend override to the Mac's reachable LAN address (for example, `http://192.168.1.25:8000`) or working `.local` hostname; loopback on an iPhone points to the phone itself.
+The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the production HTTPS default `https://mockexa-api.onrender.com`. Simulator and physical-device builds therefore work without a Mac-hosted backend. Developers can still set an override for local testing.
 
 > **Security Note**: Never commit actual API keys or credentials to repository source control.
 
@@ -388,7 +388,7 @@ The current verified result is **177 passed**. The iOS target can be checked ind
 
 ## 📌 Known Limitations
 
-1. **Physical Device Network Routing**: The iPhone and backend Mac must be reachable on the same network. If the default `.local` hostname does not resolve, set a backend URL override in the app or via `MOCKEXA_BACKEND_BASE_URL` using the Mac's LAN address.
+1. **Free Backend Cold Starts**: The Render free service spins down after inactivity, so the first request can take about a minute. A paid always-on instance removes this delay.
 2. **Gemini API Key**: Real-time LLM inference requires a valid `GEMINI_API_KEY` configured in `Backend/.env`. If unconfigured, the backend uses deterministic evaluation engines.
 3. **Cloud Features**: Cross-device history, authenticated persistence, and friends matchmaking across processes depend on Supabase configuration. Paid neural voices require the corresponding ElevenLabs or OpenAI credentials; EdgeTTS remains the backend fallback.
 
