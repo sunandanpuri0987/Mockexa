@@ -377,7 +377,7 @@ cd Backend
 .venv/bin/python -m pytest tests -q
 ```
 
-The native UI smoke suite launches a clean simulator session and verifies the welcome, login, and sign-up navigation paths:
+The native UI smoke suite launches a clean simulator session and verifies the welcome, login, and sign-up navigation paths in one end-to-end flow:
 
 ```bash
 xcodebuild test \

@@ -11,17 +11,13 @@ final class MockexaUITests: XCTestCase {
         app.launch()
     }
 
-    func testWelcomeScreenOpensLogin() {
+    func testAuthenticationEntryFlow() {
         openAuthentication()
 
         XCTAssertTrue(app.staticTexts["Welcome to Mockexa"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Email"].exists)
         XCTAssertTrue(app.staticTexts["Password"].exists)
         XCTAssertTrue(app.buttons["Log In"].exists)
-    }
-
-    func testLoginCanSwitchToSignUp() {
-        openAuthentication()
 
         let modeToggle = app.buttons["auth.mode_toggle"]
         XCTAssertTrue(modeToggle.waitForExistence(timeout: 5))
