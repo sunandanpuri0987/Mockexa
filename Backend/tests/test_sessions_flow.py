@@ -2,6 +2,48 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+
+def test_persistent_history_keeps_process_local_completed_sessions(client, auth_headers, monkeypatch):
+    from app.config import get_settings
+    from app.main import app
+    from app.utils.session_store import completed_sessions
+
+    class FakeRepository:
+        async def sessions(self, user_id, raw_token):
+            return [{
+                "id": "persisted-1",
+                "kind": "technical",
+                "topic": "Algorithms",
+                "started_at": "2026-01-01T10:00:00+00:00",
+                "duration_min": 15,
+            }]
+
+        async def feedback_for_sessions(self, session_ids, raw_token):
+            return {"persisted-1": {"overall_score": 82}}
+
+    completed_sessions.add_completed_session("test-user-123", {
+        "id": "local-company-1",
+        "kind": "company",
+        "topic": "Google Practice",
+        "date": "Today",
+        "duration": "6 min",
+        "score": 74,
+        "created_at": "2026-01-02T10:00:00+00:00",
+        "report": {},
+        "transcript": [],
+    })
+    base_settings = get_settings()
+    app.dependency_overrides[get_settings] = lambda: base_settings.model_copy(
+        update={"use_supabase_persistence": True}
+    )
+    monkeypatch.setattr("app.routers.sessions.SupabaseRepository", FakeRepository)
+    try:
+        response = client.get("/sessions", headers=auth_headers)
+        assert response.status_code == 200
+        assert [item["id"] for item in response.json()] == ["local-company-1", "persisted-1"]
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+
 def test_sessions_and_detail_flow(client: TestClient, auth_headers: dict[str, str], second_auth_headers: dict[str, str]):
     # 1. Initially sessions should be empty for User A
     resp = client.get("/sessions", headers=auth_headers)

@@ -122,11 +122,13 @@ struct CompanyPracticeStartResponse: Codable {
 
 struct CompanyPracticeAnswerRequest: Codable {
     let sessionId: String
+    let questionId: String
     let answer: String
 
     enum CodingKeys: String, CodingKey {
         case answer
         case sessionId = "session_id"
+        case questionId = "question_id"
     }
 }
 
@@ -196,13 +198,20 @@ final class CompanyQuestionBankViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    func load(companyId: String, token: String?) async {
+    func load(companyId: String, role: String?, token: String?) async {
         guard !isLoading else { return }
+        guard let token, !token.isEmpty else {
+            errorMessage = "Your sign-in session is not ready. Please sign in again."
+            return
+        }
         isLoading = true
         errorMessage = nil
         do {
+            let cleanRole = role?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let encodedRole = cleanRole.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            let roleQuery = encodedRole.isEmpty ? "" : "&role=\(encodedRole)"
             questions = try await APIClient.shared.get(
-                endpoint: "/company/\(companyId)/questions?limit=20&shuffle=true",
+                endpoint: "/company/\(companyId)/questions?limit=20&shuffle=true\(roleQuery)",
                 token: token
             )
         } catch {
@@ -226,15 +235,19 @@ final class CompanyPracticeViewModel: ObservableObject {
     @Published var isCompleted = false
     @Published var errorMessage: String?
 
-    func start(companyId: String, categories: [String], count: Int, useDeepAI: Bool, token: String?) async {
+    func start(companyId: String, categories: [String], role: String?, count: Int, useDeepAI: Bool, token: String?) async {
         guard sessionId == nil, !isLoading else { return }
+        guard let token, !token.isEmpty else {
+            errorMessage = "Your sign-in session is not ready. Please sign in again."
+            return
+        }
         isLoading = true
         errorMessage = nil
         do {
             let request = CompanyPracticeStartRequest(
                 companyId: companyId,
                 categories: categories,
-                role: nil,
+                role: role,
                 questionCount: count,
                 evaluationMode: useDeepAI ? "ai" : "fast"
             )
@@ -251,14 +264,23 @@ final class CompanyPracticeViewModel: ObservableObject {
         isLoading = false
     }
 
-    func submit(answer: String, token: String?) async {
-        guard let sessionId, !isLoading, !isCompleted else { return }
+    @discardableResult
+    func submit(answer: String, token: String?) async -> Bool {
+        guard let sessionId, let submittedQuestion = currentQuestion, !isLoading, !isCompleted else { return false }
+        guard let token, !token.isEmpty else {
+            errorMessage = "Your sign-in session expired. Please sign in again."
+            return false
+        }
         let clean = answer.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard clean.count >= 2 else { return }
+        guard clean.count >= 2 else { return false }
         isLoading = true
         errorMessage = nil
         do {
-            let request = CompanyPracticeAnswerRequest(sessionId: sessionId, answer: clean)
+            let request = CompanyPracticeAnswerRequest(
+                sessionId: sessionId,
+                questionId: submittedQuestion.id,
+                answer: clean
+            )
             let response: CompanyPracticeAnswerResponse = try await APIClient.shared.post(
                 endpoint: "/company/answer", body: request, token: token
             )
@@ -270,23 +292,35 @@ final class CompanyPracticeViewModel: ObservableObject {
             averageScore = response.averageScore
             isCompleted = response.completed
             if response.completed {
-                await finish(token: token)
+                _ = await finish(token: token)
             }
+            isLoading = false
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            isLoading = false
+            return false
         }
-        isLoading = false
     }
 
-    func finish(token: String?) async {
-        guard let sessionId, report == nil else { return }
+    @discardableResult
+    func finish(token: String?) async -> Bool {
+        guard let sessionId else { return false }
+        if report != nil { return true }
+        guard let token, !token.isEmpty else {
+            errorMessage = "Your sign-in session expired. Please sign in again."
+            return false
+        }
         do {
             report = try await APIClient.shared.postEmpty(
                 endpoint: "/company/finish/\(sessionId)", token: token
             )
             isCompleted = true
+            errorMessage = nil
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            return false
         }
     }
 }
@@ -700,9 +734,11 @@ struct CompanyQuestionListView: View {
     let companyName: String
     @StateObject private var viewModel = CompanyQuestionBankViewModel()
     @EnvironmentObject private var auth: AuthManager
+    @AppStorage("MOCKEXA_TARGET_ROLE") private var targetRole = ""
     @State private var selectedCategories = Set<String>()
     @State private var questionCount = 5
     @State private var useDeepAI = false
+    @State private var didApplyRoleDefaults = false
 
     private let categories = ["DSA", "Technical", "System Design", "Behavioral"]
 
@@ -799,7 +835,8 @@ struct CompanyQuestionListView: View {
                                 company: company,
                                 categories: Array(selectedCategories).sorted(),
                                 questionCount: min(questionCount, availableQuestionCount),
-                                useDeepAI: useDeepAI
+                                useDeepAI: useDeepAI,
+                                targetRole: targetRole
                             )
                         } label: {
                             Label("Start \(companyName) Practice", systemImage: "shuffle")
@@ -833,7 +870,7 @@ struct CompanyQuestionListView: View {
                             .foregroundStyle(MockexaTheme.destructive)
                         Button("Retry") {
                             guard let company else { return }
-                            Task { await viewModel.load(companyId: company.id, token: auth.accessToken) }
+                            Task { await viewModel.load(companyId: company.id, role: targetRole, token: auth.accessToken) }
                         }
                         .font(.caption.bold())
                         .foregroundStyle(MockexaTheme.primary)
@@ -867,7 +904,12 @@ struct CompanyQuestionListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             if let company {
-                await viewModel.load(companyId: company.id, token: auth.accessToken)
+                if !didApplyRoleDefaults {
+                    let recommended = RolePersonalization.companyCategories(for: targetRole)
+                    if !recommended.isEmpty { selectedCategories = recommended }
+                    didApplyRoleDefaults = true
+                }
+                await viewModel.load(companyId: company.id, role: targetRole, token: auth.accessToken)
             }
         }
         .onChange(of: selectedCategories) { _, _ in
@@ -919,10 +961,12 @@ struct CompanyPracticeView: View {
     let categories: [String]
     let questionCount: Int
     let useDeepAI: Bool
+    let targetRole: String
 
     @StateObject private var viewModel = CompanyPracticeViewModel()
     @StateObject private var voice = VoiceFoundation.shared
     @EnvironmentObject private var auth: AuthManager
+    @EnvironmentObject private var app: AppModel
     @State private var answer = ""
 
     var body: some View {
@@ -961,6 +1005,37 @@ struct CompanyPracticeView: View {
                         ProgressView("Preparing a shuffled interview…")
                             .tint(MockexaTheme.primary)
                             .padding(.vertical, 50)
+                    } else if viewModel.currentQuestion == nil && viewModel.sessionId == nil && !viewModel.isLoading {
+                        GlassCard {
+                            VStack(spacing: 12) {
+                                Image(systemName: "arrow.clockwise.circle.fill")
+                                    .font(.system(size: 34))
+                                    .foregroundStyle(MockexaTheme.primary)
+                                Text("Practice could not start")
+                                    .font(.headline)
+                                    .foregroundStyle(MockexaTheme.darkNavy)
+                                Text("Check your sign-in and backend connection, then retry without leaving this screen.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                Button("Retry Practice") {
+                                    guard let company else { return }
+                                    Task {
+                                        await viewModel.start(
+                                            companyId: company.id,
+                                            categories: categories,
+                                            role: targetRole.isEmpty ? nil : targetRole,
+                                            count: questionCount,
+                                            useDeepAI: useDeepAI,
+                                            token: auth.accessToken
+                                        )
+                                    }
+                                }
+                                .font(.subheadline.bold())
+                                .foregroundStyle(MockexaTheme.primary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
                     } else if let question = viewModel.currentQuestion {
                         GlassCard {
                             VStack(alignment: .leading, spacing: 12) {
@@ -1004,6 +1079,9 @@ struct CompanyPracticeView: View {
                                 Text("Your answer")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
                                     .foregroundStyle(MockexaTheme.darkNavy)
+                                Text("Be specific, explain trade-offs, and include complexity or measurable outcomes where relevant.")
+                                    .font(.caption)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
                                 TextEditor(text: $answer)
                                     .frame(minHeight: 150)
                                     .padding(8)
@@ -1012,13 +1090,20 @@ struct CompanyPracticeView: View {
                                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(MockexaTheme.border, lineWidth: 1))
                                     .foregroundStyle(MockexaTheme.textPrimary)
                                     .disabled(viewModel.isLoading)
+                                Text("\(answer.trimmingCharacters(in: .whitespacesAndNewlines).count) characters")
+                                    .font(.caption2)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
                             }
                         }
 
                         PrimaryButton(title: viewModel.isLoading ? "Evaluating…" : "Submit & Continue") {
                             let submitted = answer
-                            answer = ""
-                            Task { await viewModel.submit(answer: submitted, token: auth.accessToken) }
+                            Task {
+                                if await viewModel.submit(answer: submitted, token: auth.accessToken) {
+                                    answer = ""
+                                }
+                            }
                         }
                         .disabled(answer.trimmingCharacters(in: .whitespacesAndNewlines).count < 2 || viewModel.isLoading)
                     }
@@ -1081,6 +1166,31 @@ struct CompanyPracticeView: View {
                                         .font(.caption.bold())
                                         .foregroundStyle(MockexaTheme.warning)
                                 }
+                                if !report.strengths.isEmpty {
+                                    Text("Strengths: \(report.strengths.joined(separator: ", "))")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(MockexaTheme.success)
+                                }
+                                Button {
+                                    app.practicePath = NavigationPath()
+                                    app.tab = .history
+                                } label: {
+                                    Label("View in History", systemImage: "clock.arrow.circlepath")
+                                        .font(.subheadline.bold())
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .foregroundStyle(.white)
+                                        .background(MockexaTheme.primary, in: RoundedRectangle(cornerRadius: 14))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    } else if viewModel.isCompleted && !viewModel.isLoading {
+                        PrimaryButton(title: "Retry Final Report") {
+                            Task {
+                                if await viewModel.finish(token: auth.accessToken) {
+                                    await app.refreshUserSessions(token: auth.accessToken)
+                                }
                             }
                         }
                     }
@@ -1095,10 +1205,15 @@ struct CompanyPracticeView: View {
             await viewModel.start(
                 companyId: company.id,
                 categories: categories,
+                role: targetRole.isEmpty ? nil : targetRole,
                 count: questionCount,
                 useDeepAI: useDeepAI,
                 token: auth.accessToken
             )
+        }
+        .onChange(of: viewModel.report?.sessionId) { _, sessionId in
+            guard sessionId != nil else { return }
+            Task { await app.refreshUserSessions(token: auth.accessToken) }
         }
         .onDisappear { voice.stopSpeaking() }
     }

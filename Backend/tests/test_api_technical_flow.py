@@ -34,6 +34,13 @@ def test_health_ok():
     assert resp.json()["status"] == "ok"
 
 
+def test_root_identifies_running_backend():
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert resp.json()["service"] == "Mockexa Backend"
+    assert resp.json()["docs"] == "/docs"
+
+
 
 def test_full_technical_flow_start_answer_finish():
     start_resp = auth_client.post("/technical/start", json={
@@ -118,4 +125,3 @@ def test_multiple_start_requests_create_fresh_sessions():
         assert len(c1.state.question_history) == 0
         assert len(c2.state.question_history) == 0
         assert c1.state is not c2.state
-

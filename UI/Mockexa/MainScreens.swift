@@ -59,7 +59,13 @@ struct MainTabView: View {
 
             NavigationStack(path: $app.practicePath) {
                 PracticeHubView()
-                    .navigationDestination(for: PracticeKind.self) { PracticeSetupView(kind: $0) }
+                    .navigationDestination(for: PracticeKind.self) { kind in
+                        if kind == .aptitude {
+                            AptitudeSetupView()
+                        } else {
+                            PracticeSetupView(kind: kind)
+                        }
+                    }
                     .navigationDestination(for: QuestionBankRoute.self) { route in
                         switch route {
                         case .home:
@@ -238,7 +244,7 @@ struct HomeView: View {
                     SectionHeader(title: "Quick Practice", action: "See all", onAction: {
                         app.tab = .practice
                     })
-                    let kinds: [PracticeKind] = [.gd, .technical, .hr]
+                    let kinds: [PracticeKind] = [.gd, .technical, .hr, .aptitude]
                     ForEach(Array(kinds.enumerated()), id: \.element) { index, kind in
                         PracticeCard(kind: kind) { open(kind) }
                             .staggeredEntrance(delay: 0.16 + Double(index) * 0.06)
@@ -299,6 +305,8 @@ struct PracticeCardContent: View {
         case .gd: MockexaTheme.primary
         case .technical: Color(red: 37/255, green: 99/255, blue: 235/255)
         case .hr: Color(red: 225/255, green: 29/255, blue: 72/255)
+        case .company: Color(red: 124/255, green: 58/255, blue: 237/255)
+        case .aptitude: Color(red: 234/255, green: 88/255, blue: 12/255)
         }
     }
 
@@ -358,7 +366,7 @@ struct PracticeHubView: View {
                 .padding(.top, 12)
                 .staggeredEntrance(delay: 0.04)
 
-                ForEach(Array(PracticeKind.allCases.enumerated()), id: \.element) { index, kind in
+                ForEach(Array([PracticeKind.gd, .technical, .hr, .aptitude].enumerated()), id: \.element) { index, kind in
                     NavigationLink(value: kind) {
                         InteractiveTouchCardBody(maxTilt: 5.0) { isPressed in
                             PracticeCardContent(kind: kind, isPressed: isPressed)
@@ -486,10 +494,14 @@ struct DashboardView: View {
                             let gdHasSessions = app.userSessions.contains { $0.kind == .gd }
                             let techHasSessions = app.userSessions.contains { $0.kind == .technical }
                             let hrHasSessions = app.userSessions.contains { $0.kind == .hr }
+                            let companyHasSessions = app.userSessions.contains { $0.kind == .company }
+                            let aptitudeHasSessions = app.userSessions.contains { $0.kind == .aptitude }
 
                             MetricBar(title: "Group Discussion", value: app.gdAverageScore, color: MockexaTheme.primary, hasSessions: gdHasSessions)
                             MetricBar(title: "Technical Interview", value: app.techAverageScore, color: Color(red: 37/255, green: 99/255, blue: 235/255), hasSessions: techHasSessions)
                             MetricBar(title: "HR Interview", value: app.hrAverageScore, color: Color(red: 225/255, green: 29/255, blue: 72/255), hasSessions: hrHasSessions)
+                            MetricBar(title: "Company Practice", value: app.companyAverageScore, color: Color(red: 124/255, green: 58/255, blue: 237/255), hasSessions: companyHasSessions)
+                            MetricBar(title: "Aptitude Round", value: app.aptitudeAverageScore, color: Color(red: 234/255, green: 88/255, blue: 12/255), hasSessions: aptitudeHasSessions)
                         }
                     }
                 }
@@ -508,6 +520,11 @@ struct DashboardView: View {
         }
         .navigationBarHidden(true)
         .task {
+            if auth.isAuthenticated, let token = auth.accessToken, !token.isEmpty {
+                await app.refreshUserSessions(token: token)
+            }
+        }
+        .refreshable {
             if auth.isAuthenticated, let token = auth.accessToken, !token.isEmpty {
                 await app.refreshUserSessions(token: token)
             }
@@ -859,7 +876,7 @@ struct HistoryView: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
-                        ForEach(["All", "GD", "Technical", "HR"], id: \.self) { item in
+                        ForEach(["All", "GD", "Technical", "HR", "Aptitude", "Company"], id: \.self) { item in
                             Button(item) {
                                 Haptics.selection()
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
@@ -883,6 +900,8 @@ struct HistoryView: View {
                     case "GD": return kind == .gd
                     case "Technical": return kind == .technical
                     case "HR": return kind == .hr
+                    case "Company": return kind == .company
+                    case "Aptitude": return kind == .aptitude
                     default: return true
                     }
                 }
@@ -952,6 +971,11 @@ struct HistoryView: View {
                 await app.refreshUserSessions(token: token)
             }
         }
+        .refreshable {
+            if auth.isAuthenticated, let token = auth.accessToken, !token.isEmpty {
+                await app.refreshUserSessions(token: token)
+            }
+        }
     }
 }
 
@@ -1007,10 +1031,17 @@ struct SessionDetailView: View {
                 ScoreRing(score: sessionDetail?.score ?? session.score, size: 160)
                     .staggeredEntrance(delay: 0.10)
 
-                if let err = errorMessage {
-                    Text("Note: \(err)")
-                        .font(.caption)
+                if isLoading {
+                    ProgressView("Loading session details…")
+                        .tint(MockexaTheme.primary)
                         .foregroundStyle(MockexaTheme.textSecondary)
+                }
+
+                if let err = errorMessage {
+                    Label(err, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(MockexaTheme.destructive)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 GlassCard {
@@ -1720,6 +1751,7 @@ struct AccountSettingsSheet: View {
     @EnvironmentObject var auth: AuthManager
     @EnvironmentObject var app: AppModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showEraseConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -1742,12 +1774,54 @@ struct AccountSettingsSheet: View {
                                 DetailRow(label: "Account Status", value: auth.isAuthenticated ? "Active Account" : "Signed Out")
                             }
                         }
+
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("DATA ON THIS DEVICE")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(MockexaTheme.destructive)
+                                Text("Remove saved resumes, profile details, preferences and the secure sign-in session from this device.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
+
+                                Button(role: .destructive) {
+                                    showEraseConfirmation = true
+                                } label: {
+                                    Label("Erase Local Data & Sign Out", systemImage: "trash.fill")
+                                        .font(.subheadline.bold())
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 46)
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(MockexaTheme.destructive)
+
+                                Text("This does not delete your cloud identity. Remote account deletion will be offered only when the production server-side deletion workflow is configured.")
+                                    .font(.caption)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
+                            }
+                        }
                     }
                     .padding(20)
                 }
             }
             .navigationTitle("Account Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .confirmationDialog(
+                "Erase all Mockexa data saved on this device?",
+                isPresented: $showEraseConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Erase Local Data & Sign Out", role: .destructive) {
+                    auth.eraseLocalDataAndSignOut()
+                    app.userSessions = []
+                    app.onboardingStep = 0
+                    app.route = .welcome
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Saved resumes and profile preferences on this device cannot be recovered after erasing them.")
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }

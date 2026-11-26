@@ -51,6 +51,8 @@
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Mockexa requires microphone access for voice practice in Group Discussion and HR interviews.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Mockexa connects to your development Mac to run interview practice and refresh progress on this iPhone.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Mockexa uses speech recognition to transcribe your spoken responses in Group Discussion and HR interviews.</string>
 	<key>NSAppTransportSecurity</key>

@@ -301,11 +301,11 @@ final class PDFExportService {
 
             // 1. Personal Details Header
             if !data.personalInfo.fullName.isEmpty {
-                drawString(data.personalInfo.fullName, font: titleFont, isCentered: true)
+                drawString(data.personalInfo.fullName, font: titleFont, isCentered: isHeaderCentered)
             }
 
             if !data.personalInfo.headline.isEmpty {
-                drawString(data.personalInfo.headline, font: boldBodyFont, color: UIColor.darkGray, isCentered: true)
+                drawString(data.personalInfo.headline, font: boldBodyFont, color: UIColor.darkGray, isCentered: isHeaderCentered)
             }
 
             // Compact: merge contact + links on same line if density scale >= 2
@@ -323,18 +323,18 @@ final class PDFExportService {
                 // Merge contact + links into single line
                 let allContact = (contactComponents + linkComponents).joined(separator: "  |  ")
                 if !allContact.isEmpty {
-                    drawString(allContact, font: bodyFont, color: UIColor.darkGray, isCentered: true)
+                    drawString(allContact, font: bodyFont, color: UIColor.darkGray, isCentered: isHeaderCentered)
                 }
             } else {
                 if !contactComponents.isEmpty {
-                    drawString(contactComponents.joined(separator: "  |  "), font: bodyFont, color: UIColor.darkGray, isCentered: true)
+                    drawString(contactComponents.joined(separator: "  |  "), font: bodyFont, color: UIColor.darkGray, isCentered: isHeaderCentered)
                 }
                 if !linkComponents.isEmpty {
                     drawString(linkComponents.map { link -> String in
                         if link.contains("linkedin") { return "LinkedIn: \(link)" }
                         else if link.contains("github") { return "GitHub: \(link)" }
                         else { return "Portfolio: \(link)" }
-                    }.joined(separator: "  |  "), font: bodyFont, color: UIColor(red: 15/255, green: 90/255, blue: 71/255, alpha: 1.0), isCentered: true)
+                    }.joined(separator: "  |  "), font: bodyFont, color: UIColor(red: 15/255, green: 90/255, blue: 71/255, alpha: 1.0), isCentered: isHeaderCentered)
                 }
             }
 

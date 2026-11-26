@@ -4,7 +4,6 @@
 
 ## CONTENTS OF THIS ARCHIVE
 - app/                        FastAPI application source
-- group_d/model/              LoRA adapter weights (Qwen2.5-1.5B-Instruct base)
 - tests/                      Pytest test suite (62 tests)
 - docs/                       Project documentation
 - requirements.txt            Python dependency manifest
@@ -14,7 +13,6 @@
 - MANIFEST.txt                This file
 - verify_all_http.py          HTTP smoke-test helper (optional)
 - verify_gd_http.py           GD-specific HTTP test (optional)
-- verify_gd_model.py          Local model load test (optional)
 - verify_hr_http.py           HR-specific HTTP test (optional)
 
 ## EXCLUDED FROM ARCHIVE
@@ -25,7 +23,6 @@
 - .env              (NEVER committed — contains real secrets)
 - live_*_runner.py  (E2E test runners — dev-only)
 - GD_Moderator/     (scratch notebooks — not required for runtime)
-- group_d/evaluation/ (training artifacts — not required for runtime)
 
 ## MAC SETUP COMMANDS
 ============================================================
@@ -38,18 +35,6 @@ Homebrew (if not installed):
 Python 3.11 or 3.12 (recommended):
   brew install python@3.11
   # or download from https://www.python.org/downloads/
-
-PyTorch (CPU or MPS — choose ONE):
-
-  # CPU only (lighter, ~700MB):
-  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-
-  # Apple Silicon MPS (recommended for M1/M2/M3):
-  pip install torch torchvision torchaudio
-
-  NOTE: torch must be installed BEFORE running `pip install -r requirements.txt`
-  if you want to use a specific PyTorch build. Otherwise requirements.txt will
-  install the default CPU torch automatically.
 
 ### 2. Extract & Enter Directory
 
@@ -67,8 +52,7 @@ PyTorch (CPU or MPS — choose ONE):
 
   Expected installed packages include:
     fastapi, uvicorn[standard], pydantic, gemini, PyJWT[crypto],
-    pytest, httpx, python-dotenv, numpy, torch, transformers,
-    peft, accelerate, scikit-learn
+    pytest, httpx, python-dotenv, numpy, scikit-learn
 
 ### 5. Configure Environment
 
@@ -121,28 +105,12 @@ PyTorch (CPU or MPS — choose ONE):
 
   Expected: 62 passed
 
-## MODEL INFORMATION
-============================================================
-  Architecture: Qwen2.5-1.5B-Instruct (base) + LoRA adapter
-  Adapter path: group_d/model/  (relative to project root)
-  Adapter type: PEFT LoRA (r=32, alpha=64)
-  Task:         Causal LM — Group Discussion turn generation
-  Base model:   Downloaded automatically from HuggingFace on first run
-                → Qwen/Qwen2.5-1.5B-Instruct (~3GB, cached in ~/.cache/huggingface)
-  Adapter file: group_d/model/adapter_model.safetensors (~141MB, included in archive)
-
-  IMPORTANT: On first GD session start, the backend will download
-  the base model from HuggingFace if not already cached.
-  Ensure internet access and ~3GB free disk space in ~/.cache/huggingface/
-
 ## PORTABILITY NOTES
 ============================================================
-  - All model paths use pathlib (relative to CWD) — no hard-coded Windows paths
   - No Windows-only commands or subprocess calls in application code
   - No CRLF-sensitive scripts — Python source is cross-platform
   - .env loading uses python-dotenv with path resolution relative to app/config.py
-  - group_d/model path resolved as Path("group_d/model") — must run uvicorn
-    from the project root directory (where requirements.txt lives)
+  - Gemini is the GD generation provider; no local ML weights are required
 
 ## API CONTRACT SUMMARY
 ============================================================
@@ -178,17 +146,8 @@ PyTorch (CPU or MPS — choose ONE):
 
 ## TROUBLESHOOTING
 ============================================================
-  ImportError: No module named 'torch'
-    → Run: pip install torch  (or see step 1 for platform-specific install)
-
-  ImportError: No module named 'peft'
-    → Run: pip install peft accelerate transformers
-
   401 Unauthorized on all routes
     → Check SUPABASE_JWT_SECRET in .env matches your Supabase project
-
-  GD session hangs on first /gd/start
-    → Base model is downloading from HuggingFace — wait for download to complete
 
   Cannot connect to Supabase
     → Verify SUPABASE_URL and SUPABASE_ANON_KEY are correct

@@ -50,6 +50,7 @@ class CompanyStartResponse(BaseModel):
 class CompanyAnswerRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     session_id: str = Field(min_length=8, max_length=80)
+    question_id: str | None = Field(default=None, min_length=2, max_length=120)
     answer: str = Field(min_length=2, max_length=12_000)
 
 

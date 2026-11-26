@@ -3,11 +3,9 @@ ModelRouter — the one and only thing controllers call for generation.
 
     model_router.generate(task="gd_generation", ...)
 
-Controllers must never import GeminiBackend (or any concrete backend) directly.
-This keeps Gemini API usage in exactly one place (gemini_backend.py) and makes it
-possible to add LocalQwenBackend (the existing GD LoRA adapter, once its live
-generation quality is confirmed acceptable for production use — see the
-project audit) as a drop-in alternative without touching any controller.
+Controllers receive an LLMBackend through this router rather than depending on
+provider implementation details. Gemini is currently the production provider;
+the interface keeps future provider changes isolated from controller logic.
 
 Task -> per-task token budget mapping lives here, not scattered across
 callers, per PROJECT_STATUS.md's "prefer separate settings" + "do not

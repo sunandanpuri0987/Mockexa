@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var app: AppModel
+    @EnvironmentObject var auth: AuthManager
     var body: some View {
         ZStack {
             AppBackground()
@@ -31,6 +32,11 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.45), value: app.route)
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("MOCKEXA_SESSION_EXPIRED"))) { _ in
+            auth.signOut()
+            app.practicePath = NavigationPath()
+            app.route = .auth
+        }
     }
 }
 

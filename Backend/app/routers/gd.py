@@ -389,40 +389,22 @@ async def verify_gd_turn(
         raise HTTPException(status_code=500, detail=f"Gemini verification failed: {e}")
 
 def _backend_router(settings: Settings):
-    """Return a ModelRouter wired to the configured GD generation backend.
-
-    GD_GENERATION_BACKEND=gemini  (default, current) — uses the existing Gemini
-        backend via the already-configured GEMINI_API_KEY and GEMINI_MODEL.
-    GD_GENERATION_BACKEND=local — loads the local Qwen LoRA adapter (slow on
-        CPU; restore once performance is resolved).
-    """
-    backend_name = (settings.gd_generation_backend or "gemini").lower().strip()
-
-    if backend_name == "local":
-        from app.providers.gd_backend import LocalQwenBackend
-        from pathlib import Path
-        model_dir = Path("group_d/model")
-        try:
-            local_backend = LocalQwenBackend.get_instance(model_dir=model_dir)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to load GD ML backend: {e}")
-        return ModelRouter(settings, {"gd_generation": local_backend})
-    else:
-        # Interactive GD has a strict latency budget. If Gemini is unavailable,
-        # the controller retains its curated persona-specific argument.
-        from app.providers.gemini_backend import GeminiBackend
-        gd_settings = settings.model_copy(update={
-            "gemini_timeout_seconds": min(settings.gemini_timeout_seconds, 6.0),
-            "gemini_max_retries": 1,
-            # The controller already has a deterministic, persona-specific
-            # fallback. A second model request can outlive the mobile turn SLA.
-            "gemini_fallback_model": None,
-        })
-        try:
-            gemini_backend = GeminiBackend(gd_settings)
-        except Exception as e:
-            raise HTTPException(status_code=503, detail=f"Gemini GD backend initialization failed: {e}")
-        return ModelRouter(gd_settings, {"gd_generation": gemini_backend})
+    """Return a ModelRouter wired to the production Gemini GD backend."""
+    # Interactive GD has a strict latency budget. If Gemini is unavailable,
+    # the controller retains its curated persona-specific argument.
+    from app.providers.gemini_backend import GeminiBackend
+    gd_settings = settings.model_copy(update={
+        "gemini_timeout_seconds": min(settings.gemini_timeout_seconds, 6.0),
+        "gemini_max_retries": 1,
+        # The controller already has a deterministic, persona-specific
+        # fallback. A second model request can outlive the mobile turn SLA.
+        "gemini_fallback_model": None,
+    })
+    try:
+        gemini_backend = GeminiBackend(gd_settings)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Gemini GD backend initialization failed: {e}")
+    return ModelRouter(gd_settings, {"gd_generation": gemini_backend})
 
 @router.post(
     "/start",

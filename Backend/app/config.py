@@ -89,6 +89,10 @@ class Settings(BaseModel):
     host: str = os.environ.get("HOST", "0.0.0.0")
     port: int = _int_env("PORT", 8000)
     cors_origins: str = os.environ.get("CORS_ORIGINS", "*")
+    max_request_body_bytes: int = _int_env("MAX_REQUEST_BODY_BYTES", 1_000_000)
+    enable_rate_limiting: bool = _bool_env("ENABLE_RATE_LIMITING", False)
+    rate_limit_requests: int = _int_env("RATE_LIMIT_REQUESTS", 120)
+    rate_limit_window_seconds: int = _int_env("RATE_LIMIT_WINDOW_SECONDS", 60)
 
     # --- Auth (Supabase-compatible JWT) ---
     supabase_url: str | None = os.environ.get("SUPABASE_URL")
@@ -98,10 +102,9 @@ class Settings(BaseModel):
     # --- Feature Flags ---
     use_supabase_persistence: bool = _bool_env("USE_SUPABASE_PERSISTENCE", False)
 
-    # --- GD Generation Provider ---
-    # Set to "gemini" to route GD AI turns through Google Gemini.
-    # Set to "local" to restore the local Qwen LoRA backend when performance allows.
-    gd_generation_backend: str = os.environ.get("GD_GENERATION_BACKEND", "gemini")
+    # --- GD Generation ---
+    # Gemini is the production GD provider. The previous local LoRA experiment
+    # was removed because it did not meet the interactive latency target.
     gd_verify_opening_turn: bool = _bool_env("GD_VERIFY_OPENING_TURN", False)
 
     # --- ElevenLabs Neural TTS Provider ---
@@ -123,6 +126,30 @@ class Settings(BaseModel):
     elevenlabs_voice_hr: str = os.environ.get("ELEVENLABS_VOICE_HR", "XrExE9yKIg1WjnnlVkGX")
 
     model_config = ConfigDict(frozen=True)
+
+
+def validate_production_settings(settings: Settings) -> None:
+    """Fail closed when a deployment is marked production but remains unsafe."""
+    if settings.environment.casefold() != "production":
+        return
+
+    problems: list[str] = []
+    origins = {item.strip() for item in settings.cors_origins.split(",") if item.strip()}
+    if not origins or "*" in origins:
+        problems.append("CORS_ORIGINS must contain explicit HTTPS app/web origins")
+    if not settings.supabase_url or not settings.supabase_anon_key:
+        problems.append("SUPABASE_URL and SUPABASE_ANON_KEY are required")
+    if not settings.use_supabase_persistence:
+        problems.append("USE_SUPABASE_PERSISTENCE must be enabled")
+    if not settings.enable_rate_limiting:
+        problems.append("ENABLE_RATE_LIMITING must be enabled")
+    if settings.max_request_body_bytes < 16_384:
+        problems.append("MAX_REQUEST_BODY_BYTES must be at least 16384")
+    if settings.rate_limit_requests < 1 or settings.rate_limit_window_seconds < 1:
+        problems.append("rate-limit values must be positive")
+
+    if problems:
+        raise RuntimeError("Unsafe production configuration: " + "; ".join(problems))
 
 
 @lru_cache

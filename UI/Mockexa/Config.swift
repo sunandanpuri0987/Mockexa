@@ -14,7 +14,7 @@ struct MockexaConfig {
 #if targetEnvironment(simulator)
     static let defaultSimulatorURL = "http://127.0.0.1:8000"
 #else
-    static let defaultSimulatorURL = "http://127.0.0.1:8000"
+    static let defaultSimulatorURL = "http://Dhruvs-MacBook-Air.local:8000"
 #endif
     
     /// Default Supabase configuration from Backend environment
@@ -30,7 +30,18 @@ struct MockexaConfig {
     static var baseURL: String {
         get {
             if let custom = UserDefaults.standard.string(forKey: baseURLKey), !custom.isEmpty {
-                return custom.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                let cleaned = custom.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+#if targetEnvironment(simulator)
+                return cleaned
+#else
+                // A loopback override saved while testing in Simulator points
+                // back to the iPhone on real hardware. Ignore that stale value
+                // and use the Mac's Bonjour hostname instead.
+                let isLegacyMacAddress = cleaned.localizedCaseInsensitiveContains("Dhruvs-MacBook-Air-3.local")
+                if !cleaned.contains("127.0.0.1") && !cleaned.contains("localhost") && !isLegacyMacAddress {
+                    return cleaned
+                }
+#endif
             }
             if let envURL = ProcessInfo.processInfo.environment[baseURLKey], !envURL.isEmpty {
                 return envURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
@@ -86,5 +97,93 @@ struct MockexaConfig {
         UserDefaults.standard.removeObject(forKey: baseURLKey)
         UserDefaults.standard.removeObject(forKey: supabaseURLKey)
         UserDefaults.standard.removeObject(forKey: supabaseAnonKeyKey)
+    }
+}
+
+/// Keeps onboarding's target role as the single personalization source used
+/// across interview setup, company practice, GD and aptitude rounds.
+enum RolePersonalization {
+    private static let allTechnicalDomains = [
+        "Data Structures", "Algorithms", "Operating Systems", "DBMS",
+        "OOP", "Software Engineering", "Programming"
+    ]
+
+    private static func key(_ role: String) -> String {
+        role.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    static func technicalDomains(for role: String) -> [String] {
+        let value = key(role)
+        if value.contains("data") && value.contains("analyst") {
+            return ["DBMS", "Programming", "Algorithms", "Data Structures"]
+        }
+        if value.contains("product") {
+            return ["Software Engineering", "DBMS", "Algorithms", "OOP"]
+        }
+        if value.contains("business") && value.contains("analyst") {
+            return ["DBMS", "Software Engineering", "Programming", "Algorithms"]
+        }
+        if value.contains("architect") {
+            return ["Software Engineering", "Operating Systems", "DBMS", "OOP", "Algorithms"]
+        }
+        if value.contains("full stack") || value.contains("developer") {
+            return ["Programming", "DBMS", "Data Structures", "Algorithms", "OOP", "Software Engineering"]
+        }
+        if value.contains("software") || value.contains("engineer") {
+            return ["Data Structures", "Algorithms", "OOP", "DBMS", "Operating Systems", "Software Engineering"]
+        }
+        return allTechnicalDomains
+    }
+
+    static func aptitudeCategories(for role: String) -> [String] {
+        let value = key(role)
+        if value.contains("data") || value.contains("business analyst") {
+            return ["Data Interpretation", "Quantitative Aptitude", "Logical Reasoning"]
+        }
+        if value.contains("product") {
+            return ["Logical Reasoning", "Verbal Ability", "Data Interpretation"]
+        }
+        if value.contains("architect") || value.contains("software") || value.contains("developer") || value.contains("engineer") {
+            return ["Logical Reasoning", "Quantitative Aptitude", "Verbal Ability"]
+        }
+        return []
+    }
+
+    static func companyCategories(for role: String) -> Set<String> {
+        let value = key(role)
+        if value.contains("product") || value.contains("business analyst") {
+            return ["Behavioral", "System Design", "Technical"]
+        }
+        if value.contains("data") {
+            return ["Technical", "DSA", "Behavioral"]
+        }
+        if value.contains("architect") {
+            return ["System Design", "Technical", "Behavioral"]
+        }
+        if value.contains("software") || value.contains("developer") || value.contains("engineer") {
+            return ["DSA", "Technical", "System Design"]
+        }
+        return []
+    }
+
+    static func hrStyle(for role: String) -> String {
+        let value = key(role)
+        if value.contains("product") || value.contains("architect") { return "Leadership" }
+        if value.contains("analyst") { return "Situational" }
+        return "Behavioral"
+    }
+
+    static func gdTopic(for role: String) -> String {
+        let value = key(role)
+        if value.contains("data") || value.contains("analyst") {
+            return "Should personal data be treated as private property?"
+        }
+        if value.contains("product") {
+            return "Should companies prioritize skills over degrees?"
+        }
+        if value.contains("architect") || value.contains("software") || value.contains("developer") || value.contains("engineer") {
+            return "Will automation create more jobs than it removes?"
+        }
+        return "Remote work and productivity"
     }
 }

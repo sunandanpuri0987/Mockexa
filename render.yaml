@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: mockexa-api
+    runtime: python
+    plan: free
+    rootDir: Backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements-prod.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: MOCKEXA_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://mockexa-api.onrender.com
+      - key: USE_SUPABASE_PERSISTENCE
+        value: "true"
+      - key: ENABLE_RATE_LIMITING
+        value: "true"
+      - key: RATE_LIMIT_REQUESTS
+        value: "120"
+      - key: RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
+      - key: USE_GEMINI
+        value: "true"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false

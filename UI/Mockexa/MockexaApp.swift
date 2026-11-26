@@ -93,6 +93,18 @@ final class AppModel: ObservableObject {
         return hrSessions.reduce(0) { $0 + $1.score } / hrSessions.count
     }
 
+    var companyAverageScore: Int {
+        let sessions = userSessions.filter { $0.kind == .company }
+        guard !sessions.isEmpty else { return 0 }
+        return sessions.reduce(0) { $0 + $1.score } / sessions.count
+    }
+
+    var aptitudeAverageScore: Int {
+        let sessions = userSessions.filter { $0.kind == .aptitude }
+        guard !sessions.isEmpty else { return 0 }
+        return sessions.reduce(0) { $0 + $1.score } / sessions.count
+    }
+
     var bestReadinessScore: Int? {
         userSessions.filter { $0.kind != nil }.map(\.score).max()
     }

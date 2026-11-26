@@ -465,7 +465,7 @@ public final class VoiceFoundation: NSObject, ObservableObject {
 #if targetEnvironment(simulator)
             try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
 #else
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP])
+            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothHFP, .allowBluetoothA2DP])
 #endif
             try session.setActive(true, options: .notifyOthersOnDeactivation)
             isAudioSessionActive = true

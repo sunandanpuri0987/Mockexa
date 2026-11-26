@@ -1,17 +1,19 @@
 import Foundation
 
 enum PracticeKind: String, CaseIterable, Identifiable, Hashable {
-    case gd = "Group Discussion", technical = "Technical Interview", hr = "HR Interview"
+    case gd = "Group Discussion", technical = "Technical Interview", hr = "HR Interview", company = "Company Practice", aptitude = "Aptitude Round"
     var id: String { rawValue }
     var displayName: String {
         switch self {
         case .gd: return "Group Discussion"
         case .technical: return "Technical Interview"
         case .hr: return "HR Interview"
+        case .company: return "Company Practice"
+        case .aptitude: return "Aptitude Round"
         }
     }
-    var icon: String { switch self { case .gd: "person.3.fill"; case .technical: "chevron.left.forwardslash.chevron.right"; case .hr: "quote.bubble.fill" } }
-    var subtitle: String { switch self { case .gd: "Speak. Challenge. Lead."; case .technical: "Think like an interviewer."; case .hr: "Build confident answers." } }
+    var icon: String { switch self { case .gd: "person.3.fill"; case .technical: "chevron.left.forwardslash.chevron.right"; case .hr: "quote.bubble.fill"; case .company: "building.2.fill"; case .aptitude: "timer" } }
+    var subtitle: String { switch self { case .gd: "Speak. Challenge. Lead."; case .technical: "Think like an interviewer."; case .hr: "Build confident answers."; case .company: "Prepare for your target company."; case .aptitude: "Calculate. Reason. Decide." } }
 }
 
 struct PracticeSession: Identifiable, Hashable {

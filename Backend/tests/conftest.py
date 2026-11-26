@@ -28,12 +28,15 @@ def get_test_token(user_id: str = "test-user-123") -> str:
 
 @pytest.fixture(autouse=True)
 def clean_session_stores():
-    from app.utils.session_store import technical_sessions, gd_sessions, hr_sessions, company_sessions, completed_sessions
+    from app.utils.session_store import technical_sessions, gd_sessions, hr_sessions, company_sessions, company_reports, aptitude_sessions, aptitude_reports, completed_sessions
     from app.controllers.gd_friends import reward_wallets
     technical_sessions.clear()
     gd_sessions.clear()
     hr_sessions.clear()
     company_sessions.clear()
+    company_reports.clear()
+    aptitude_sessions.clear()
+    aptitude_reports.clear()
     completed_sessions.clear()
     reward_wallets.clear()
     yield
@@ -41,6 +44,9 @@ def clean_session_stores():
     gd_sessions.clear()
     hr_sessions.clear()
     company_sessions.clear()
+    company_reports.clear()
+    aptitude_sessions.clear()
+    aptitude_reports.clear()
     completed_sessions.clear()
     reward_wallets.clear()
 

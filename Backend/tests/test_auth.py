@@ -20,7 +20,9 @@ def _get_token(user_id: str = "test-user-123", expired: bool = False, bad_secret
     else:
         payload["exp"] = time.time() + 3600
         
-    secret = "wrong-secret" if bad_secret else TEST_SECRET
+    # Keep the intentionally wrong key cryptographically well-sized so this
+    # negative test does not hide real warnings behind PyJWT key-length noise.
+    secret = "wrong-secret-used-only-for-signature-test-32b" if bad_secret else TEST_SECRET
     return jwt.encode(payload, secret, algorithm="HS256")
 
 def test_health_unauthenticated_succeeds():

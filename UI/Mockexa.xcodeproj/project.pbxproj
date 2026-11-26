@@ -29,6 +29,7 @@
 		B10000000000000000000024 /* CompanyQuestionBank.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* CompanyQuestionBank.swift */; };
 		B10000000000000000000025 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* Assets.xcassets */; };
 		B10000000000000000000026 /* FriendsGD.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* FriendsGD.swift */; };
+		B10000000000000000000027 /* AptitudeRound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000027 /* AptitudeRound.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +57,7 @@
 		A10000000000000000000024 /* CompanyQuestionBank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanyQuestionBank.swift; sourceTree = "<group>"; };
 		A10000000000000000000025 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000000000000000000026 /* FriendsGD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsGD.swift; sourceTree = "<group>"; };
+		A10000000000000000000027 /* AptitudeRound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AptitudeRound.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				A10000000000000000000024 /* CompanyQuestionBank.swift */,
 				A10000000000000000000025 /* Assets.xcassets */,
 				A10000000000000000000026 /* FriendsGD.swift */,
+				A10000000000000000000027 /* AptitudeRound.swift */,
 			);
 			path = Mockexa;
 			sourceTree = "<group>";
@@ -191,6 +194,7 @@
 				B10000000000000000000005 /* MainScreens.swift in Sources */,
 				B10000000000000000000006 /* PracticeFlows.swift in Sources */,
 				B10000000000000000000026 /* FriendsGD.swift in Sources */,
+				B10000000000000000000027 /* AptitudeRound.swift in Sources */,
 				B10000000000000000000011 /* Config.swift in Sources */,
 				B10000000000000000000012 /* AuthManager.swift in Sources */,
 				B10000000000000000000013 /* APISchemas.swift in Sources */,

@@ -4,6 +4,8 @@
 
 Mockexa is a native iOS application and FastAPI backend service engineered to help candidates prepare for placement interviews. It provides real-time, interactive practice sessions across **Technical Coding/System Design**, **HR Behavioral Interviews**, and **Group Discussion (GD) Panel Simulations**, complete with multi-dimensional scoring and actionable feedback.
 
+It also includes a timed **Aptitude Round** with 40 curated questions across quantitative aptitude, logical reasoning, verbal ability and data interpretation, including instant explanations, category scoring and saved reports.
+
 The application combines a high-performance native SwiftUI interface—featuring touchscreen-native 3D gestures and custom micro-interactions—with a resilient backend architecture powered by FastAPI, Supabase Authentication, and Gemini LLM intelligence.
 
 ---
@@ -338,12 +340,23 @@ SUPABASE_URL=YOUR_SUPABASE_URL
 SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 SUPABASE_JWT_SECRET=YOUR_SUPABASE_JWT_SECRET
 
+# Required production hardening
+MOCKEXA_ENV=production
+USE_SUPABASE_PERSISTENCE=True
+CORS_ORIGINS=https://YOUR_EXPLICIT_APP_OR_WEB_ORIGIN
+ENABLE_RATE_LIMITING=True
+RATE_LIMIT_REQUESTS=120
+RATE_LIMIT_WINDOW_SECONDS=60
+MAX_REQUEST_BODY_BYTES=1000000
+
 # Optional neural text-to-speech
 ELEVENLABS_API_KEY=YOUR_ELEVENLABS_API_KEY
 OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 ```
 
 Gemini, ElevenLabs, and OpenAI are optional for local development: the backend uses deterministic interview evaluation and the TTS route can fall through to EdgeTTS when paid-provider credentials are unavailable. `USE_SUPABASE_PERSISTENCE=False` keeps session data in memory; set it to `True` only after configuring Supabase.
+
+When `MOCKEXA_ENV=production`, the backend fails closed if CORS is wildcarded, Supabase persistence is disabled, authentication storage is missing, or rate limiting is disabled. The built-in limiter protects a single process; a multi-replica deployment should enforce a shared Redis/API-gateway limit as well.
 
 The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the default. The Simulator uses `http://127.0.0.1:8000`. For a physical iPhone, set the in-app backend override to the Mac's reachable LAN address (for example, `http://192.168.1.25:8000`) or working `.local` hostname; loopback on an iPhone points to the phone itself.
 
@@ -369,7 +382,7 @@ cd Backend
 - Session persistence/history and multi-provider TTS caching/error handling.
 - Supabase Auth JWT verification parsing.
 
-The current verified result is **150 passed**. The iOS target can be checked independently with the simulator `xcodebuild` command above.
+The current verified result is **177 passed**. The iOS target can be checked independently with the simulator `xcodebuild` command above.
 
 ---
 

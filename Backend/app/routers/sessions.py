@@ -3,7 +3,7 @@ from typing import Any
 from datetime import datetime
 import json
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.auth import get_current_user_id, get_raw_jwt_token
 from app.config import Settings, get_settings
@@ -31,7 +31,41 @@ class SessionDetailOut(BaseModel):
     user_id: str
     created_at: str | None = None
     report: dict[str, Any] | None = None
-    transcript: list[dict[str, Any]] = []
+    transcript: list[dict[str, Any]] = Field(default_factory=list)
+
+
+def _safe_score(value: Any) -> int:
+    try:
+        return max(0, min(100, int(round(float(value)))))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _local_summary(session: dict[str, Any]) -> SessionSummaryOut:
+    return SessionSummaryOut(
+        id=session["id"],
+        kind=session.get("kind", "technical"),
+        topic=session.get("topic", "Interview Practice"),
+        date=session.get("date", "Today"),
+        duration=session.get("duration", "15 min"),
+        score=_safe_score(session.get("score", 0)),
+        created_at=session.get("created_at"),
+    )
+
+
+def _local_detail(user_id: str, detail: dict[str, Any]) -> SessionDetailOut:
+    return SessionDetailOut(
+        id=detail["id"],
+        kind=detail.get("kind", "technical"),
+        topic=detail.get("topic", "Interview Practice"),
+        date=detail.get("date", "Today"),
+        duration=detail.get("duration", "15 min"),
+        score=_safe_score(detail.get("score", 0)),
+        user_id=user_id,
+        created_at=detail.get("created_at"),
+        report=detail.get("report", {}),
+        transcript=detail.get("transcript", []),
+    )
 
 def _format_date(raw_date: Any) -> str:
     if not raw_date:
@@ -55,6 +89,7 @@ async def list_user_sessions(
     raw_token: str = Depends(get_raw_jwt_token),
     settings: Settings = Depends(get_settings),
 ):
+    local_result = [_local_summary(s) for s in completed_sessions.get_user_sessions(user_id)]
     if settings.use_supabase_persistence:
         repo = SupabaseRepository()
         try:
@@ -80,28 +115,27 @@ async def list_user_sessions(
                     topic=topic,
                     date=date_formatted,
                     duration=f"{s.get('duration_min', 15)} min",
-                    score=score,
+                    score=_safe_score(score),
                     created_at=str(started) if started else None
                 ))
-            return result
+            # Some practice modes currently complete in the process-local store
+            # while the durable repository rollout is in progress. Never hide
+            # those sessions merely because Supabase persistence is enabled.
+            merged = {item.id: item for item in local_result}
+            merged.update({item.id: item for item in result})
+            return sorted(
+                merged.values(),
+                key=lambda item: item.created_at or "",
+                reverse=True,
+            )
         except RepositoryError as exc:
+            if local_result:
+                return local_result
             raise HTTPException(status_code=503, detail=f"Database persistent session history unavailable: {exc}")
         except Exception as exc:
             raise HTTPException(status_code=500, detail=f"Failed to fetch session history: {exc}")
 
-    in_mem = completed_sessions.get_user_sessions(user_id)
-    return [
-        SessionSummaryOut(
-            id=s["id"],
-            kind=s.get("kind", "technical"),
-            topic=s.get("topic", "Interview Practice"),
-            date=s.get("date", "Today"),
-            duration=s.get("duration", "15 min"),
-            score=s.get("score", 0),
-            created_at=s.get("created_at")
-        )
-        for s in in_mem
-    ]
+    return local_result
 
 @router.get("/{session_id}", response_model=SessionDetailOut)
 async def get_user_session_detail(
@@ -110,6 +144,10 @@ async def get_user_session_detail(
     raw_token: str = Depends(get_raw_jwt_token),
     settings: Settings = Depends(get_settings),
 ):
+    local_detail = completed_sessions.get_session_detail(user_id, session_id)
+    if local_detail is not None:
+        return _local_detail(user_id, local_detail)
+
     if settings.use_supabase_persistence:
         repo = SupabaseRepository()
         try:
@@ -171,26 +209,11 @@ async def get_user_session_detail(
             topic=topic,
             date=date_formatted,
             duration=f"{db_session.get('duration_min', 15)} min",
-            score=score,
+            score=_safe_score(score),
             user_id=user_id,
             created_at=str(started) if started else None,
             report=report_data,
             transcript=transcript
         )
 
-    detail = completed_sessions.get_session_detail(user_id, session_id)
-    if detail is None:
-        raise HTTPException(status_code=404, detail="Session not found or access denied.")
-
-    return SessionDetailOut(
-        id=detail["id"],
-        kind=detail.get("kind", "technical"),
-        topic=detail.get("topic", "Interview Practice"),
-        date=detail.get("date", "Today"),
-        duration=detail.get("duration", "15 min"),
-        score=detail.get("score", 0),
-        user_id=user_id,
-        created_at=detail.get("created_at"),
-        report=detail.get("report", {}),
-        transcript=detail.get("transcript", [])
-    )
+    raise HTTPException(status_code=404, detail="Session not found or access denied.")

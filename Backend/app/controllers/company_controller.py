@@ -100,7 +100,9 @@ def evaluate_company_fast(question: CompanyQuestion, answer: str) -> AnswerAnaly
     if question.category == "Behavioral":
         behavioral_structure = {"situation", "task", "action", "result"}
         star_hits = len(tokens & behavioral_structure)
-        ownership = bool(tokens & {"i", "my", "led", "owned", "decided", "implemented"})
+        ownership = bool(tokens & {"my", "led", "owned", "decided", "implemented"}) or bool(
+            re.search(r"\bi\b", answer, flags=re.IGNORECASE)
+        )
         outcome = bool(re.search(r"\b\d+(?:\.\d+)?(?:%|x)?\b", answer)) or bool(
             tokens & {"improved", "reduced", "increased", "saved", "resolved", "delivered"}
         )
@@ -158,8 +160,12 @@ class CompanyPracticeSession:
     company_id: str
     questions: list[CompanyQuestion]
     evaluation_mode: str = "fast"
+    target_role: str = ""
     answers: list[str] = field(default_factory=list)
     analyses: list[AnswerAnalysis] = field(default_factory=list)
+    # A mobile client can retry a POST when the response is lost. Cache the
+    # response per question so a retry is safe and never advances twice.
+    answer_responses: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
     def shuffled(
@@ -168,6 +174,7 @@ class CompanyPracticeSession:
         pool: list[CompanyQuestion],
         count: int,
         evaluation_mode: str = "fast",
+        target_role: str = "",
     ) -> "CompanyPracticeSession":
         selected = list(pool)
         random.SystemRandom().shuffle(selected)
@@ -175,6 +182,7 @@ class CompanyPracticeSession:
             company_id=company_id,
             questions=selected[:count],
             evaluation_mode=evaluation_mode,
+            target_role=target_role,
         )
 
     @property
@@ -196,6 +204,14 @@ class CompanyPracticeSession:
             analysis = evaluate_company_fast(self.current_question, answer)
         self.answers.append(answer)
         self.analyses.append(analysis)
+
+    def cached_response(self, question_id: str | None) -> dict | None:
+        if not question_id:
+            return None
+        return self.answer_responses.get(question_id)
+
+    def cache_response(self, question_id: str, response: dict) -> None:
+        self.answer_responses[question_id] = response
 
     def report(self) -> dict:
         category_values: dict[str, list[float]] = defaultdict(list)

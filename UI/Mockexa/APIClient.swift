@@ -4,6 +4,7 @@ enum APIError: LocalizedError {
     case unauthorized
     case notFound
     case validationError(String)
+    case conflict(String)
     case rateLimited
     case serverError(statusCode: Int, message: String)
     case networkTimeout
@@ -19,6 +20,8 @@ enum APIError: LocalizedError {
             return "Requested resource not found on backend."
         case .validationError(let msg):
             return "Invalid request: \(msg)"
+        case .conflict(let msg):
+            return msg
         case .rateLimited:
             return "Rate limit exceeded. Please wait a moment and try again."
         case .serverError(let code, let msg):
@@ -39,12 +42,19 @@ final class APIClient {
     static let shared = APIClient()
     
     private let urlSession: URLSession
+    private var tokenRefresher: (@MainActor () async -> String?)?
     
     init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 60.0
         configuration.timeoutIntervalForResource = 90.0
         self.urlSession = URLSession(configuration: configuration)
+    }
+
+    /// AuthManager installs a single refresh callback at app startup. Protected
+    /// requests that receive 401 are retried once with the rotated access token.
+    func configureTokenRefresher(_ refresher: @escaping @MainActor () async -> String?) {
+        tokenRefresher = refresher
     }
     
     /// Performs a GET request to the specified endpoint
@@ -139,7 +149,7 @@ final class APIClient {
 
 
     
-    private func execute<T: Decodable>(request: URLRequest) async throws -> T {
+    private func execute<T: Decodable>(request: URLRequest, mayRefreshToken: Bool = true) async throws -> T {
         do {
             let (data, response) = try await urlSession.data(for: request)
             
@@ -156,9 +166,21 @@ final class APIClient {
                     throw APIError.decodingError("\(error.localizedDescription) (Body: \(bodyStr.prefix(200)))")
                 }
             case 401:
+                if mayRefreshToken,
+                   request.value(forHTTPHeaderField: "Authorization") != nil,
+                   let tokenRefresher,
+                   let freshToken = await tokenRefresher(),
+                   !freshToken.isEmpty {
+                    var retryRequest = request
+                    retryRequest.setValue("Bearer \(freshToken)", forHTTPHeaderField: "Authorization")
+                    return try await execute(request: retryRequest, mayRefreshToken: false)
+                }
                 throw APIError.unauthorized
             case 404:
                 throw APIError.notFound
+            case 409:
+                let msg = parseDetailMessage(from: data) ?? "This practice session changed. Please try again."
+                throw APIError.conflict(msg)
             case 422:
                 let msg = parseDetailMessage(from: data) ?? "Validation failed"
                 throw APIError.validationError(msg)

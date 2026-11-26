@@ -4,6 +4,7 @@ import Combine
 struct PracticeSetupView: View {
     let kind: PracticeKind
     @EnvironmentObject var auth: AuthManager
+    @AppStorage("MOCKEXA_TARGET_ROLE") private var savedTargetRole = ""
     @State private var selection: String
     @State private var duration: String
     @State private var company: String
@@ -12,13 +13,14 @@ struct PracticeSetupView: View {
     @State private var friendsAction = "create"
     @State private var roomCode = ""
     @State private var useActiveResume = true
+    @State private var didApplyRoleDefaults = false
 
     private var activeResumeContext: (context: String, role: String, jobDescription: String, name: String)? {
         ResumeViewModel.getActiveResumeContext()
     }
 
     private var supportsResumePersonalization: Bool {
-        kind != .gd || gdExperience == "ai"
+        kind != .company && kind != .aptitude && (kind != .gd || gdExperience == "ai")
     }
 
     init(kind: PracticeKind) {
@@ -36,6 +38,14 @@ struct PracticeSetupView: View {
             _selection = State(initialValue: "General HR")
             _duration = State(initialValue: "10 min")
             _company = State(initialValue: "Voice")
+        case .company:
+            _selection = State(initialValue: "Company Practice")
+            _duration = State(initialValue: "")
+            _company = State(initialValue: "")
+        case .aptitude:
+            _selection = State(initialValue: "All Categories")
+            _duration = State(initialValue: "15 min")
+            _company = State(initialValue: "")
         }
     }
 
@@ -77,6 +87,15 @@ struct PracticeSetupView: View {
 
                 options
 
+                if !savedTargetRole.isEmpty {
+                    Label("Personalized for \(savedTargetRole)", systemImage: "scope")
+                        .font(.caption.bold())
+                        .foregroundStyle(MockexaTheme.primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(MockexaTheme.primary.opacity(0.09), in: Capsule())
+                }
+
                 if supportsResumePersonalization, let active = activeResumeContext {
                     Toggle(isOn: $useActiveResume) {
                         VStack(alignment: .leading, spacing: 3) {
@@ -115,6 +134,11 @@ struct PracticeSetupView: View {
         }
         .navigationTitle(kind.displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { applyRoleDefaultsIfNeeded() }
+        .onChange(of: savedTargetRole) { _, _ in
+            didApplyRoleDefaults = false
+            applyRoleDefaultsIfNeeded()
+        }
     }
 
     var setupTitle: String {
@@ -122,6 +146,8 @@ struct PracticeSetupView: View {
         case .gd: "Set up your GD"
         case .technical: "Technical Interview"
         case .hr: "HR Interview"
+        case .company: "Company Practice"
+        case .aptitude: "Aptitude Round"
         }
     }
 
@@ -130,12 +156,16 @@ struct PracticeSetupView: View {
         case .gd: "Shape the room before you enter it."
         case .technical: "Choose your challenge."
         case .hr: "Pick a conversation style."
+        case .company: "Choose a company and practice its interview questions."
+        case .aptitude: "Practice timed placement-style multiple-choice questions."
         }
     }
 
     var startTitle: String {
         if kind == .technical { return "Start Technical Interview" }
         if kind == .hr { return "Start HR Interview" }
+        if kind == .company { return "Open Company Practice" }
+        if kind == .aptitude { return "Set Up Aptitude Round" }
         if gdExperience == "online" { return "Find Online Group" }
         if gdExperience == "friends" { return friendsAction == "join" ? "Join Friends Room" : "Create Friends Room" }
         return "Meet Your AI Panel"
@@ -168,6 +198,10 @@ struct PracticeSetupView: View {
             return "\(selection) • \(duration) difficulty"
         case .hr:
             return "\(selection) • \(company) responses"
+        case .company:
+            return "Target-company question practice"
+        case .aptitude:
+            return "Timed quantitative, logical, verbal and data interpretation practice"
         }
     }
 
@@ -194,6 +228,10 @@ struct PracticeSetupView: View {
             default: style = "Covers motivation, fit, communication, strengths, and career direction."
             }
             return "\(style) Answer using \(company.lowercased()) mode."
+        case .company:
+            return "Choose a target company, role, and question category from the company practice screen."
+        case .aptitude:
+            return "Choose categories, difficulty, question count and time limit before starting."
         }
     }
 
@@ -241,9 +279,9 @@ struct PracticeSetupView: View {
                 }
             }
         } else if kind == .technical {
-            OptionGroup(title: "Domain", values: ["Data Structures", "Algorithms", "Operating Systems", "DBMS", "OOP", "Software Engineering", "Programming"], selection: $selection)
+            OptionGroup(title: "Role-relevant Domain", values: RolePersonalization.technicalDomains(for: savedTargetRole), selection: $selection)
             OptionGroup(title: "Difficulty", values: ["Easy", "Medium", "Hard"], selection: $duration)
-        } else {
+        } else if kind == .hr {
             OptionGroup(title: "Interview Style", values: ["General HR", "Behavioral", "Leadership", "Situational", "Stress Interview"], selection: $selection)
             OptionGroup(title: "Response Mode", values: ["Voice", "Type"], selection: $company)
         }
@@ -257,6 +295,27 @@ struct PracticeSetupView: View {
         }
     }
 
+    private func applyRoleDefaultsIfNeeded() {
+        guard !didApplyRoleDefaults, !savedTargetRole.isEmpty else { return }
+        didApplyRoleDefaults = true
+        switch kind {
+        case .technical:
+            selection = RolePersonalization.technicalDomains(for: savedTargetRole).first ?? selection
+        case .hr:
+            selection = RolePersonalization.hrStyle(for: savedTargetRole)
+        case .gd:
+            selection = RolePersonalization.gdTopic(for: savedTargetRole)
+        case .company, .aptitude:
+            break
+        }
+    }
+
+    private var roleAwareGDContext: String {
+        let resume = useActiveResume ? (activeResumeContext?.context ?? "") : ""
+        guard !savedTargetRole.isEmpty else { return resume }
+        return (["Target role: \(savedTargetRole)", resume].filter { !$0.isEmpty }).joined(separator: "\n")
+    }
+
     @ViewBuilder var destination: some View {
         if kind == .gd {
             if gdExperience == "ai" {
@@ -265,7 +324,7 @@ struct PracticeSetupView: View {
                     durationStr: duration,
                     modeStr: company,
                     aiStarts: gdStarter == "AI starts",
-                    resumeContext: useActiveResume ? activeResumeContext?.context : "",
+                    resumeContext: roleAwareGDContext,
                     jobDescription: useActiveResume ? activeResumeContext?.jobDescription : ""
                 )
             } else {
@@ -274,6 +333,10 @@ struct PracticeSetupView: View {
                     topic: selection, durationStr: duration, mode: company, roomCode: roomCode
                 )
             }
+        } else if kind == .company {
+            CompanyQuestionBankView()
+        } else if kind == .aptitude {
+            AptitudeSetupView()
         } else {
             LiveInterviewView(
                 kind: kind,
@@ -282,7 +345,7 @@ struct PracticeSetupView: View {
                 modeStr: company,
                 resumeContext: useActiveResume ? activeResumeContext?.context : "",
                 jobDescription: useActiveResume ? activeResumeContext?.jobDescription : "",
-                targetRole: useActiveResume ? activeResumeContext?.role : nil
+                targetRole: savedTargetRole.isEmpty ? (useActiveResume ? activeResumeContext?.role : nil) : savedTargetRole
             )
         }
     }
@@ -2109,6 +2172,47 @@ struct ReportView: View {
                                 color: MockexaTheme.secondary,
                                 items: [summary]
                             )
+                        }
+                        if kind == .company || kind == .aptitude {
+                            let categoryScores = (report["category_scores"]?.value as? [String: Any] ?? [:])
+                                .compactMap { key, value -> (String, Double)? in
+                                    guard let score = number(value) else { return nil }
+                                    return (key, score)
+                                }
+                                .sorted { $0.0 < $1.0 }
+                            if !categoryScores.isEmpty {
+                                ReportSection(
+                                    title: "Category Performance",
+                                    icon: "chart.bar.fill",
+                                    color: MockexaTheme.secondary,
+                                    items: categoryScores.map { "\($0.0): \(Int($0.1.rounded()))%" }
+                                )
+                            }
+                            let strengths = stringArray(report["strengths"]?.value)
+                            let focusAreas = stringArray(report["focus_areas"]?.value)
+                            if !strengths.isEmpty {
+                                ReportSection(title: "Strong Areas", icon: "checkmark.circle.fill", color: MockexaTheme.success, items: strengths)
+                            }
+                            if !focusAreas.isEmpty {
+                                ReportSection(title: "Focus Next", icon: "scope", color: MockexaTheme.warning, items: focusAreas)
+                            }
+                            if kind == .aptitude {
+                                let attempted = Int(number(report["attempted"]?.value) ?? 0)
+                                let correct = Int(number(report["correct"]?.value) ?? 0)
+                                let incorrect = Int(number(report["incorrect"]?.value) ?? 0)
+                                let unanswered = Int(number(report["unanswered"]?.value) ?? 0)
+                                ReportSection(
+                                    title: "Round Summary",
+                                    icon: "timer",
+                                    color: MockexaTheme.primary,
+                                    items: [
+                                        "Attempted: \(attempted)",
+                                        "Correct: \(correct)",
+                                        "Incorrect: \(incorrect)",
+                                        "Unanswered: \(unanswered)"
+                                    ]
+                                )
+                            }
                         }
                     } else if kind == .technical, let report = techVM?.reportData {
                         let domainScores = (report["domain_scores"]?.value as? [String: Any] ?? [:])

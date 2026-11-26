@@ -195,12 +195,23 @@ final class AuthManager: ObservableObject {
     private let keychainKey = "MOCKEXA_ACTIVE_SESSION"
     private let installFlagKey = "MOCKEXA_APP_INSTALLED_FLAG"
     private let preferencesOwnerKey = "MOCKEXA_PREFERENCES_OWNER"
+    // ASWebAuthenticationSession and its presentation provider must stay alive
+    // until Google redirects back to the app. Keeping them only as local
+    // variables can drop the callback after the browser finishes successfully.
+    private var googleAuthSession: ASWebAuthenticationSession?
+    private var googleAuthContextProvider: GoogleAuthContextProvider?
+    private var accessTokenRefreshTask: Task<String?, Never>?
     
     init() {
         restoreSession()
+        APIClient.shared.configureTokenRefresher { [weak self] in
+            await self?.recoverAccessTokenAfterUnauthorized()
+        }
     }
     
-    /// Restores a previously saved real session from Keychain or UserDefaults
+    /// Restores a previously saved real session from Keychain. Older builds
+    /// wrote a duplicate session to UserDefaults; migrate it once, then erase
+    /// that plaintext fallback so bearer and refresh tokens remain in Keychain.
     func restoreSession() {
         let isAppInstalled = UserDefaults.standard.bool(forKey: installFlagKey)
         if !isAppInstalled {
@@ -212,7 +223,13 @@ final class AuthManager: ObservableObject {
             return
         }
         
-        guard let savedData = KeychainHelper.load(key: keychainKey) ?? UserDefaults.standard.data(forKey: keychainKey),
+        let legacySessionData = UserDefaults.standard.data(forKey: keychainKey)
+        if KeychainHelper.load(key: keychainKey) == nil, let legacySessionData {
+            KeychainHelper.save(key: keychainKey, data: legacySessionData)
+        }
+        UserDefaults.standard.removeObject(forKey: keychainKey)
+
+        guard let savedData = KeychainHelper.load(key: keychainKey),
               let session = try? JSONDecoder().decode(AuthSession.self, from: savedData) else {
             isRestoringSession = false
             return
@@ -340,7 +357,7 @@ final class AuthManager: ObservableObject {
     }
 
     private func persistUpdatedEmailInSession(_ newEmail: String) {
-        if let savedData = KeychainHelper.load(key: keychainKey) ?? UserDefaults.standard.data(forKey: keychainKey),
+        if let savedData = KeychainHelper.load(key: keychainKey),
            let session = try? JSONDecoder().decode(AuthSession.self, from: savedData) {
             let updated = AuthSession(
                 accessToken: session.accessToken,
@@ -352,7 +369,6 @@ final class AuthManager: ObservableObject {
             )
             if let data = try? JSONEncoder().encode(updated) {
                 KeychainHelper.save(key: keychainKey, data: data)
-                UserDefaults.standard.set(data, forKey: keychainKey)
             }
         }
     }
@@ -571,6 +587,36 @@ final class AuthManager: ObservableObject {
         } catch {
             return false
         }
+    }
+
+    /// Coalesces simultaneous 401 responses so Supabase's rotating refresh
+    /// token is consumed only once, then every waiting request reuses the same
+    /// new access token.
+    private func recoverAccessTokenAfterUnauthorized() async -> String? {
+        if let accessTokenRefreshTask {
+            return await accessTokenRefreshTask.value
+        }
+
+        guard let savedData = KeychainHelper.load(key: keychainKey),
+              let session = try? JSONDecoder().decode(AuthSession.self, from: savedData),
+              let refreshToken = session.refreshToken,
+              !refreshToken.isEmpty else {
+            NotificationCenter.default.post(name: Notification.Name("MOCKEXA_SESSION_EXPIRED"), object: nil)
+            return nil
+        }
+
+        let task = Task { @MainActor [weak self] () -> String? in
+            guard let self, await self.refreshSession(with: refreshToken) else { return nil }
+            return self.accessToken
+        }
+        accessTokenRefreshTask = task
+        let refreshedToken = await task.value
+        accessTokenRefreshTask = nil
+
+        if refreshedToken == nil {
+            NotificationCenter.default.post(name: Notification.Name("MOCKEXA_SESSION_EXPIRED"), object: nil)
+        }
+        return refreshedToken
     }
     
     /// Sign in using real Supabase Auth REST API (`/auth/v1/token?grant_type=password`)
@@ -809,6 +855,7 @@ final class AuthManager: ObservableObject {
     /// Sign out and clear stored real session
     func signOut() {
         KeychainHelper.delete(key: keychainKey)
+        // Also remove the insecure legacy fallback created by older builds.
         UserDefaults.standard.removeObject(forKey: keychainKey)
         accessToken = nil
         currentUserId = ""
@@ -818,6 +865,46 @@ final class AuthManager: ObservableObject {
         currentUserAge = nil
         currentUserPhotoData = nil
         isAuthenticated = false
+    }
+
+    /// Removes this user's device-local profile, resume and preference data,
+    /// then signs out. This intentionally does not claim to delete the remote
+    /// Supabase identity; cloud account deletion requires a trusted server-side
+    /// administrative workflow.
+    func eraseLocalDataAndSignOut() {
+        let userId = currentUserId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let defaults = UserDefaults.standard
+
+        if !userId.isEmpty {
+            let suffix = "_\(userId)"
+            for key in defaults.dictionaryRepresentation().keys where
+                (key.hasPrefix("MOCKEXA_") || key.hasPrefix("mockexa_")) && key.hasSuffix(suffix) {
+                defaults.removeObject(forKey: key)
+            }
+
+            if defaults.string(forKey: "mockexa_resume_storage_owner") == userId {
+                defaults.removeObject(forKey: "mockexa_resume_storage_owner")
+                defaults.removeObject(forKey: "mockexa_resume_profiles_list")
+                defaults.removeObject(forKey: "mockexa_active_profile_id")
+                defaults.removeObject(forKey: "mockexa_resume_builder_data")
+            }
+
+            if defaults.string(forKey: preferencesOwnerKey) == userId {
+                defaults.removeObject(forKey: preferencesOwnerKey)
+                for key in [
+                    "MOCKEXA_STUDY_FIELD", "MOCKEXA_TARGET_ROLE",
+                    "MOCKEXA_TARGET_COMPANIES", "MOCKEXA_CONFIDENCE_LEVEL"
+                ] {
+                    defaults.removeObject(forKey: key)
+                }
+            }
+        }
+
+        defaults.removeObject(forKey: "MOCKEXA_LAST_EMAIL")
+        defaults.removeObject(forKey: "MOCKEXA_ONBOARDING_COMPLETED")
+        defaults.removeObject(forKey: keychainKey)
+
+        signOut()
     }
     
     private func saveSession(_ session: AuthSession, rawData: Data? = nil) {
@@ -864,7 +951,7 @@ final class AuthManager: ObservableObject {
 
         if let data = try? JSONEncoder().encode(sessionToStore) {
             KeychainHelper.save(key: keychainKey, data: data)
-            UserDefaults.standard.set(data, forKey: keychainKey)
+            UserDefaults.standard.removeObject(forKey: keychainKey)
         }
         self.isAuthenticated = true
         activatePreferences(for: session.userId)
@@ -1008,8 +1095,30 @@ final class AuthManager: ObservableObject {
         defer { isLoading = false }
         
         let supabaseURL = MockexaConfig.supabaseURL
+        let anonKey = MockexaConfig.supabaseAnonKey
         let scheme = "mockexa"
         let redirectURL = "mockexa://auth/callback"
+
+        // Do not send the user into Safari when the configured Supabase
+        // project has been paused, deleted, or mistyped. ASWebAuthenticationSession
+        // otherwise displays the unhelpful "server can't be found" page.
+        guard let settingsURL = URL(string: "\(supabaseURL)/auth/v1/settings") else {
+            authError = "Google sign-in is not configured correctly. Check the Supabase project URL."
+            return false
+        }
+        var preflight = URLRequest(url: settingsURL)
+        preflight.timeoutInterval = 8
+        preflight.setValue(anonKey, forHTTPHeaderField: "apikey")
+        do {
+            let (_, response) = try await URLSession.shared.data(for: preflight)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                authError = "Google sign-in server is unavailable. Restore the Supabase project or update its URL in App Settings."
+                return false
+            }
+        } catch {
+            authError = "Google sign-in server cannot be reached. Restore the Supabase project or update its URL in App Settings."
+            return false
+        }
         
         let allowedQuery = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
         guard let encodedRedirect = redirectURL.addingPercentEncoding(withAllowedCharacters: allowedQuery),
@@ -1020,6 +1129,8 @@ final class AuthManager: ObservableObject {
         
         return await withCheckedContinuation { continuation in
             let session = ASWebAuthenticationSession(url: authURL, callbackURLScheme: scheme) { callbackURL, error in
+                self.googleAuthSession = nil
+                self.googleAuthContextProvider = nil
                 if let error = error as? ASWebAuthenticationSessionError, error.code == .canceledLogin {
                     continuation.resume(returning: false)
                     return
@@ -1048,9 +1159,16 @@ final class AuthManager: ObservableObject {
             }
             
             let contextProvider = GoogleAuthContextProvider()
+            self.googleAuthSession = session
+            self.googleAuthContextProvider = contextProvider
             session.presentationContextProvider = contextProvider
             session.prefersEphemeralWebBrowserSession = false
-            session.start()
+            if !session.start() {
+                self.googleAuthSession = nil
+                self.googleAuthContextProvider = nil
+                self.authError = "Google sign-in could not be started. Please try again."
+                continuation.resume(returning: false)
+            }
         }
     }
     

@@ -570,6 +570,8 @@ struct SessionSummaryItem: Codable, Identifiable, Hashable {
         case "gd", "group discussion": return .gd
         case "hr", "hr interview": return .hr
         case "technical", "tech", "technical interview": return .technical
+        case "company", "company practice": return .company
+        case "aptitude", "aptitude round": return .aptitude
         default: return nil
         }
     }
@@ -609,6 +611,8 @@ struct SessionDetailItem: Codable, Identifiable, Hashable {
         case "gd", "group discussion": return .gd
         case "hr", "hr interview": return .hr
         case "technical", "tech", "technical interview": return .technical
+        case "company", "company practice": return .company
+        case "aptitude", "aptitude round": return .aptitude
         default: return nil
         }
     }

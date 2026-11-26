@@ -59,6 +59,7 @@ Backend/group_d/model/*.pt
 *.log
 *.tmp
 scratch/
+tmp/
 
 # Generated review/export artifacts
 .ppt-work/

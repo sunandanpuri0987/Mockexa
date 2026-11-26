@@ -39,12 +39,19 @@ python -m pytest tests/ -v
 
 The test suite covers GD generation, Technical evaluation, HR scoring, Auth middleware, Model router fallback, and Session persistence.
 
+## Cloud deployment
+
+The repository root contains `render.yaml` for a Render Blueprint deployment.
+It provisions the FastAPI service with managed HTTPS, installs the lean
+production dependency set from `requirements-prod.txt`, starts Uvicorn on
+Render's assigned port, and checks `/health` during deploys. Secret values stay
+in the Render environment and must never be committed to Git.
+
 ## Group Discussion (GD) Model Provider
 
-- **Default Provider**: Group Discussion AI turns run through Gemini (`GD_GENERATION_BACKEND=gemini` in `.env`).
-- **Optional Local ML Model**: The codebase supports a local `Qwen2.5-1.5B-Instruct` LoRA adapter (`GD_GENERATION_BACKEND=local`).
-- **Model Weight Artifacts**: Heavy binary weights (`group_d/model/adapter_model.safetensors`, ~141 MB) are intentionally **excluded** from Git source control to maintain repository size limits.
-- **Local Developer Setup**: Developers who wish to run local CPU/GPU ML inference should obtain `adapter_model.safetensors` separately and place it in `Backend/group_d/model/`.
+- **Production Provider**: Group Discussion AI turns run through Gemini.
+- **Failure Handling**: The GD controller keeps a deterministic, persona-specific fallback for temporary provider failures.
+- **No Local Weights Required**: A fresh checkout does not download or load PyTorch/Qwen model artifacts.
 
 ## Architecture & Layout
 
@@ -61,7 +68,7 @@ app/
   providers/
     llm_backend.py                 LLM protocol definitions & exception handling
     gemini_backend.py                Gemini Cloud SDK integration with retry & token budget
-    model_router.py                Dynamic routing between Gemini and local ML models
+    model_router.py                Provider-neutral task routing and token budgets
   routers/
     health.py, gd.py, technical.py, hr.py, sessions.py Active API routes
   schemas/                         Pydantic DTO request and response models
