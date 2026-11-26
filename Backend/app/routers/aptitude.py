@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import random
+import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -11,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.auth import get_current_user_id, get_raw_jwt_token
 from app.config import Settings, get_settings
-from app.controllers.aptitude_controller import AptitudeSession
+from app.controllers.aptitude_controller import AptitudeAnswer, AptitudeSession
 from app.data.aptitude_questions import CATEGORIES, QUESTIONS
 from app.repository import SupabaseRepository
 from app.schemas.aptitude import (
@@ -27,6 +29,50 @@ from app.utils.session_store import aptitude_reports, aptitude_sessions, complet
 
 router = APIRouter(prefix="/aptitude", tags=["aptitude round"])
 logger = logging.getLogger("mockexa.aptitude")
+_STATE_PREFIX = "mockexa:aptitude:v1:"
+_QUESTION_BY_ID = {question.id: question for question in QUESTIONS}
+
+
+def _encode_active_state(session: AptitudeSession) -> str:
+    payload = {
+        "question_ids": [question.id for question in session.questions],
+        "duration_seconds": session.duration_seconds,
+        "target_role": session.target_role,
+        "started_at_epoch": time.time() - session.elapsed_seconds,
+        "answers": [
+            {"question_id": answer.question_id, "selected_index": answer.selected_index}
+            for answer in session.answers
+        ],
+        "cached_responses": session.cached_responses,
+    }
+    return _STATE_PREFIX + json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+
+
+def _decode_active_state(topic: str | None) -> AptitudeSession | None:
+    if not topic or not topic.startswith(_STATE_PREFIX):
+        return None
+    try:
+        payload = json.loads(topic[len(_STATE_PREFIX):])
+        questions = [_QUESTION_BY_ID[question_id] for question_id in payload["question_ids"]]
+        elapsed = max(0.0, time.time() - float(payload["started_at_epoch"]))
+        session = AptitudeSession(
+            questions=questions,
+            duration_seconds=int(payload["duration_seconds"]),
+            target_role=str(payload.get("target_role") or ""),
+            started_at=time.monotonic() - elapsed,
+        )
+        for item in payload.get("answers", []):
+            question = _QUESTION_BY_ID[str(item["question_id"])]
+            selected_index = int(item["selected_index"])
+            session.answers.append(AptitudeAnswer(
+                question_id=question.id,
+                selected_index=selected_index,
+                correct=selected_index == question.correct_index,
+            ))
+        session.cached_responses = dict(payload.get("cached_responses") or {})
+        return session
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
 
 
 class _SessionLocks:
@@ -91,7 +137,12 @@ async def categories(_: str = Depends(get_current_user_id)):
 
 
 @router.post("/start", response_model=AptitudeStartResponse)
-async def start(request: AptitudeStartRequest, user_id: str = Depends(get_current_user_id)):
+async def start(
+    request: AptitudeStartRequest,
+    user_id: str = Depends(get_current_user_id),
+    raw_token: str = Depends(get_raw_jwt_token),
+    settings: Settings = Depends(get_settings),
+):
     selected_categories = _normalized_categories(request.categories)
     if not selected_categories:
         selected_categories = _role_categories(request.target_role)
@@ -120,7 +171,21 @@ async def start(request: AptitudeStartRequest, user_id: str = Depends(get_curren
         duration_seconds=request.duration_minutes * 60,
         target_role=request.target_role or "",
     )
-    session_id = str(uuid.uuid4())
+    if settings.use_supabase_persistence:
+        repo = SupabaseRepository()
+        await repo.ensure_profile(user_id, raw_token)
+        db_session = await repo.create_session({
+            "user_id": user_id,
+            "kind": "aptitude",
+            "role": session.target_role or "Candidate",
+            "domains": selected_categories,
+            "topic": _encode_active_state(session),
+            "duration_min": request.duration_minutes,
+            "question_count": len(session.questions),
+        }, raw_token)
+        session_id = db_session["id"]
+    else:
+        session_id = str(uuid.uuid4())
     aptitude_sessions.save(session_id, user_id, session)
     return AptitudeStartResponse(
         session_id=session_id,
@@ -132,13 +197,31 @@ async def start(request: AptitudeStartRequest, user_id: str = Depends(get_curren
 
 
 @router.post("/answer", response_model=AptitudeAnswerResponse)
-async def answer(request: AptitudeAnswerRequest, user_id: str = Depends(get_current_user_id)):
+async def answer(
+    request: AptitudeAnswerRequest,
+    user_id: str = Depends(get_current_user_id),
+    raw_token: str = Depends(get_raw_jwt_token),
+    settings: Settings = Depends(get_settings),
+):
     async with session_locks.lock(request.session_id):
         session: AptitudeSession | None = aptitude_sessions.load(request.session_id, user_id)
+        repo = None
+        if session is None and settings.use_supabase_persistence:
+            repo = SupabaseRepository()
+            try:
+                db_session = await repo.session(request.session_id, user_id, raw_token)
+                session = _decode_active_state(db_session.get("topic"))
+            except Exception:
+                session = None
+            if session is not None:
+                aptitude_sessions.save(request.session_id, user_id, session)
         if session is None:
             raise HTTPException(status_code=404, detail="unknown or expired aptitude session")
         cached = session.cached_responses.get(request.question_id)
         if cached is not None:
+            if settings.use_supabase_persistence:
+                repo = repo or SupabaseRepository()
+                await repo.update_session(request.session_id, user_id, raw_token, {"topic": _encode_active_state(session)})
             return AptitudeAnswerResponse.model_validate(cached)
         if session.expired:
             raise HTTPException(status_code=409, detail="Time is up. Finish the aptitude round to view your result.")
@@ -165,6 +248,9 @@ async def answer(request: AptitudeAnswerRequest, user_id: str = Depends(get_curr
             completed=session.completed,
         )
         session.cached_responses[question.id] = response.model_dump()
+        if settings.use_supabase_persistence:
+            repo = repo or SupabaseRepository()
+            await repo.update_session(request.session_id, user_id, raw_token, {"topic": _encode_active_state(session)})
         return response
 
 
@@ -180,6 +266,12 @@ async def finish(
         if cached is not None:
             return cached
         session: AptitudeSession | None = aptitude_sessions.load(session_id, user_id)
+        if session is None and settings.use_supabase_persistence:
+            try:
+                db_session = await SupabaseRepository().session(session_id, user_id, raw_token)
+                session = _decode_active_state(db_session.get("topic"))
+            except Exception:
+                session = None
         if session is None:
             raise HTTPException(status_code=404, detail="unknown or expired aptitude session")
 
@@ -216,16 +308,6 @@ async def finish(
             try:
                 repo = SupabaseRepository()
                 await repo.ensure_profile(user_id, raw_token)
-                await repo.create_session({
-                    "id": session_id,
-                    "user_id": user_id,
-                    "kind": "aptitude",
-                    "role": session.target_role or "Candidate",
-                    "domains": sorted(report["category_scores"].keys()),
-                    "topic": "Aptitude Round",
-                    "duration_min": max(1, (report["time_taken_seconds"] + 59) // 60),
-                    "question_count": len(session.questions),
-                }, raw_token)
                 await repo.upsert_feedback({
                     "session_id": session_id,
                     "overall_score": report["overall_score"],
@@ -236,7 +318,10 @@ async def finish(
                     "recommendations": report["focus_areas"],
                     "summary": f"{report['correct']} of {report['total_questions']} aptitude questions correct.",
                 }, raw_token)
-                await repo.update_session(session_id, user_id, raw_token, {"status": "completed"})
+                await repo.update_session(session_id, user_id, raw_token, {
+                    "status": "completed",
+                    "duration_min": max(1, (report["time_taken_seconds"] + 59) // 60),
+                })
             except Exception as exc:
                 logger.warning("aptitude_history_cloud_sync_failed session_id=%s error=%s", session_id, exc)
         try:

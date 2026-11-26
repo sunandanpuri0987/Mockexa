@@ -41,6 +41,23 @@ def _safe_score(value: Any) -> int:
         return 0
 
 
+def _display_topic(kind: str, raw_topic: Any, role: Any = None) -> str:
+    """Hide durable active-state envelopes from user-facing history."""
+    topic = str(raw_topic or "")
+    if topic.startswith("mockexa:aptitude:v1:"):
+        return "Aptitude Round"
+    if topic.startswith("mockexa:company:v1:"):
+        try:
+            payload = json.loads(topic.split(":", 3)[3])
+            company_id = str(payload.get("company_id") or "").strip()
+            if company_id:
+                return f"{company_id.replace('-', ' ').title()} Practice"
+        except (json.JSONDecodeError, TypeError, ValueError):
+            pass
+        return "Company Practice"
+    return topic or str(role or "") or "Interview Practice"
+
+
 def _local_summary(session: dict[str, Any]) -> SessionSummaryOut:
     return SessionSummaryOut(
         id=session["id"],
@@ -106,7 +123,7 @@ async def list_user_sessions(
                 fb = feedback_by_session.get(sid)
                 score = fb.get("overall_score", 0) if (fb and isinstance(fb, dict)) else 0
                 kind = s.get("kind", "technical")
-                topic = s.get("topic") or s.get("role") or "Interview Practice"
+                topic = _display_topic(kind, s.get("topic"), s.get("role"))
                 started = s.get("started_at")
                 date_formatted = _format_date(started)
                 result.append(SessionSummaryOut(
@@ -165,7 +182,7 @@ async def get_user_session_detail(
             
         score = fb.get("overall_score", 0) if (fb and isinstance(fb, dict)) else 0
         kind = db_session.get("kind", "technical")
-        topic = db_session.get("topic") or db_session.get("role") or "Interview Practice"
+        topic = _display_topic(kind, db_session.get("topic"), db_session.get("role"))
         started = db_session.get("started_at")
         date_formatted = _format_date(started)
         

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import random
 import uuid
@@ -17,7 +18,7 @@ from app.controllers.company_controller import (
     evaluate_company_fast,
     feedback_for,
 )
-from app.controllers.technical_controller import StructuredOutputValidator
+from app.controllers.technical_controller import AnswerAnalysis, StructuredOutputValidator
 from app.controllers.technical_gemini_backend import GeminiTechnicalBackend
 from app.data.company_questions import COMPANIES, COMPANY_BY_ID, QUESTIONS
 from app.providers.gemini_backend import GeminiBackend
@@ -40,6 +41,73 @@ from app.utils.session_store import company_reports, company_sessions, completed
 router = APIRouter(prefix="/company", tags=["company practice"])
 logger = logging.getLogger("mockexa.company")
 VALID_CATEGORIES = {"DSA", "Technical", "System Design", "Behavioral"}
+_STATE_PREFIX = "mockexa:company:v1:"
+_QUESTION_BY_ID = {question.id: question for question in QUESTIONS}
+
+
+def _analysis_dict(analysis: AnswerAnalysis) -> dict:
+    return {
+        "classification": analysis.classification,
+        "correctness": analysis.correctness,
+        "completeness": analysis.completeness,
+        "relevance": analysis.relevance,
+        "reasoning": analysis.reasoning,
+        "missing_concepts": list(analysis.missing_concepts),
+        "misconceptions": list(analysis.misconceptions),
+        "overall_score": analysis.overall_score,
+        "feedback": analysis.feedback,
+    }
+
+
+def _encode_active_state(session: CompanyPracticeSession) -> str:
+    payload = {
+        "company_id": session.company_id,
+        "question_ids": [question.id for question in session.questions],
+        "evaluation_mode": session.evaluation_mode,
+        "target_role": session.target_role,
+        "answers": session.answers,
+        "analyses": [_analysis_dict(analysis) for analysis in session.analyses],
+        "answer_responses": session.answer_responses,
+    }
+    return _STATE_PREFIX + json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+
+
+def _decode_active_state(topic: str | None) -> CompanyPracticeSession | None:
+    if not topic or not topic.startswith(_STATE_PREFIX):
+        return None
+    try:
+        payload = json.loads(topic[len(_STATE_PREFIX):])
+        questions = [_QUESTION_BY_ID[question_id] for question_id in payload["question_ids"]]
+        analyses = [
+            AnswerAnalysis(
+                classification=str(item["classification"]),
+                correctness=float(item["correctness"]),
+                completeness=float(item["completeness"]),
+                relevance=float(item["relevance"]),
+                reasoning=float(item["reasoning"]),
+                missing_concepts=tuple(item.get("missing_concepts") or ()),
+                misconceptions=tuple(item.get("misconceptions") or ()),
+                overall_score=float(item["overall_score"]),
+                feedback=str(item.get("feedback") or ""),
+            )
+            for item in payload.get("analyses", [])
+        ]
+        answers = [str(answer) for answer in payload.get("answers", [])]
+        if len(answers) != len(analyses) or len(answers) > len(questions):
+            return None
+        return CompanyPracticeSession(
+            company_id=str(payload["company_id"]),
+            questions=questions,
+            evaluation_mode=str(payload.get("evaluation_mode") or "fast"),
+            target_role=str(payload.get("target_role") or ""),
+            answers=answers,
+            analyses=analyses,
+            answer_responses=dict(payload.get("answer_responses") or {}),
+        )
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
 class CompanySessionLockManager:
     """Reference-counted process-local locks without retaining finished IDs."""
 
@@ -158,7 +226,12 @@ async def questions(
 
 
 @router.post("/start", response_model=CompanyStartResponse)
-async def start(request: CompanyStartRequest, user_id: str = Depends(get_current_user_id)):
+async def start(
+    request: CompanyStartRequest,
+    user_id: str = Depends(get_current_user_id),
+    raw_token: str = Depends(get_raw_jwt_token),
+    settings: Settings = Depends(get_settings),
+):
     company_id = request.company_id.casefold()
     if company_id not in COMPANY_BY_ID:
         raise HTTPException(status_code=404, detail="unsupported company")
@@ -176,7 +249,21 @@ async def start(request: CompanyStartRequest, user_id: str = Depends(get_current
         evaluation_mode=request.evaluation_mode,
         target_role=request.role or "",
     )
-    session_id = str(uuid.uuid4())
+    if settings.use_supabase_persistence:
+        repo = SupabaseRepository()
+        await repo.ensure_profile(user_id, raw_token)
+        db_session = await repo.create_session({
+            "user_id": user_id,
+            "kind": "company",
+            "role": session.target_role or "Candidate",
+            "domains": normalized_categories,
+            "topic": _encode_active_state(session),
+            "duration_min": max(1, len(session.questions) * 3),
+            "question_count": len(session.questions),
+        }, raw_token)
+        session_id = db_session["id"]
+    else:
+        session_id = str(uuid.uuid4())
     company_sessions.save(session_id, user_id, session)
     return CompanyStartResponse(
         session_id=session_id,
@@ -191,15 +278,29 @@ async def start(request: CompanyStartRequest, user_id: str = Depends(get_current
 async def answer(
     request: CompanyAnswerRequest,
     user_id: str = Depends(get_current_user_id),
+    raw_token: str = Depends(get_raw_jwt_token),
     settings: Settings = Depends(get_settings),
 ):
     async with company_session_locks.lock(request.session_id):
         session = company_sessions.load(request.session_id, user_id)
+        repo = None
+        if session is None and settings.use_supabase_persistence:
+            repo = SupabaseRepository()
+            try:
+                db_session = await repo.session(request.session_id, user_id, raw_token)
+                session = _decode_active_state(db_session.get("topic"))
+            except Exception:
+                session = None
+            if session is not None:
+                company_sessions.save(request.session_id, user_id, session)
         if session is None:
             raise HTTPException(status_code=404, detail="unknown or expired company session")
 
         cached = session.cached_response(request.question_id)
         if cached is not None:
+            if settings.use_supabase_persistence:
+                repo = repo or SupabaseRepository()
+                await repo.update_session(request.session_id, user_id, raw_token, {"topic": _encode_active_state(session)})
             return CompanyAnswerResponse.model_validate(cached)
 
         question = session.current_question
@@ -252,6 +353,9 @@ async def answer(
             completed=session.completed,
         )
         session.cache_response(question.id, response.model_dump())
+        if settings.use_supabase_persistence:
+            repo = repo or SupabaseRepository()
+            await repo.update_session(request.session_id, user_id, raw_token, {"topic": _encode_active_state(session)})
         return response
 
 
@@ -267,6 +371,12 @@ async def finish(
         if cached is not None:
             return cached
         session = company_sessions.load(session_id, user_id)
+        if session is None and settings.use_supabase_persistence:
+            try:
+                db_session = await SupabaseRepository().session(session_id, user_id, raw_token)
+                session = _decode_active_state(db_session.get("topic"))
+            except Exception:
+                session = None
         if session is None:
             raise HTTPException(status_code=404, detail="unknown or expired company session")
         if not session.answers:
@@ -312,16 +422,6 @@ async def finish(
             try:
                 repo = SupabaseRepository()
                 await repo.ensure_profile(user_id, raw_token)
-                await repo.create_session({
-                    "id": session_id,
-                    "user_id": user_id,
-                    "kind": "company",
-                    "role": session.target_role or "Candidate",
-                    "domains": sorted(report["category_scores"].keys()),
-                    "topic": f"{company.name} Practice",
-                    "duration_min": max(1, len(session.answers) * 3),
-                    "question_count": len(session.questions),
-                }, raw_token)
                 await repo.upsert_feedback({
                     "session_id": session_id,
                     "overall_score": report["overall_score"],
@@ -332,7 +432,10 @@ async def finish(
                     "recommendations": report["focus_areas"],
                     "summary": f"Completed {report['questions_answered']} {company.name} interview questions.",
                 }, raw_token)
-                await repo.update_session(session_id, user_id, raw_token, {"status": "completed"})
+                await repo.update_session(session_id, user_id, raw_token, {
+                    "status": "completed",
+                    "duration_min": max(1, len(session.answers) * 3),
+                })
             except Exception as exc:
                 # The finished report remains available locally; a temporary
                 # cloud outage must not discard a candidate's completed round.
