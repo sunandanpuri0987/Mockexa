@@ -113,6 +113,11 @@ struct HealthResponse: Codable {
     }
 }
 
+struct AccountDeletionResponse: Codable {
+    let deleted: Bool
+    let message: String
+}
+
 // MARK: - Technical Interview Schemas
 struct TechnicalStartRequest: Codable {
     let name: String

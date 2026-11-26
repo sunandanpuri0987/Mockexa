@@ -313,6 +313,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 The production backend is available at `https://mockexa-api.onrender.com`. Verify it at `https://mockexa-api.onrender.com/health` or open interactive docs at `https://mockexa-api.onrender.com/docs`. Local development can still use `http://127.0.0.1:8000` through a configuration override.
 
+Public legal pages are served by the backend at `/legal/privacy` and `/legal/terms`. Signed-in users can permanently remove their Mockexa account and associated Supabase data from **Account Settings → Delete Cloud Account**; confirmation requires typing `DELETE` before the app calls `DELETE /account`.
+
 ### 2. Running the iOS Application
 
 1. Open `UI/Mockexa.xcodeproj` in Xcode.
@@ -359,6 +361,8 @@ Gemini, ElevenLabs, and OpenAI are optional for local development: the backend u
 When `MOCKEXA_ENV=production`, the backend fails closed if CORS is wildcarded, Supabase persistence is disabled, authentication storage is missing, or rate limiting is disabled. The built-in limiter protects a single process; a multi-replica deployment should enforce a shared Redis/API-gateway limit as well.
 
 The iOS backend URL resolves in this order: a saved in-app override, the `MOCKEXA_BACKEND_BASE_URL` process environment variable, `Info.plist`, then the production HTTPS default `https://mockexa-api.onrender.com`. Simulator and physical-device builds therefore work without a Mac-hosted backend. Developers can still set an override for local testing.
+
+> **Pending release check (27 November 2026)**: Repeat the complete authenticated flow on a physical iPhone over mobile data or a different Wi-Fi network. The simulator build and automated backend tests are verified; this physical-device production check was intentionally deferred.
 
 > **Security Note**: Never commit actual API keys or credentials to repository source control.
 

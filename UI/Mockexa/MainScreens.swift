@@ -1752,6 +1752,8 @@ struct AccountSettingsSheet: View {
     @EnvironmentObject var app: AppModel
     @Environment(\.dismiss) private var dismiss
     @State private var showEraseConfirmation = false
+    @State private var showDeleteAccount = false
+    @State private var legalDocument: LegalDocument?
 
     var body: some View {
         NavigationStack {
@@ -1795,9 +1797,43 @@ struct AccountSettingsSheet: View {
                                 .buttonStyle(.bordered)
                                 .tint(MockexaTheme.destructive)
 
-                                Text("This does not delete your cloud identity. Remote account deletion will be offered only when the production server-side deletion workflow is configured.")
+                                Text("This affects only this iPhone. Your Mockexa account and cloud data remain available.")
                                     .font(.caption)
                                     .foregroundStyle(MockexaTheme.textSecondary)
+                            }
+                        }
+
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("LEGAL & PRIVACY")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(MockexaTheme.primary)
+                                ProfileRowButton(icon: "hand.raised.fill", title: "Privacy Policy", subtitle: "How Mockexa processes your data") {
+                                    legalDocument = .privacy
+                                }
+                                Divider()
+                                ProfileRowButton(icon: "doc.text.fill", title: "Terms of Use", subtitle: "Rules and service limitations") {
+                                    legalDocument = .terms
+                                }
+                            }
+                        }
+
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("DELETE ACCOUNT")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(MockexaTheme.destructive)
+                                Text("Permanently delete your sign-in identity, practice history, answers, feedback and cloud-saved resumes. This cannot be undone.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(MockexaTheme.textSecondary)
+                                Button(role: .destructive) { showDeleteAccount = true } label: {
+                                    Label("Permanently Delete Account", systemImage: "person.crop.circle.badge.xmark")
+                                        .font(.subheadline.bold())
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 46)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(MockexaTheme.destructive)
                             }
                         }
                     }
@@ -1822,10 +1858,134 @@ struct AccountSettingsSheet: View {
             } message: {
                 Text("Saved resumes and profile preferences on this device cannot be recovered after erasing them.")
             }
+            .sheet(item: $legalDocument) { document in
+                LegalDocumentView(document: document)
+            }
+            .sheet(isPresented: $showDeleteAccount) {
+                DeleteAccountConfirmationView {
+                    try await auth.deleteCloudAccount()
+                    app.userSessions = []
+                    app.onboardingStep = 0
+                    app.route = .welcome
+                    dismiss()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
                         .foregroundStyle(MockexaTheme.primary)
+                }
+            }
+        }
+    }
+}
+
+enum LegalDocument: String, Identifiable {
+    case privacy, terms
+    var id: String { rawValue }
+    var title: String { self == .privacy ? "Privacy Policy" : "Terms of Use" }
+    var webURL: URL {
+        URL(string: "\(MockexaConfig.baseURL)/legal/\(rawValue)")!
+    }
+}
+
+struct LegalDocumentView: View {
+    let document: LegalDocument
+    @Environment(\.dismiss) private var dismiss
+
+    private var sections: [(String, String)] {
+        if document == .privacy {
+            return [
+                ("Information we process", "Account identifiers and contact details, profile and target-role preferences, practice answers and transcripts, scores and feedback, resume content you save, and limited security and reliability logs."),
+                ("How we use information", "To authenticate you, personalize questions, generate feedback, synchronize progress and resumes, prevent abuse, diagnose failures and improve the service."),
+                ("Service providers", "Supabase provides authentication and storage, Render hosts the backend, Google Gemini supports selected AI features, and ElevenLabs provides optional text-to-speech."),
+                ("Retention and deletion", "Cloud data is retained while your account is active. Account Settings lets you permanently delete your identity and associated cloud data, or erase device-local data separately."),
+                ("Your choices", "You can edit profile data, avoid optional voice features, erase local data, sign out, or permanently delete your account. Do not submit confidential third-party information."),
+                ("Security and age", "Mockexa uses HTTPS and account-scoped access controls. No system is perfectly secure. Mockexa is not directed to children under 13.")
+            ]
+        }
+        return [
+            ("Educational purpose", "Mockexa is an interview-preparation tool. It does not guarantee employment, interview outcomes, score accuracy or acceptance by any company."),
+            ("Your responsibilities", "Protect your credentials, use the service lawfully, and do not submit confidential employer material, malicious content or personal data you lack permission to use."),
+            ("AI-generated content", "Questions, ratings and feedback may be AI-assisted and can be incomplete or incorrect. Review important guidance independently."),
+            ("Acceptable use", "Do not attempt unauthorized access, interfere with other users, or scrape the service at harmful volume."),
+            ("Your content", "You retain ownership of submitted content and allow Mockexa to process it only as needed to provide and secure the service."),
+            ("Termination", "You may stop using Mockexa or permanently delete your account at any time. The service is provided as-is to the maximum extent allowed by law.")
+        ]
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Effective 27 November 2026")
+                        .font(.caption)
+                        .foregroundStyle(MockexaTheme.textSecondary)
+                }
+                ForEach(sections, id: \.0) { section in
+                    Section(section.0) { Text(section.1) }
+                }
+                Section {
+                    Link("View web version", destination: document.webURL)
+                    Link("Contact: sunandanpuri0987@gmail.com", destination: URL(string: "mailto:sunandanpuri0987@gmail.com")!)
+                }
+            }
+            .navigationTitle(document.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
+    }
+}
+
+struct DeleteAccountConfirmationView: View {
+    let onDelete: () async throws -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var confirmation = ""
+    @State private var isDeleting = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Permanent deletion") {
+                    Text("This deletes your Mockexa account, practice history, answers, feedback and cloud resumes. It cannot be undone.")
+                    TextField("Type DELETE", text: $confirmation)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                }
+                if let errorMessage {
+                    Section { Text(errorMessage).foregroundStyle(MockexaTheme.destructive) }
+                }
+                Section {
+                    Button(role: .destructive) {
+                        Task {
+                            isDeleting = true
+                            errorMessage = nil
+                            do {
+                                try await onDelete()
+                                dismiss()
+                            } catch {
+                                errorMessage = error.localizedDescription
+                                isDeleting = false
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if isDeleting { ProgressView().padding(.trailing, 8) }
+                            Text(isDeleting ? "Deleting Account…" : "Delete Account Permanently").bold()
+                            Spacer()
+                        }
+                    }
+                    .disabled(confirmation != "DELETE" || isDeleting)
+                }
+            }
+            .navigationTitle("Delete Account")
+            .navigationBarTitleDisplayMode(.inline)
+            .interactiveDismissDisabled(isDeleting)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }.disabled(isDeleting)
                 }
             }
         }

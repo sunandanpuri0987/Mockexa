@@ -97,3 +97,7 @@ class SupabaseRepository:
             prefer="resolution=merge-duplicates,return=representation",
         )
         return rows[0]
+
+    async def delete_own_account(self, token: str) -> bool:
+        result = await self._request("POST", "rpc/delete_own_account", token, data={})
+        return result is True

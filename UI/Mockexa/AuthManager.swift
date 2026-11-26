@@ -908,6 +908,22 @@ final class AuthManager: ObservableObject {
 
         signOut()
     }
+
+    /// Permanently removes the authenticated Supabase identity and all
+    /// account-scoped Mockexa cloud data, then clears this device.
+    func deleteCloudAccount() async throws {
+        guard let token = accessToken, !token.isEmpty else {
+            throw APIError.unauthorized
+        }
+        let response: AccountDeletionResponse = try await APIClient.shared.delete(
+            endpoint: "/account",
+            token: token
+        )
+        guard response.deleted else {
+            throw APIError.serverError(statusCode: 500, message: "The server did not confirm account deletion.")
+        }
+        eraseLocalDataAndSignOut()
+    }
     
     private func saveSession(_ session: AuthSession, rawData: Data? = nil) {
         self.accessToken = session.accessToken
