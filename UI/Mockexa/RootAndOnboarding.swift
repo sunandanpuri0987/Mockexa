@@ -56,7 +56,10 @@ struct SplashView: View {
 
     private func routeAfterSplash() {
         Task { @MainActor in
-            while auth.isRestoringSession {
+            // Never leave the user trapped on the splash screen when an auth
+            // provider is slow or temporarily unreachable on a mobile network.
+            let restoreDeadline = ContinuousClock.now + .seconds(15)
+            while auth.isRestoringSession && ContinuousClock.now < restoreDeadline {
                 try? await Task.sleep(for: .milliseconds(20))
             }
             if auth.isAuthenticated {

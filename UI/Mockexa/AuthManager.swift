@@ -515,6 +515,7 @@ final class AuthManager: ObservableObject {
         guard let url = URL(string: "\(supabaseURL)/auth/v1/user") else { return }
         
         var request = URLRequest(url: url)
+        request.timeoutInterval = 12
         request.httpMethod = "GET"
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -565,6 +566,7 @@ final class AuthManager: ObservableObject {
         }
         
         var request = URLRequest(url: url)
+        request.timeoutInterval = 12
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
