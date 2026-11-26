@@ -2,6 +2,28 @@ import Foundation
 import Combine
 import SwiftUI
 
+private struct ResumeCloudDocument: Codable {
+    let profiles: [ResumeProfile]
+    let activeProfileId: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case profiles
+        case activeProfileId = "active_profile_id"
+        case updatedAt = "updated_at"
+    }
+}
+
+private struct ResumeCloudSaveRequest: Codable {
+    let profiles: [ResumeProfile]
+    let activeProfileId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case profiles
+        case activeProfileId = "active_profile_id"
+    }
+}
+
 enum ResumeBuilderStep: Int, CaseIterable, Identifiable {
     case personalInfo = 0
     case summary = 1
@@ -61,12 +83,18 @@ final class ResumeViewModel: ObservableObject {
     @Published var currentStep: ResumeBuilderStep = .personalInfo
     @Published var validationError: String? = nil
     @Published var isResetConfirmPresented: Bool = false
+    @Published private(set) var isCloudSyncing = false
+    @Published private(set) var cloudSyncError: String? = nil
+    @Published private(set) var lastCloudSyncAt: Date? = nil
     
     private let profilesBaseKey = "mockexa_resume_profiles_list"
     private let activeProfileBaseKey = "mockexa_active_profile_id"
     private let legacyUserDefaultsKey = "mockexa_resume_builder_data"
     private let storageOwnerKey = "mockexa_resume_storage_owner"
     private var storageUserId = ""
+    private var cloudAccessToken: String?
+    private var cloudSyncTask: Task<Void, Never>?
+    private var isApplyingCloudState = false
 
     private var profilesKey: String {
         storageUserId.isEmpty ? profilesBaseKey : "\(profilesBaseKey)_\(storageUserId)"
@@ -85,25 +113,29 @@ final class ResumeViewModel: ObservableObject {
         return profiles.first(where: { $0.id == id }) ?? profiles.first
     }
 
-    func activateStorage(for userId: String) {
+    func activateStorage(for userId: String, token: String?) async {
         let cleanId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanId.isEmpty, storageUserId != cleanId else { return }
+        cloudAccessToken = token
+        guard !cleanId.isEmpty else { return }
 
-        let defaults = UserDefaults.standard
-        let scopedProfilesKey = "\(profilesBaseKey)_\(cleanId)"
-        let scopedActiveKey = "\(activeProfileBaseKey)_\(cleanId)"
-        if defaults.data(forKey: scopedProfilesKey) == nil,
-           defaults.string(forKey: storageOwnerKey) == nil {
-            if let existingProfiles = defaults.data(forKey: profilesBaseKey) {
-                defaults.set(existingProfiles, forKey: scopedProfilesKey)
+        if storageUserId != cleanId {
+            let defaults = UserDefaults.standard
+            let scopedProfilesKey = "\(profilesBaseKey)_\(cleanId)"
+            let scopedActiveKey = "\(activeProfileBaseKey)_\(cleanId)"
+            if defaults.data(forKey: scopedProfilesKey) == nil,
+               defaults.string(forKey: storageOwnerKey) == nil {
+                if let existingProfiles = defaults.data(forKey: profilesBaseKey) {
+                    defaults.set(existingProfiles, forKey: scopedProfilesKey)
+                }
+                if let existingActive = defaults.string(forKey: activeProfileBaseKey) {
+                    defaults.set(existingActive, forKey: scopedActiveKey)
+                }
             }
-            if let existingActive = defaults.string(forKey: activeProfileBaseKey) {
-                defaults.set(existingActive, forKey: scopedActiveKey)
-            }
+            defaults.set(cleanId, forKey: storageOwnerKey)
+            storageUserId = cleanId
+            loadFromUserDefaults()
         }
-        defaults.set(cleanId, forKey: storageOwnerKey)
-        storageUserId = cleanId
-        loadFromUserDefaults()
+        await reconcileWithCloud()
     }
 
     // MARK: - Navigation & Validation
@@ -264,6 +296,79 @@ final class ResumeViewModel: ObservableObject {
             }
         } catch {
             print("Failed to save resume profiles: \(error)")
+        }
+        if !isApplyingCloudState {
+            scheduleCloudSync()
+        }
+    }
+
+    private func scheduleCloudSync() {
+        guard cloudAccessToken?.isEmpty == false, !storageUserId.isEmpty else { return }
+        cloudSyncTask?.cancel()
+        cloudSyncTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(900))
+            guard !Task.isCancelled else { return }
+            await self?.uploadToCloud()
+        }
+    }
+
+    private func uploadToCloud() async {
+        guard let token = cloudAccessToken, !token.isEmpty else { return }
+        isCloudSyncing = true
+        defer { isCloudSyncing = false }
+        do {
+            let _: ResumeCloudDocument = try await APIClient.shared.post(
+                endpoint: "/resume-profiles",
+                body: ResumeCloudSaveRequest(profiles: profiles, activeProfileId: activeProfileId),
+                token: token
+            )
+            cloudSyncError = nil
+            lastCloudSyncAt = Date()
+        } catch {
+            // Local storage remains authoritative while offline; a later edit
+            // or screen open retries without losing the user's resume.
+            cloudSyncError = error.localizedDescription
+        }
+    }
+
+    private func reconcileWithCloud() async {
+        guard let token = cloudAccessToken, !token.isEmpty else { return }
+        isCloudSyncing = true
+        defer { isCloudSyncing = false }
+        do {
+            let remote: ResumeCloudDocument = try await APIClient.shared.get(
+                endpoint: "/resume-profiles", token: token
+            )
+            if remote.profiles.isEmpty {
+                await uploadToCloud()
+                return
+            }
+
+            var mergedById = Dictionary(uniqueKeysWithValues: profiles.map { ($0.id, $0) })
+            for remoteProfile in remote.profiles {
+                if let local = mergedById[remoteProfile.id], local.updatedAt > remoteProfile.updatedAt {
+                    continue
+                }
+                mergedById[remoteProfile.id] = remoteProfile
+            }
+            let merged = mergedById.values.sorted { $0.updatedAt > $1.updatedAt }
+            let preferredActiveId = remote.activeProfileId.flatMap { remoteId in
+                merged.contains(where: { $0.id == remoteId }) ? remoteId : nil
+            } ?? activeProfileId ?? merged.first?.id
+
+            isApplyingCloudState = true
+            profiles = merged
+            activeProfileId = preferredActiveId
+            if let selected = merged.first(where: { $0.id == preferredActiveId }) ?? merged.first {
+                resumeData = selected.resumeData
+            }
+            saveProfilesToUserDefaults()
+            isApplyingCloudState = false
+            cloudSyncError = nil
+            lastCloudSyncAt = Date()
+            await uploadToCloud()
+        } catch {
+            cloudSyncError = error.localizedDescription
         }
     }
 

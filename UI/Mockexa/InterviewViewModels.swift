@@ -25,6 +25,41 @@ private func currentTimeString() -> String {
     return formatter.string(from: Date())
 }
 
+private struct TechnicalSessionSnapshot: Codable {
+    let sessionId: String
+    let currentQuestion: QuestionOut
+    let lastAnalysis: AnswerAnalysisOut?
+    let questionHistory: [QuestionOut]
+    let answersHistory: [String]
+    let questionIndex: Int
+    let totalQuestions: Int
+}
+
+private struct HRSessionSnapshot: Codable {
+    let sessionId: String
+    let currentQuestion: HRQuestionOut
+    let lastEvaluation: HREvaluationOut?
+    let questionHistory: [HRQuestionOut]
+    let answersHistory: [String]
+    let questionIndex: Int
+    let totalQuestions: Int
+}
+
+private struct GDParticipantSnapshot: Codable {
+    let name: String
+    let role: String
+}
+
+private struct GDSessionSnapshot: Codable {
+    let sessionId: String
+    let topic: String
+    let participants: [GDParticipantSnapshot]
+    let turnsHistory: [GDTurnResponse]
+    let currentTurn: GDTurnResponse?
+    let currentSpeakerIndex: Int
+    let interruptionCount: Int
+}
+
 // MARK: - Technical Interview ViewModel
 @MainActor
 final class TechnicalViewModel: ObservableObject {
@@ -42,6 +77,44 @@ final class TechnicalViewModel: ObservableObject {
     @Published var totalQuestions: Int = 5
     
     private let apiClient = APIClient.shared
+    private var activeUserId = ""
+
+    private func snapshotKey(_ userId: String) -> String { "MOCKEXA_ACTIVE_TECHNICAL_\(userId)" }
+
+    @discardableResult
+    func restoreActiveSession(for userId: String) -> Bool {
+        guard !userId.isEmpty,
+              let data = UserDefaults.standard.data(forKey: snapshotKey(userId)),
+              let snapshot = try? JSONDecoder().decode(TechnicalSessionSnapshot.self, from: data) else { return false }
+        activeUserId = userId
+        sessionId = snapshot.sessionId
+        currentQuestion = snapshot.currentQuestion
+        lastAnalysis = snapshot.lastAnalysis
+        questionHistory = snapshot.questionHistory
+        answersHistory = snapshot.answersHistory
+        questionIndex = snapshot.questionIndex
+        totalQuestions = snapshot.totalQuestions
+        transcriptEntries = snapshot.questionHistory.enumerated().flatMap { index, question in
+            var entries = [TranscriptEntry(speaker: "AI Interviewer", text: question.question, timestamp: currentTimeString())]
+            if index < snapshot.answersHistory.count {
+                entries.append(TranscriptEntry(speaker: "You", text: snapshot.answersHistory[index], timestamp: currentTimeString()))
+            }
+            return entries
+        }
+        isCompleted = false
+        return true
+    }
+
+    private func persistActiveSession() {
+        guard !activeUserId.isEmpty, let sessionId, let currentQuestion, !isCompleted else { return }
+        let snapshot = TechnicalSessionSnapshot(sessionId: sessionId, currentQuestion: currentQuestion, lastAnalysis: lastAnalysis, questionHistory: questionHistory, answersHistory: answersHistory, questionIndex: questionIndex, totalQuestions: totalQuestions)
+        if let data = try? JSONEncoder().encode(snapshot) { UserDefaults.standard.set(data, forKey: snapshotKey(activeUserId)) }
+    }
+
+    private func clearActiveSession() {
+        guard !activeUserId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: snapshotKey(activeUserId))
+    }
     
     func startSession(
         name: String = "Candidate",
@@ -52,8 +125,10 @@ final class TechnicalViewModel: ObservableObject {
         maxQuestions: Int = 5,
         resumeContext: String? = nil,
         jobDescription: String? = nil,
+        userId: String = "",
         token: String?
     ) async {
+        activeUserId = userId
         isLoading = true
         errorMessage = nil
         isCompleted = false
@@ -90,6 +165,7 @@ final class TechnicalViewModel: ObservableObject {
             self.currentQuestion = response.question
             self.questionHistory.append(response.question)
             self.transcriptEntries.append(TranscriptEntry(speaker: "AI Interviewer", text: response.question.question, timestamp: currentTimeString()))
+            persistActiveSession()
         } catch let err as APIError {
             handleAPIError(err)
         } catch {
@@ -118,12 +194,14 @@ final class TechnicalViewModel: ObservableObject {
             if response.completed || response.nextQuestion == nil {
                 self.isCompleted = true
                 self.currentQuestion = nil
+                clearActiveSession()
             } else if let nextQ = response.nextQuestion {
                 self.currentQuestion = nextQ
                 self.questionHistory.append(nextQ)
                 self.questionIndex += 1
                 self.transcriptEntries.append(TranscriptEntry(speaker: "AI Interviewer", text: nextQ.question, timestamp: currentTimeString()))
             }
+            persistActiveSession()
         } catch let err as APIError {
             if case .serverError(let code, _) = err, code == 409 {
                 self.isCompleted = true
@@ -153,6 +231,7 @@ final class TechnicalViewModel: ObservableObject {
             let response: TechnicalFinishResponse = try await apiClient.postEmpty(endpoint: "/technical/finish/\(sid)", token: token)
             self.reportData = response.report
             self.isCompleted = true
+            clearActiveSession()
         } catch let err as APIError {
             if case .serverError(let code, _) = err, code == 409 {
                 self.isCompleted = true
@@ -192,6 +271,44 @@ final class HRViewModel: ObservableObject {
     @Published var totalQuestions: Int = 5
     
     private let apiClient = APIClient.shared
+    private var activeUserId = ""
+
+    private func snapshotKey(_ userId: String) -> String { "MOCKEXA_ACTIVE_HR_\(userId)" }
+
+    @discardableResult
+    func restoreActiveSession(for userId: String) -> Bool {
+        guard !userId.isEmpty,
+              let data = UserDefaults.standard.data(forKey: snapshotKey(userId)),
+              let snapshot = try? JSONDecoder().decode(HRSessionSnapshot.self, from: data) else { return false }
+        activeUserId = userId
+        sessionId = snapshot.sessionId
+        currentQuestion = snapshot.currentQuestion
+        lastEvaluation = snapshot.lastEvaluation
+        questionHistory = snapshot.questionHistory
+        answersHistory = snapshot.answersHistory
+        questionIndex = snapshot.questionIndex
+        totalQuestions = snapshot.totalQuestions
+        transcriptEntries = snapshot.questionHistory.enumerated().flatMap { index, question in
+            var entries = [TranscriptEntry(speaker: "HR Interviewer", text: question.question, timestamp: currentTimeString())]
+            if index < snapshot.answersHistory.count {
+                entries.append(TranscriptEntry(speaker: "You", text: snapshot.answersHistory[index], timestamp: currentTimeString()))
+            }
+            return entries
+        }
+        isCompleted = false
+        return true
+    }
+
+    private func persistActiveSession() {
+        guard !activeUserId.isEmpty, let sessionId, let currentQuestion, !isCompleted else { return }
+        let snapshot = HRSessionSnapshot(sessionId: sessionId, currentQuestion: currentQuestion, lastEvaluation: lastEvaluation, questionHistory: questionHistory, answersHistory: answersHistory, questionIndex: questionIndex, totalQuestions: totalQuestions)
+        if let data = try? JSONEncoder().encode(snapshot) { UserDefaults.standard.set(data, forKey: snapshotKey(activeUserId)) }
+    }
+
+    private func clearActiveSession() {
+        guard !activeUserId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: snapshotKey(activeUserId))
+    }
     
     func startSession(
         name: String = "Candidate",
@@ -201,8 +318,10 @@ final class HRViewModel: ObservableObject {
         interviewStyle: String = "General HR",
         resumeContext: String? = nil,
         jobDescription: String? = nil,
+        userId: String = "",
         token: String?
     ) async {
+        activeUserId = userId
         isLoading = true
         errorMessage = nil
         isCompleted = false
@@ -236,6 +355,7 @@ final class HRViewModel: ObservableObject {
             self.currentQuestion = response.question
             self.questionHistory.append(response.question)
             self.transcriptEntries.append(TranscriptEntry(speaker: "HR Interviewer", text: response.question.question, timestamp: currentTimeString()))
+            persistActiveSession()
         } catch let err as APIError {
             handleAPIError(err)
         } catch {
@@ -264,12 +384,14 @@ final class HRViewModel: ObservableObject {
             if response.completed || response.nextQuestion == nil {
                 self.isCompleted = true
                 self.currentQuestion = nil
+                clearActiveSession()
             } else if let nextQ = response.nextQuestion {
                 self.currentQuestion = nextQ
                 self.questionHistory.append(nextQ)
                 self.questionIndex += 1
                 self.transcriptEntries.append(TranscriptEntry(speaker: "HR Interviewer", text: nextQ.question, timestamp: currentTimeString()))
             }
+            persistActiveSession()
         } catch let err as APIError {
             if case .serverError(let code, _) = err, code == 409 {
                 self.isCompleted = true
@@ -299,6 +421,7 @@ final class HRViewModel: ObservableObject {
             let response: HRFinishResponse = try await apiClient.postEmpty(endpoint: "/hr/finish/\(sid)", token: token)
             self.reportData = response.report
             self.isCompleted = true
+            clearActiveSession()
         } catch let err as APIError {
             if case .serverError(let code, _) = err, code == 409 {
                 self.isCompleted = true
@@ -342,6 +465,40 @@ final class GDViewModel: ObservableObject {
     
     private let apiClient = APIClient.shared
     private static let avatarColors: [Color] = [MockexaTheme.primary, .blue, .pink, .orange, MockexaTheme.secondary]
+    private var activeUserId = ""
+
+    private func snapshotKey(_ userId: String) -> String { "MOCKEXA_ACTIVE_GD_\(userId)" }
+
+    @discardableResult
+    func restoreActiveSession(for userId: String) -> Bool {
+        guard !userId.isEmpty,
+              let data = UserDefaults.standard.data(forKey: snapshotKey(userId)),
+              let snapshot = try? JSONDecoder().decode(GDSessionSnapshot.self, from: data) else { return false }
+        activeUserId = userId
+        sessionId = snapshot.sessionId
+        topic = snapshot.topic
+        participants = snapshot.participants.enumerated().map { index, item in
+            GDParticipant(id: item.name, name: item.name, initials: String(item.name.prefix(1)).uppercased(), role: item.role, color: Self.avatarColors[index % Self.avatarColors.count])
+        }
+        turnsHistory = snapshot.turnsHistory
+        currentTurn = snapshot.currentTurn
+        currentSpeakerIndex = snapshot.currentSpeakerIndex
+        interruptionCount = snapshot.interruptionCount
+        transcriptEntries = snapshot.turnsHistory.map { TranscriptEntry(speaker: $0.speaker, text: $0.response, timestamp: currentTimeString()) }
+        isFinished = false
+        return true
+    }
+
+    private func persistActiveSession() {
+        guard !activeUserId.isEmpty, let sessionId, !isFinished else { return }
+        let snapshot = GDSessionSnapshot(sessionId: sessionId, topic: topic, participants: participants.map { GDParticipantSnapshot(name: $0.name, role: $0.role) }, turnsHistory: turnsHistory, currentTurn: currentTurn, currentSpeakerIndex: currentSpeakerIndex, interruptionCount: interruptionCount)
+        if let data = try? JSONEncoder().encode(snapshot) { UserDefaults.standard.set(data, forKey: snapshotKey(activeUserId)) }
+    }
+
+    private func clearActiveSession() {
+        guard !activeUserId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: snapshotKey(activeUserId))
+    }
     
     private func updateSpeakerIndex(for speakerName: String) {
         let normSpeaker = speakerName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -353,8 +510,9 @@ final class GDViewModel: ObservableObject {
         }
     }
     
-    func startGD(topic: String = "Remote work and productivity", numRounds: Int = 4, mode: String = "balanced", durationStr: String? = nil, aiStarts: Bool = true, resumeContext: String? = nil, jobDescription: String? = nil, token: String?) async {
+    func startGD(topic: String = "Remote work and productivity", numRounds: Int = 4, mode: String = "balanced", durationStr: String? = nil, aiStarts: Bool = true, resumeContext: String? = nil, jobDescription: String? = nil, userId: String = "", token: String?) async {
         guard !isGeneratingTurn else { return }
+        activeUserId = userId
         isGeneratingTurn = true
         errorMessage = nil
         sessionId = nil
@@ -428,6 +586,7 @@ final class GDViewModel: ObservableObject {
                 
                 self.isFinished = respondResp.finished
             }
+            if isFinished { clearActiveSession() } else { persistActiveSession() }
         } catch is CancellationError {
             // Task cancelled by SwiftUI lifecycle, do not display error banner
         } catch let err as APIError {
@@ -461,6 +620,7 @@ final class GDViewModel: ObservableObject {
             }
             
             self.isFinished = response.finished
+            if isFinished { clearActiveSession() } else { persistActiveSession() }
         } catch let err as APIError {
             if case .serverError(let code, _) = err, code == 409 {
                 self.isFinished = true
@@ -503,6 +663,7 @@ final class GDViewModel: ObservableObject {
             }
             
             self.isFinished = response.finished
+            if isFinished { clearActiveSession() } else { persistActiveSession() }
         } catch let err as APIError {
             // A timeout can happen after the backend has already saved the
             // user's turn. Keep it visible so Retry does not erase their words.
@@ -541,6 +702,7 @@ final class GDViewModel: ObservableObject {
                 updateSpeakerIndex(for: turn.speaker)
             }
             isFinished = response.finished
+            if isFinished { clearActiveSession() } else { persistActiveSession() }
         } catch let err as APIError {
             handleAPIError(err)
         } catch {
@@ -578,6 +740,7 @@ final class GDViewModel: ObservableObject {
             self.metrics = response.metrics
             self.summary = response.summary
             self.isFinished = true
+            clearActiveSession()
         } catch let err as APIError {
             print("[GD API] APIError on finishGD: \(err)")
             if case .serverError(let code, _) = err, code == 409 {

@@ -192,6 +192,16 @@ struct CompanyPracticeReport: Codable {
     }
 }
 
+private struct CompanySessionSnapshot: Codable {
+    let sessionId: String
+    let currentQuestion: CompanyQuestion
+    let lastEvaluation: CompanyPracticeEvaluation?
+    let lastReview: CompanyQuestionReview?
+    let questionNumber: Int
+    let totalQuestions: Int
+    let averageScore: Double
+}
+
 @MainActor
 final class CompanyQuestionBankViewModel: ObservableObject {
     @Published var questions: [CompanyQuestion] = []
@@ -234,9 +244,41 @@ final class CompanyPracticeViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isCompleted = false
     @Published var errorMessage: String?
+    private var activeUserId = ""
 
-    func start(companyId: String, categories: [String], role: String?, count: Int, useDeepAI: Bool, token: String?) async {
+    private func snapshotKey(_ userId: String) -> String { "MOCKEXA_ACTIVE_COMPANY_\(userId)" }
+
+    @discardableResult
+    func restoreActiveSession(for userId: String) -> Bool {
+        guard !userId.isEmpty,
+              let data = UserDefaults.standard.data(forKey: snapshotKey(userId)),
+              let snapshot = try? JSONDecoder().decode(CompanySessionSnapshot.self, from: data) else { return false }
+        activeUserId = userId
+        sessionId = snapshot.sessionId
+        currentQuestion = snapshot.currentQuestion
+        lastEvaluation = snapshot.lastEvaluation
+        lastReview = snapshot.lastReview
+        questionNumber = snapshot.questionNumber
+        totalQuestions = snapshot.totalQuestions
+        averageScore = snapshot.averageScore
+        isCompleted = false
+        return true
+    }
+
+    private func persistActiveSession() {
+        guard !activeUserId.isEmpty, let sessionId, let currentQuestion, !isCompleted else { return }
+        let snapshot = CompanySessionSnapshot(sessionId: sessionId, currentQuestion: currentQuestion, lastEvaluation: lastEvaluation, lastReview: lastReview, questionNumber: questionNumber, totalQuestions: totalQuestions, averageScore: averageScore)
+        if let data = try? JSONEncoder().encode(snapshot) { UserDefaults.standard.set(data, forKey: snapshotKey(activeUserId)) }
+    }
+
+    private func clearActiveSession() {
+        guard !activeUserId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: snapshotKey(activeUserId))
+    }
+
+    func start(companyId: String, categories: [String], role: String?, count: Int, useDeepAI: Bool, userId: String = "", token: String?) async {
         guard sessionId == nil, !isLoading else { return }
+        activeUserId = userId
         guard let token, !token.isEmpty else {
             errorMessage = "Your sign-in session is not ready. Please sign in again."
             return
@@ -258,6 +300,7 @@ final class CompanyPracticeViewModel: ObservableObject {
             currentQuestion = response.question
             questionNumber = response.questionNumber
             totalQuestions = response.totalQuestions
+            persistActiveSession()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -292,7 +335,10 @@ final class CompanyPracticeViewModel: ObservableObject {
             averageScore = response.averageScore
             isCompleted = response.completed
             if response.completed {
+                clearActiveSession()
                 _ = await finish(token: token)
+            } else {
+                persistActiveSession()
             }
             isLoading = false
             return true
@@ -316,6 +362,7 @@ final class CompanyPracticeViewModel: ObservableObject {
                 endpoint: "/company/finish/\(sessionId)", token: token
             )
             isCompleted = true
+            clearActiveSession()
             errorMessage = nil
             return true
         } catch {
@@ -1202,12 +1249,14 @@ struct CompanyPracticeView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             guard let company else { return }
+            if viewModel.restoreActiveSession(for: auth.currentUserId) { return }
             await viewModel.start(
                 companyId: company.id,
                 categories: categories,
                 role: targetRole.isEmpty ? nil : targetRole,
                 count: questionCount,
                 useDeepAI: useDeepAI,
+                userId: auth.currentUserId,
                 token: auth.accessToken
             )
         }

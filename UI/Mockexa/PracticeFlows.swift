@@ -916,7 +916,12 @@ struct PanelView: View {
         .task {
             if gdVM.sessionId == nil && !gdVM.isFinished && !gdVM.isGeneratingTurn {
                 if auth.isAuthenticated, let token = auth.accessToken, !token.isEmpty {
-                    await startSession(token: token)
+                    if gdVM.restoreActiveSession(for: auth.currentUserId) {
+                        sessionClockStarted = true
+                        sessionDeadline = Date().addingTimeInterval(TimeInterval(remainingSeconds))
+                    } else {
+                        await startSession(token: token)
+                    }
                 } else {
                     gdVM.errorMessage = "Please log in to participate in Group Discussion."
                 }
@@ -949,6 +954,7 @@ struct PanelView: View {
             aiStarts: aiStarts,
             resumeContext: resumeContext,
             jobDescription: jobDescription,
+            userId: auth.currentUserId,
             token: token
         )
         // The visible timer represents actual discussion time. Backend/model
@@ -1831,6 +1837,7 @@ struct LiveInterviewView: View {
                 let resolvedRole = targetRole ?? (savedTargetRole.isEmpty ? "Software Engineer" : savedTargetRole)
 
                 if kind == .technical {
+                    if techVM.restoreActiveSession(for: auth.currentUserId) { return }
                     await techVM.startSession(
                         name: candidateName,
                         targetRole: resolvedRole,
@@ -1838,18 +1845,21 @@ struct LiveInterviewView: View {
                         difficulty: difficultyInt,
                         resumeContext: resumeContext,
                         jobDescription: jobDescription,
+                        userId: auth.currentUserId,
                         token: token
                     )
                 } else {
                     if hrInputMode == .voice {
                         _ = await voice.requestPermissions()
                     }
+                    if hrVM.restoreActiveSession(for: auth.currentUserId) { return }
                     await hrVM.startSession(
                         name: candidateName,
                         targetRole: resolvedRole,
                         interviewStyle: selectedDomain,
                         resumeContext: resumeContext,
                         jobDescription: jobDescription,
+                        userId: auth.currentUserId,
                         token: token
                     )
                 }

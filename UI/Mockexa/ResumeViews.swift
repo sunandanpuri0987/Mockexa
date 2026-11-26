@@ -2470,7 +2470,7 @@ struct ResumeStudioView: View {
                 Text(importErrorMessage ?? "The selected resume could not be imported.")
             }
             .task(id: auth.currentUserId) {
-                vm.activateStorage(for: auth.currentUserId)
+                await vm.activateStorage(for: auth.currentUserId, token: auth.accessToken)
             }
         }
     }

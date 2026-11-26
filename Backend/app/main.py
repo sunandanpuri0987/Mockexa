@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings, validate_production_settings
 from app.error_handlers import register_error_handlers
-from app.routers import aptitude, company, gd, health, hr, sessions, technical, tts
+from app.routers import aptitude, company, gd, health, hr, resume_cloud, sessions, technical, tts
 from app.security import install_security_middleware
 
 logging.basicConfig(level=logging.INFO)
@@ -69,3 +69,4 @@ app.include_router(sessions.router)
 app.include_router(tts.router)
 app.include_router(company.router)
 app.include_router(aptitude.router)
+app.include_router(resume_cloud.router)

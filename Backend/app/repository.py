@@ -85,3 +85,15 @@ class SupabaseRepository:
         return {row["session_id"]: row for rows in results for row in rows}
     async def sessions(self,user_id:str,token:str)->list[dict]:
         return await self._request("GET","sessions",token,params={"user_id":f"eq.{user_id}","status":"eq.completed","select":"*","order":"started_at.desc"})
+    async def resume_document(self, user_id: str, token: str) -> dict | None:
+        rows = await self._request(
+            "GET", "resume_documents", token,
+            params={"user_id": f"eq.{user_id}", "select": "user_id,profiles,active_profile_id,updated_at"},
+        )
+        return rows[0] if rows else None
+    async def upsert_resume_document(self, data: dict, token: str) -> dict:
+        rows = await self._request(
+            "POST", "resume_documents", token, data=data,
+            prefer="resolution=merge-duplicates,return=representation",
+        )
+        return rows[0]

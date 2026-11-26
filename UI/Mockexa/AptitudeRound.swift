@@ -101,6 +101,16 @@ struct AptitudeReport: Decodable {
     }
 }
 
+private struct AptitudeSessionSnapshot: Codable {
+    let sessionId: String
+    let currentQuestion: AptitudeQuestion
+    let questionNumber: Int
+    let totalQuestions: Int
+    let correctAnswers: Int
+    let attempted: Int
+    let remainingSeconds: Int
+}
+
 @MainActor
 final class AptitudeRoundViewModel: ObservableObject {
     @Published var sessionId: String?
@@ -117,9 +127,40 @@ final class AptitudeRoundViewModel: ObservableObject {
 
     private var pendingQuestion: AptitudeQuestion?
     private var roundCompleted = false
+    private var activeUserId = ""
 
-    func start(categories: [String], difficulty: Int?, count: Int, duration: Int, targetRole: String?, token: String?) async {
+    private func snapshotKey(_ userId: String) -> String { "MOCKEXA_ACTIVE_APTITUDE_\(userId)" }
+
+    @discardableResult
+    func restoreActiveSession(for userId: String) -> Bool {
+        guard !userId.isEmpty,
+              let data = UserDefaults.standard.data(forKey: snapshotKey(userId)),
+              let snapshot = try? JSONDecoder().decode(AptitudeSessionSnapshot.self, from: data) else { return false }
+        activeUserId = userId
+        sessionId = snapshot.sessionId
+        currentQuestion = snapshot.currentQuestion
+        questionNumber = snapshot.questionNumber
+        totalQuestions = snapshot.totalQuestions
+        correctAnswers = snapshot.correctAnswers
+        attempted = snapshot.attempted
+        remainingSeconds = snapshot.remainingSeconds
+        return true
+    }
+
+    private func persistActiveSession() {
+        guard !activeUserId.isEmpty, let sessionId, let currentQuestion, report == nil else { return }
+        let snapshot = AptitudeSessionSnapshot(sessionId: sessionId, currentQuestion: currentQuestion, questionNumber: questionNumber, totalQuestions: totalQuestions, correctAnswers: correctAnswers, attempted: attempted, remainingSeconds: remainingSeconds)
+        if let data = try? JSONEncoder().encode(snapshot) { UserDefaults.standard.set(data, forKey: snapshotKey(activeUserId)) }
+    }
+
+    private func clearActiveSession() {
+        guard !activeUserId.isEmpty else { return }
+        UserDefaults.standard.removeObject(forKey: snapshotKey(activeUserId))
+    }
+
+    func start(categories: [String], difficulty: Int?, count: Int, duration: Int, targetRole: String?, userId: String = "", token: String?) async {
         guard sessionId == nil, !isLoading else { return }
+        activeUserId = userId
         guard let token, !token.isEmpty else {
             errorMessage = "Please sign in again before starting an aptitude round."
             return
@@ -143,6 +184,7 @@ final class AptitudeRoundViewModel: ObservableObject {
             questionNumber = response.questionNumber
             totalQuestions = response.totalQuestions
             remainingSeconds = response.durationSeconds
+            persistActiveSession()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -195,6 +237,7 @@ final class AptitudeRoundViewModel: ObservableObject {
         pendingQuestion = nil
         feedback = nil
         questionNumber += 1
+        persistActiveSession()
     }
 
     func finish(token: String?) async {
@@ -213,6 +256,7 @@ final class AptitudeRoundViewModel: ObservableObject {
             currentQuestion = nil
             feedback = nil
             remainingSeconds = 0
+            clearActiveSession()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -427,12 +471,14 @@ struct AptitudeRoundView: View {
             Text("Unanswered questions will be counted in the final score.")
         }
         .task {
+            if viewModel.restoreActiveSession(for: auth.currentUserId) { return }
             await viewModel.start(
                 categories: categories,
                 difficulty: difficulty,
                 count: questionCount,
                 duration: durationMinutes,
                 targetRole: targetRole.isEmpty ? nil : targetRole,
+                userId: auth.currentUserId,
                 token: auth.accessToken
             )
         }
