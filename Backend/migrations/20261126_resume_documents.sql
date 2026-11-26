@@ -9,6 +9,10 @@ create table if not exists public.resume_documents (
 
 alter table public.resume_documents enable row level security;
 
+-- RLS policies filter rows, while table privileges allow authenticated users
+-- to reach the table through PostgREST in the first place.
+grant select, insert, update on table public.resume_documents to authenticated;
+
 drop policy if exists "resume_documents_select_own" on public.resume_documents;
 create policy "resume_documents_select_own" on public.resume_documents
     for select using (auth.uid() = user_id);
