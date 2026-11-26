@@ -26,7 +26,15 @@ struct MockexaConfig {
         get {
             if let custom = UserDefaults.standard.string(forKey: baseURLKey), !custom.isEmpty {
                 let cleaned = custom.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-                return cleaned
+                let lowered = cleaned.lowercased()
+                let isLegacyLocalOverride = lowered.contains("localhost")
+                    || lowered.contains("127.0.0.1")
+                    || lowered.contains(".local")
+                    || lowered.contains("://192.168.")
+                    || lowered.contains("://10.")
+                if !isLegacyLocalOverride {
+                    return cleaned
+                }
             }
             if let envURL = ProcessInfo.processInfo.environment[baseURLKey], !envURL.isEmpty {
                 return envURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
